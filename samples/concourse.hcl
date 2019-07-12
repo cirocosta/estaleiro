@@ -15,11 +15,11 @@ DESC
   }
 
   package {
-    "btrfs-tools" { }
+    "btrfs-tools" {}
     "ca-certificates" {}
     "dumb-init" {}
-    "iproute2" {}
     "file" {}
+    "iproute2" {}
   }
 
   env {
@@ -29,11 +29,8 @@ DESC
   files "/usr/local/concourse/" {
     description = "the Concourse binaries and resource types exist"
 
-    from {
-      local_tarball "./linux-rc/*.tgz" {
-        description = ""
-        bill_of_materials = "bom.yml"
-      }
+    tarball "./linux-rc/*.tgz" {
+      bill_of_materials = "bom.yml"
     }
   }
 
