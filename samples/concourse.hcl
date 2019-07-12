@@ -1,17 +1,7 @@
 image "concourse/concourse" {
-
-  description = <<DESC
-    The container image used to distribute Concourse for Containerized
-    platforms (like Docker and Kubernetes), having "all bateries" included":
-    - resource types
-    - runtime binaries
-    - fly
-    - concourse.
-DESC
-
   base_image {
     name = "library/ubuntu"
-    ref = "bionic"
+    ref  = "bionic"
   }
 
   package {
@@ -29,8 +19,8 @@ DESC
   files "/usr/local/concourse/" {
     description = "the Concourse binaries and resource types exist"
 
-    tarball "./linux-rc/*.tgz" {
-      bill_of_materials = "bom.yml"
+    copy "local" {
+      paths = "./linux-rc/concourse-*.tgz"
     }
   }
 
