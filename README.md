@@ -1,6 +1,7 @@
 # estaleiro [istaˈlejru]
 
 <br />
+<br />
 
 <img align="left" width="384" height="256" src="https://github.com/cirocosta/estaleiro/raw/master/.github/shipyard.jpg" />
 
@@ -9,12 +10,10 @@
 
 > *masculine noun - shipyard*
 
-> `Dockerfile`s can get out of hand quickly.
-
-> `estaleiro` allows you to build container images with confidence.
-
-
-<br />
+> `estaleiro` allows you to build container images with confidence:
+> - rules
+> - traceability
+> - chain of trust
 
 
 
