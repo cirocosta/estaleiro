@@ -10,11 +10,14 @@
 
 > *masculine noun - shipyard*
 
-`estaleiro` allows you to build container images with confidence:
+`estaleiro` allows you to build container images with confidence - a declarative
+approach to dealing with the last mile in building container images.
 
-- rules
-- traceability
-- chain of trust
+<br />
+<br />
+<br />
+<br />
+
 
 
 
