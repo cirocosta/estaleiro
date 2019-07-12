@@ -3,12 +3,7 @@
 <br />
 
 
-<img  align="left" 
-      width="384" 
-      height="256" 
-      src="https://github.com/cirocosta/estaleiro/raw/master/.github/shipyard.jpg"
-      alt="photo of a shipyard"
->
+<img align="left" width="384" height="256" src="https://github.com/cirocosta/estaleiro/raw/master/.github/shipyard.jpg" />
 
 <br />
 
