@@ -1,0 +1,50 @@
+RULES
+
+
+	```yaml
+	base_images:
+	  - name: registry.hub.docker.com/library/ubuntu
+	    tag: bionic
+	  - name: scratch
+	    tag: latest
+
+	user:
+	  root: false
+	```
+
+
+EXAMPLE
+
+	```yaml
+
+	steps:
+	- name: test
+	  dockerfile: ./Dockerfile
+	  target: test
+	- name: build
+	  dockerfile: ./Dockerfile
+	  target: build
+	
+	final:
+	  - add:
+	      from:
+	        step: build
+		at: /assets/in
+	      to:
+	        at: /opt/resource/in
+  
+
+	```
+
+
+
+
+SOURCES
+
+	```yaml
+	/opt/resource/
+
+	```
+
+
+

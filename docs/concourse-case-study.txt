@@ -1,0 +1,204 @@
+CONCOURSE AS A CASE STUDY
+
+	Concourse has quite a few number of images to build:
+	
+	- concourse/concourse
+	- concourse/*-resource (13 of them)
+
+	This means that there's a lot of source code to be scanned by the OSLO
+	team to ensure that we're not shipping licenses that hurt our customers.
+
+
+
+BILL OF MATERIALS
+
+	bom.yml
+
+		bin/concourse:
+		  type: git
+		  version: $sha
+		  source: https://github.com/concourse/concourse
+		bin/gdn:
+		  type: git
+		  version: $tag
+		  source: https://github.com/cloudfoundry/garden-runc-release
+		resource-types/bosh-io-release/*:
+		  type: git
+		  version: $tag
+		  source: https://github.com/concourse/bosh-io-release-resource
+		...
+		
+
+
+
+IMAGE BULDING
+
+	concourse/concourse
+
+		This is a very particular case where it's very hard to get
+		visibility right:
+
+		- `linux-rc/*` brings the result of multiple build steps in a
+		  pipeline that generate several binaries that are put together
+		  in the form of a final `rc`, being made of:
+
+
+			.
+			├── bom.yml
+			├── bin
+			│   ├── concourse  - github.com/concourse/concourse@ref
+			│   └── gdn - github.com/cloudfoundry/guardian@ref
+			├── fly-assets - github.com/concourse/concourse@ref
+			│   ├── fly-darwin-amd64.tgz
+			│   ├── fly-linux-amd64.tgz
+			│   └── fly-windows-amd64.zip
+			└── resource-types
+			    ├── bosh-io-release
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── bosh-io-stemcell
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── cf
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── docker-image
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── git
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── github-release
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── hg
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── mock
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── pool
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── registry-image
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── s3
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── semver
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    ├── time
+			    │   ├── resource_metadata.json
+			    │   └── rootfs.tgz
+			    └── tracker
+				├── resource_metadata.json
+				└── rootfs.tgz
+		
+
+		SAMPLE
+		
+
+			copy_from_disk:
+			  from: ./linux-rc/*.tgz
+			  to: /usr/local
+			  bom: 
+			    file: ./linux-rc/bom.yml
+
+			ADD ./linux-rc/*.tgz /usr/local
+			ENV ...
+			APT_INST
+			STOPSIGNAL
+			ENTRYPOINT
+
+
+	concourse/git-resource
+
+		from:
+		  name: library/ubuntu
+		  ref: bionic
+
+		apt_inst:
+		  - curl
+		  - git
+		  - gnupg
+		  - gzip
+		  - jq
+		  - openssl
+		  - libssl-dev
+		  - make
+		  - g++
+		  - openssl-client
+		  - libstdc++6
+
+		apt_add_repo:
+		  - deb http://http.debian.net/debian wheezy-backports main
+
+		apt_inst:
+		  - git-lfs
+
+		copy:
+		  src:
+		    step: build-proxy-tunnel
+		    at: /usr/bin/proxytunnel
+		  dst: /usr/bin/proxytunnel
+		  mode: 0755
+		  source_code: <>
+		  version?
+
+		rm:
+		  - /usr/libexec/git-core/git-add
+		  - /usr/libexec/git-core/git-add--interactive
+		  - /usr/libexec/git-core/git-annotate
+		  ...
+
+
+		APT_INST
+		ADD_APT_REPO 
+		BUILD_FROM_GIT
+		remove unnecessary git binaries
+		link few things
+
+
+	concourse/docker-image-resource
+		
+		APT_INST
+		ADD_APT_REPO
+
+
+
+
+
+
+
+
+COMMANDS
+
+
+	APT_INST
+
+		rule_set:
+			- version must be specified
+			- source must exist
+
+		args:
+			[ package name ]
+
+		example:
+			apt_inst:
+			  - dnsutils
+			  - gcc
+
+
+	APT_ADD_REPO
+
+		rule_set:
+			- must have `deb src` available
+			
+
+
+
+
+
+

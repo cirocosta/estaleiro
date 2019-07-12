@@ -1,0 +1,72 @@
+jobs:
+  - name: collect-bom
+    plan:
+      - in_parallel:
+          steps:
+            - get: linux-rc
+              trigger: true
+            - get: git-resource
+              trigger: true
+            - get: gdn
+              trigger: true
+            - get: concourse
+              trigger: true
+      - task: generate-bom
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: ubuntu }
+          inputs:
+            - name: linux-rc
+            - name: git-resource 
+            - name: gdn
+            - name: concourse
+          run:
+            path: /bin/bash
+            args:
+              - -ce
+              - |
+                echo "bin/concourse: 
+                  version: $(cat concourse/.git/ref)
+                  type: git
+                bin/gdn: 
+                  version: $(cat ./gdn/version)
+                  type: git
+                resource-types/git-resource/*: 
+                  version: $(cat ./git-resource/version)
+                  type: git
+                " > bom.yml
+
+                cat ./bom.yml
+
+resources:
+  - name: concourse
+    type: git
+    source:
+      uri: https://github.com/concourse/concourse
+
+  - name: gdn
+    type: github-release
+    source:
+      owner: cloudfoundry
+      repository: garden-runc-release
+      access_token: ((github-token))
+
+
+  - name: git-resource
+    type: github-release
+    source:
+      owner: concourse
+      repository: git-resource
+      access_token: ((github-token))
+
+
+  - name: linux-rc
+    type: s3
+    source:
+      bucket: concourse-artifacts
+      endpoint: https://storage.googleapis.com
+      region_name: us-central1
+      regexp: rcs/concourse-(.*)-linux-amd64.tgz
+

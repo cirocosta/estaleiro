@@ -1,0 +1,6 @@
+
+> OSL Tooling confirmed that adding dependency metadata to containers is one of
+> the most helpful things that NavCon can do to help them deal with containers.
+> This is what I mean when I advise caution about reasoning about OSL.
+
+https://www.pivotalk.io/t/building-community-containers-with-buildpacks-navcon/29527/19
