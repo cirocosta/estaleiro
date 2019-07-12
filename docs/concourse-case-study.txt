@@ -12,6 +12,9 @@ CONCOURSE AS A CASE STUDY
 
 BILL OF MATERIALS
 
+	Describes versions and where copyright + licensing information can be
+	retrieved from if source code needs to be analyzed.
+
 	bom.yml
 
 		bin/concourse:
@@ -28,10 +31,24 @@ BILL OF MATERIALS
 		  source: https://github.com/concourse/bosh-io-release-resource
 		...
 		
+	
+	It's intended to cover all of the files that a given directory or
+	tarball contains.
 
 
 
-IMAGE BULDING
+BUILD PROCESS DISCOVERY
+
+	`estaleiro` adds metadata to the container image in order to allow
+	others to:
+
+	- verify that the `ruleset` makes sense
+	- give continuity from other images that have been built in steps before
+	
+
+
+
+IMAGE BULDING SAMPLES
 
 	concourse/concourse
 
@@ -44,11 +61,10 @@ IMAGE BULDING
 
 
 			.
-			├── bom.yml
 			├── bin
-			│   ├── concourse  - github.com/concourse/concourse@ref
-			│   └── gdn - github.com/cloudfoundry/guardian@ref
-			├── fly-assets - github.com/concourse/concourse@ref
+			│   ├── concourse
+			│   └── gdn
+			├── fly-assets
 			│   ├── fly-darwin-amd64.tgz
 			│   ├── fly-linux-amd64.tgz
 			│   └── fly-windows-amd64.zip
@@ -56,109 +72,126 @@ IMAGE BULDING
 			    ├── bosh-io-release
 			    │   ├── resource_metadata.json
 			    │   └── rootfs.tgz
-			    ├── bosh-io-stemcell
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── cf
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── docker-image
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── git
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── github-release
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── hg
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── mock
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── pool
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── registry-image
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── s3
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── semver
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
-			    ├── time
-			    │   ├── resource_metadata.json
-			    │   └── rootfs.tgz
+			    ...
 			    └── tracker
 				├── resource_metadata.json
 				└── rootfs.tgz
-		
+
+
+		What the build process of `concourse/concourse` does then is to
+		just extract all of that at a particular container image
+		location, and then add some packages that are necessary for
+		Concourse to have at runtime.
+
+		With `estaleiro` being given a ruleset that forces builds to
+		have Bill of Materials files, this means that we can't just
+		drop that tarball into the container image without saying where
+		the contents of that tarball comes from.
+	
 
 		SAMPLE
-		
 
-			copy_from_disk:
-			  from: ./linux-rc/*.tgz
-			  to: /usr/local
-			  bom: 
-			    file: ./linux-rc/bom.yml
 
-			ADD ./linux-rc/*.tgz /usr/local
-			ENV ...
-			APT_INST
-			STOPSIGNAL
-			ENTRYPOINT
+			base_image:
+			  name: library/ubuntu
+			  ref: bionic
+
+			files:
+			  - from: { local: ./linux-rc/*.tgz }
+			    to: /usr/local
+			    bom: { file: ./linux-rc/bom.yml }
+
+			env:
+			  - CONCOURSE_SESSION_SIGNING_KEY /concourse-keys/session_signing_key
+			  ...
+
+			packages:
+			  - btrfs-tools
+			  - ca-certificates
+			  - dumb-init
+			  - iproute2
+			  - file
+
+			stopsignal:
+			  - SIGUSR2
+
+			entrypoint:
+			  - /usr/local/concourse/bin/concourse
+
+
+
+
+		OUTPUT:
+
+			- container image
+				OCI image somewhere in the filesystem
+
+
+			- full bill of materials
+
+				```
+				base_image:
+				  name: <>
+				  tag: <>?
+				  digest: <>
+
+				packages:
+				  - name: <this>
+				    version: <that>
+				    repository: <>
+
+				files:
+				  - name: /usr/local/bin/concourse
+				    version: blabla
+				    ...
+
+				user: 1001
+
+				```
 
 
 	concourse/git-resource
 
-		from:
+		base_image:
 		  name: library/ubuntu
 		  ref: bionic
 
-		apt_inst:
+		apt_repos:
+		  - deb http://http.debian.net/debian wheezy-backports main
+
+		packages:
 		  - curl
 		  - git
 		  - gnupg
 		  - gzip
 		  - jq
 		  - openssl
-		  - libssl-dev
+		  - libssl-dev:q
 		  - make
 		  - g++
 		  - openssl-client
 		  - libstdc++6
-
-		apt_add_repo:
-		  - deb http://http.debian.net/debian wheezy-backports main
-
-		apt_inst:
 		  - git-lfs
 
-		copy:
-		  src:
-		    step: build-proxy-tunnel
-		    at: /usr/bin/proxytunnel
-		  dst: /usr/bin/proxytunnel
-		  mode: 0755
-		  source_code: <>
-		  version?
+		files:
+		  - from:
+		      step: build-proxy-tunnel
+		      at: /usr/bin/proxytunnel
+		    dst: /usr/bin/proxytunnel
+		    mode: 0755
+		    source_code: <>
+		    version?
 
-		rm:
+		without_files:
 		  - /usr/libexec/git-core/git-add
 		  - /usr/libexec/git-core/git-add--interactive
 		  - /usr/libexec/git-core/git-annotate
 		  ...
+	
+		links:
+		  - from: <>
+		    to: <>
 
-
-		APT_INST
-		ADD_APT_REPO 
-		BUILD_FROM_GIT
-		remove unnecessary git binaries
-		link few things
 
 
 	concourse/docker-image-resource
@@ -174,6 +207,26 @@ IMAGE BULDING
 
 
 COMMANDS
+
+	COPY
+		description:
+			Provides the ability to retrieve blobs, either from
+			other container images, or the file system.
+
+			Being the only way to add files that are not coming from
+			a package manager, 
+
+
+		rule_set:
+			- `bom` must be provided
+
+	BASE_IMAGE
+
+		rule_set:
+			- name must match a whitelist
+			- digest must be specified
+			- blacklist of tags
+			- whitelist of tags
 
 
 	APT_INST
@@ -197,8 +250,8 @@ COMMANDS
 			- must have `deb src` available
 			
 
+	STOPSIGNAL
 
-
-
-
+		rule_set:
+			[]
 
