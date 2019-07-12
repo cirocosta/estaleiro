@@ -8,7 +8,9 @@
 
 
 > *masculine noun - shipyard*
+
 > `Dockerfile`s can get out of hand quickly.
+
 > `estaleiro` allows you to build container images with confidence.
 
 
