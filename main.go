@@ -5,12 +5,14 @@ import (
 	"os"
 
 	"github.com/cirocosta/estaleiro/config"
+	"github.com/cirocosta/estaleiro/debug"
 	"github.com/cirocosta/estaleiro/frontend"
 	"github.com/jessevdk/go-flags"
 )
 
 var cli struct {
-	Filename string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
+	Filename    string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
+	DebugOutput string `long:"debug-output" choice:"dot" choice:"json" description:"dump llb to stdout"`
 }
 
 func main() {
@@ -35,13 +37,21 @@ func main() {
 		return
 	}
 
-	graph, err := frontend.LLBToGraph(llb)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to generate graph: %v\n", err)
-		return
-	}
+	if cli.DebugOutput != "" {
+		var dotOutput = false
 
-	fmt.Print(graph)
+		if cli.DebugOutput == "dot" {
+			dotOutput = true
+		}
+
+		graph, err := debug.LLBToGraph(llb, dotOutput)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to generate graph: %v\n", err)
+			return
+		}
+
+		fmt.Print(graph)
+	}
 
 	return
 }
