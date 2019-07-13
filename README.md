@@ -6,6 +6,7 @@
 <img align="left" width="384" height="256" src="https://github.com/cirocosta/estaleiro/raw/master/.github/shipyard.jpg" />
 
 <br />
+<br />
 
 
 > *masculine noun - shipyard*
@@ -17,8 +18,6 @@ approach to dealing with the last mile in building container images.
 <br />
 <br />
 <br />
-
-
 
 
 ### problem set
