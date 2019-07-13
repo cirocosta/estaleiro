@@ -15,12 +15,11 @@ type Config struct {
 }
 
 type Image struct {
-	BaseImage BaseImage `hcl:"base_image"`
-}
-
-type BaseImage struct {
-	Name      string `hcl:"name"`
-	Reference string `hcl:"ref"`
+	Name      string `hcl:"name,label"`
+	BaseImage struct {
+		Name      string `hcl:"name"`
+		Reference string `hcl:"ref,optional"`
+	} `hcl:"base_image,block"`
 }
 
 func ParseFile(filename string) (cfg *Config, err error) {
