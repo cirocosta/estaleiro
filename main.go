@@ -4,15 +4,18 @@ import (
 	"os"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/cirocosta/statuscheck/commands"
 	"github.com/jessevdk/go-flags"
 )
 
+var (
+	config struct{}
+)
+
 func main() {
-	logger := lager.NewLogger("my-app")
+	logger := lager.NewLogger("estaleiro")
 	logger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
 
-	parser := flags.NewParser(&commands.StatusCheck, flags.HelpFlag|flags.PassDoubleDash)
+	parser := flags.NewParser(&config, flags.HelpFlag|flags.PassDoubleDash)
 	parser.NamespaceDelimiter = "-"
 
 	_, err := parser.Parse()
