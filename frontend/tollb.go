@@ -2,6 +2,8 @@ package frontend
 
 import (
 	"context"
+	"io/ioutil"
+	"os"
 
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/moby/buildkit/client/llb"
@@ -61,12 +63,21 @@ func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.St
 	return cp.AddMount("/dest", dest)
 }
 
-func addStep(*config.Step) (state llb.State, err error) {
-	var stepState *llb.State
+func addStep(step *config.Step) (state llb.State, err error) {
+	var (
+		stepState         *llb.State
+		dockerfileContent []byte
+	)
 
-	stepState, _, err = dockerfile.Dockerfile2LLB(context.TODO(), []byte(`
-FROM busybox
-RUN echo "lol"`), dockerfile.ConvertOpt{})
+	dockerfileContent, err = readFile(step.Dockerfile)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed reading dockerfile %s", step.Dockerfile)
+		return
+	}
+
+	stepState, _, err = dockerfile.Dockerfile2LLB(
+		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{})
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to convert dockerfile to llb")
@@ -74,5 +85,23 @@ RUN echo "lol"`), dockerfile.ConvertOpt{})
 	}
 
 	state = *stepState
+	return
+}
+
+func readFile(filename string) (content []byte, err error) {
+	var file *os.File
+
+	file, err = os.Open(filename)
+	if err != nil {
+		return
+	}
+
+	defer file.Close()
+
+	content, err = ioutil.ReadAll(file)
+	if err != nil {
+		return
+	}
+
 	return
 }
