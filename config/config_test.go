@@ -28,6 +28,16 @@ var _ = Describe("Config", func() {
 			})
 		})
 
+		Context("with just step", func() {
+			BeforeEach(func() {
+				content = `step "build" { }`
+			})
+
+			It("fails", func() {
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
 		Context("having image", func() {
 			Context("missing `base_image`", func() {
 				BeforeEach(func() {
@@ -53,6 +63,25 @@ var _ = Describe("Config", func() {
 				})
 			})
 
+			Context("having `step`", func() {
+				BeforeEach(func() {
+					content = `
+					step "this" {
+						dockerfile = "./Dockerfile"
+					}
+
+					image "busybox" { 
+						base_image {
+							name = "this"	
+						}
+					}`
+				})
+
+				It("succeeds", func() {
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+			})
 		})
 
 	})

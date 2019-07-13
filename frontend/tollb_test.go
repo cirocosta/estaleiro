@@ -1,12 +1,10 @@
 package frontend_test
 
 import (
+	_ "github.com/cirocosta/estaleiro/frontend"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
-	. "UNKNOWN_PACKAGE_PATH"
 )
 
-var _ = Describe("./Tollb", func() {
+var _ = Describe("ToLLB", func() {
 
 })
