@@ -12,7 +12,7 @@ import (
 
 var cli struct {
 	Filename    string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
-	DebugOutput string `long:"debug-output" choice:"dot" choice:"json" description:"dump llb to stdout"`
+	DebugOutput string `long:"debug-output" short:"d" choice:"dot" choice:"json" description:"dump llb to stdout"`
 }
 
 func main() {
