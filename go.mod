@@ -12,6 +12,5 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.8.1
-	github.com/r2d4/mockerfile v0.0.0-20190109124726-140c6a912bbf // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
 )
