@@ -31,4 +31,9 @@ FROM ubuntu AS release
 		/usr/local/bin/estaleiro \
 		/usr/local/bin/estaleiro
 
-ENTRYPOINT [ "/usr/bin/estaleiro" ]
+	ENTRYPOINT [ "/usr/bin/estaleiro" ]
+
+
+FROM release AS frontend
+
+	CMD [ "frontend" ]

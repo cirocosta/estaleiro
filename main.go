@@ -4,19 +4,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cirocosta/estaleiro/config"
-	"github.com/cirocosta/estaleiro/debug"
-	"github.com/cirocosta/estaleiro/frontend"
+	"github.com/cirocosta/estaleiro/command"
 	"github.com/jessevdk/go-flags"
 )
 
 var cli struct {
-	Filename    string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
-	DebugOutput string `long:"debug-output" short:"d" choice:"dot" choice:"json" description:"dump llb to stdout"`
 }
 
 func main() {
-	parser := flags.NewParser(&cli, flags.HelpFlag|flags.PassDoubleDash)
+	parser := flags.NewParser(&command.Estaleiro, flags.HelpFlag|flags.PassDoubleDash)
 	parser.NamespaceDelimiter = "-"
 
 	_, err := parser.Parse()
@@ -25,33 +21,4 @@ func main() {
 		return
 	}
 
-	cfg, err := config.ParseFile(cli.Filename)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to parse configuration file: %v\n", err)
-		return
-	}
-
-	llb, err := frontend.ToLLB(cfg)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to convert to llb: %v\n", err)
-		return
-	}
-
-	if cli.DebugOutput != "" {
-		var dotOutput = false
-
-		if cli.DebugOutput == "dot" {
-			dotOutput = true
-		}
-
-		graph, err := debug.LLBToGraph(llb, dotOutput)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to generate graph: %v\n", err)
-			return
-		}
-
-		fmt.Print(graph)
-	}
-
-	return
 }

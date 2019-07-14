@@ -1,8 +1,11 @@
 build:
 	go build -i -v .
 
-image:
-	docker build -t cirocosta/estaleiro .
+image-frontend:
+	docker build --target frontend -t cirocosta/estaleiro-frontend .
+
+image-estaleiro:
+	DOCKER_BUILDKIT=1 docker build -f ./estaleiro.hcl .
 
 test:
 	go test -v ./...

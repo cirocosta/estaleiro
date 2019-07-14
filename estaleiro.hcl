@@ -1,3 +1,5 @@
+# syntax = cirocosta/estaleiro-frontend
+
 step "build" {
   dockerfile = "./Dockerfile"
   target     = "build"

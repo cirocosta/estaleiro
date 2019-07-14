@@ -20,9 +20,17 @@ resources:
       username: ((docker-user))
       password: ((docker-password))
 
+  - name: container-image-frontend
+    type: registry-image
+    source:
+      repository: cirocosta/estaleiro-frontend
+      tag: rc
+      username: ((docker-user))
+      password: ((docker-password))
+
 
 jobs:
-  - name: build
+  - name: regular
     public: true
     plan:
       - in_parallel:
@@ -40,6 +48,29 @@ jobs:
               params: {TARGET: "test"}
               file: repository/ci/tasks/build.yml
       - put: container-image
+        inputs: [image]
+        get_params: {format: oci}
+        params:
+          image: image/image.tar
+
+  - name: frontend
+    public: true
+    plan:
+      - in_parallel:
+        - {get: repository, trigger: true}
+      - in_parallel:
+          fail_fast: true
+          steps:
+            - task: build-image
+              privileged: true
+              params: {TARGET: "frontend"}
+              file: repository/ci/tasks/build.yml
+            - task: test
+              privileged: true
+              output_mapping: { image: discard }
+              params: {TARGET: "test"}
+              file: repository/ci/tasks/build.yml
+      - put: container-image-frontend
         inputs: [image]
         get_params: {format: oci}
         params:
