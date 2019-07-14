@@ -33,6 +33,11 @@ With that power, problems arise when an entire organization starts adopting it:
   - having the source code from where?
 
 
+### buildkit
+
+- TODO: how to do it on macos
+
+
 ### LICENSE
 
 Apache V2.
