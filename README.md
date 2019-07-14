@@ -12,7 +12,7 @@
 
 > *masculine noun - shipyard*
 
-`estaleiro` allows you to shio container images with confidence - a declarative
+`estaleiro` allows you to ship container images with confidence - a declarative
 approach to dealing with the last mile in building container images, so you can
 have more control over what you ship.
 
@@ -35,7 +35,10 @@ have more control over what you ship.
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
+
 ### problem set
+
+> consistently enforcing a guideline for baking container images is hard
 
 `Dockerfile`s are great - they allow us to do anything!
 
@@ -46,6 +49,7 @@ With that power, problems arise when an entire organization starts adopting it:
 - artifacts can end up in them coming from who knows where
   - with which versions?
   - having the source code from where?
+
 
 
 ### estaleiro
@@ -105,8 +109,45 @@ image "cirocosta/estaleiro" {
 ```
 
 
+### tests
+At the moment, there are no integration tests.
 
-### developing
+Unit tests can be run with the standard `go test`:
+
+```console
+$ go test -v ./...
+?   	github.com/cirocosta/estaleiro	[no test files]
+?   	github.com/cirocosta/estaleiro/command	[no test files]
+=== RUN   TestConfig
+Running Suite: Config Suite
+...
+```
+
+
+### developing it locally
+
+1. start `buildkitd` inside a container (that can be reached from the host).
+
+```console
+$ make run-buildkitd
+```
+
+
+2. with `buildkit` running, set the environment variable `BUILDKIT_HOST` that
+   allows `estaleiro` to target `buildkitd`.
+
+```console
+$ export BUILDKIT_HOST=tcp://0.0.0.0:1234
+```
+
+Now, you can run `estaleiro` using the standard `buildctl` CLI to interact with
+`buildkitd`.
+
+For instance, to build an image that ships `estaleiro`:
+
+```console
+./estaleiro build -f ./estaleiro.hcl | buildctl build --local context=.
+```
 
 
 ### license
