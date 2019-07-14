@@ -26,7 +26,7 @@ func (c *buildCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	definition, err := state.Marshal()
+	definition, err := state.Marshal(llb.LinuxAmd64)
 	if err != nil {
 		err = errors.Wrap(err, "marshaling llb state")
 		return

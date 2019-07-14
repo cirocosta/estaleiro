@@ -8,6 +8,7 @@ import (
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/moby/buildkit/client/llb"
 	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 )
 
@@ -77,7 +78,14 @@ func addStep(step *config.Step) (state llb.State, err error) {
 	}
 
 	stepState, _, err = dockerfile.Dockerfile2LLB(
-		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{})
+		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{
+			BuildPlatforms: []specs.Platform{
+				{
+					Architecture: "amd64",
+					OS:           "linux",
+				},
+			},
+		})
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to convert dockerfile to llb")
