@@ -28,50 +28,65 @@ resources:
       username: ((docker-user))
       password: ((docker-password))
 
+  - name: image-buildkit
+    type: registry-image
+    source:
+      repository: cirocosta/buildkit-task
+
 
 jobs:
-  - name: regular
-    public: true
-    plan:
-      - in_parallel:
-        - {get: repository, trigger: true}
-      - in_parallel:
-          fail_fast: true
-          steps:
-            - task: build-image
-              privileged: true
-              params: {TARGET: "release"}
-              file: repository/ci/tasks/build.yml
-            - task: test
-              privileged: true
-              output_mapping: { image: discard }
-              params: {TARGET: "test"}
-              file: repository/ci/tasks/build.yml
-      - put: container-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
 
-  - name: frontend
+  - name: build
     public: true
     plan:
-      - in_parallel:
-        - {get: repository, trigger: true}
+      - {get: repository, trigger: true}
       - in_parallel:
           fail_fast: true
           steps:
-            - task: build-image
+            - task: build-regular
+              file: repository/ci/tasks/build-with-rootfs.yml
+              params: {TARGET: "release"}
               privileged: true
-              params: {TARGET: "frontend"}
+            - task: build-frontend
               file: repository/ci/tasks/build.yml
-            - task: test
+              output_mapping: { image: image-frontend }
+              params: {TARGET: "frontend"}
               privileged: true
+            - task: test
+              file: repository/ci/tasks/build.yml
               output_mapping: { image: discard }
               params: {TARGET: "test"}
-              file: repository/ci/tasks/build.yml
-      - put: container-image-frontend
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+              privileged: true
+            - {get: image-buildkit}
+      - task: integration
+        image: image-buildkit
+        privileged: true
+        config:
+          platform: linux
+          inputs: 
+            - name: rootfs
+            - name: repository
+          run:
+            path: /bin/sh
+            args:
+              - -cex
+              - |
+                stty columns 80
+                ./rootfs/rootfs/usr/local/bin/estaleiro \
+                  build -f ./repository/estaleiro.hcl \
+                  | exec buildctl-daemonless.sh \
+                    build --local context=./repository
+      - in_parallel:
+          fail_fast: true
+          steps:
+            - put: container-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
+            - put: container-image-frontend
+              inputs: [image-frontend]
+              get_params: {format: oci}
+              params:
+                image: image-frontend/image.tar
+
