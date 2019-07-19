@@ -16,10 +16,11 @@ var _ = Describe("Config", func() {
 		var (
 			content string
 			err     error
+			cfg     *config.Config
 		)
 
 		JustBeforeEach(func() {
-			_, err = config.Parse([]byte(content), mockFilename)
+			cfg, err = config.Parse([]byte(content), mockFilename)
 		})
 
 		Context("with empty content", func() {
@@ -64,8 +65,10 @@ var _ = Describe("Config", func() {
 			})
 
 			Context("having `step`", func() {
-				BeforeEach(func() {
-					content = `
+
+				Context("without file defined", func() {
+					BeforeEach(func() {
+						content = `
 					step "this" {
 						dockerfile = "./Dockerfile"
 					}
@@ -75,10 +78,40 @@ var _ = Describe("Config", func() {
 							name = "this"	
 						}
 					}`
+					})
+
+					It("fails", func() {
+						Expect(err).To(HaveOccurred())
+					})
 				})
 
-				It("succeeds", func() {
-					Expect(err).ToNot(HaveOccurred())
+				Context("with file defined", func() {
+
+					BeforeEach(func() {
+						content = `
+					step "this" {
+					  dockerfile = "./Dockerfile"
+
+					  file "/bin/binary" {
+					    vcs "git" {
+					       repository = "something.git"
+					       ref        = "master"
+					    }
+					  }
+					}
+
+					image "busybox" { 
+					  base_image {
+					    name = "this"	
+					  }
+					}`
+					})
+
+					It("succeeds", func() {
+						Expect(err).ToNot(HaveOccurred())
+						Expect(cfg.Steps[0].File.Location).To(Equal("/bin/binary"))
+					})
+
 				})
 
 			})

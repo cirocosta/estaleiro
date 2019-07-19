@@ -1,5 +1,15 @@
 package config
 
+// Vcs represents information about a version control system that allows
+// us to retrieve the source code from such file.
+//
+type VCS struct {
+	Type string `hcl:"type,label"`
+
+	Ref        string `hcl:"ref"`
+	Repository string `hcl:"repository"`
+}
+
 // Step represents a build step that can be done using a regular
 // Dockerfile (essentially, what `docker build` would build).
 //
@@ -17,12 +27,17 @@ package config
 //
 // ```
 //
-//
 type Step struct {
-	Name       string `hcl:"name,label"`
-	Dockerfile string `hcl:"dockerfile"`
-	Target     string `hcl:"target,optional"`
-	Context    string `hcl:"context,optional"`
+	Name string ` hcl:"name,label"`
+
+	Dockerfile string ` hcl:"dockerfile"`
+	Target     string ` hcl:"target,optional"`
+	Context    string ` hcl:"context,optional"`
+
+	File struct {
+		Location string `hcl:"location,label"`
+		VCS      VCS    `hcl:"vcs,block"`
+	} `hcl:"file,block"`
 }
 
 // File corresponds to a file that can be brought into the the final
@@ -42,27 +57,27 @@ type Step struct {
 // ```
 //
 type File struct {
-	Destination string `hcl:"destination,label"`
+	Destination string ` hcl:"destination,label" `
 
 	FromStep *struct {
-		StepName string `hcl:"step_name,label"`
-		Path     string `hcl:"path"`
-	} `hcl:"from_step,block"`
+		StepName string `hcl:"step_name,label" `
+		Path     string `hcl:"path" `
+	} ` hcl:"from_step,block" `
 }
 
 type Config struct {
-	Image Image  `hcl:"image,block"`
-	Steps []Step `hcl:"step,block"`
+	Image Image  `hcl:"image,block" `
+	Steps []Step `hcl:"step,block" `
 }
 
 // Image is the final layer that is meant to be shipped as a container
 // image.
 //
 type Image struct {
-	Name      string `hcl:"name,label"`
+	Name      string ` hcl:"name,label" `
 	BaseImage struct {
-		Name      string `hcl:"name"`
-		Reference string `hcl:"ref,optional"`
-	} `hcl:"base_image,block"`
-	Files []File `hcl:"file,block"`
+		Name      string `hcl:"name" `
+		Reference string `hcl:"ref,optional" `
+	} ` hcl:"base_image,block" `
+	Files []File `hcl:"file,block" `
 }
