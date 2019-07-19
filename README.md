@@ -14,12 +14,13 @@
 
 `estaleiro` allows you to ship container images with confidence - a declarative
 approach to dealing with the last mile in building container images, so you can
-have more control over what you ship.
+have more control (through transparency) over what you ship.
 
 <br />
 <br />
 <br />
 <br />
+
 
 **Table of Contents**
 

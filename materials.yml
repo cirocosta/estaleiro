@@ -1,18 +1,6 @@
 files:
   - name: /usr/local/bin/estaleiro
-    version: $something 
     source: 
       type: git
+      version: dev
       uri: https://github.com/cirocosta/estaleiro
-
-packages:
-  - name: ca-certificates
-    version: $something
-    source:
-      type: deb
-      uri: file:///something.tgz
-
-  - name: docker-ce
-    version: $something
-    source:
-      skipped: true

@@ -3,6 +3,13 @@
 step "build" {
   dockerfile = "./Dockerfile"
   target     = "build"
+
+  file "/bin/estaleiro" {
+    source "git" {
+      ref  = "master"
+      root = "https://github.com/cirocosta/estaleiro"
+    }
+  }
 }
 
 image "cirocosta/estaleiro" {
@@ -13,8 +20,6 @@ image "cirocosta/estaleiro" {
   }
 
   file "/usr/local/bin/estaleiro" {
-    from_step "build" {
-      path = "/usr/local/bin/estaleiro"
-    }
+    from_step "build" "/usr/local/bin/estaleiro" { }
   }
 }

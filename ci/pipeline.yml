@@ -72,8 +72,10 @@ jobs:
               - |
                 export PATH=$(realpath ./rootfs)/rootfs/usr/local/bin:$PATH
 
-                cd ./repository
                 stty columns 80
+                sanitize-groups
+
+                cd ./repository
                 estaleiro build -f ./estaleiro.hcl | buildctl-daemonless.sh build --local context=.
       - in_parallel:
           fail_fast: true
