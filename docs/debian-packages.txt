@@ -1,0 +1,17 @@
+
+
+
+
+```bash
+cat /etc/apt/sources.list | sed 's/# deb-src/deb-src/g' > /etc/apt/sources.list.new
+mv /etc/apt/sources.list.new /etc/apt/sources.list
+
+# so we can have `apt-get source` and `apt-cache showsrc`
+apt update && apt install -y dpkg-dev
+```
+
+
+
+
+
+
