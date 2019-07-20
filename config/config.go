@@ -34,10 +34,10 @@ type Step struct {
 	Target     string ` hcl:"target,optional"`
 	Context    string ` hcl:"context,optional"`
 
-	File struct {
+	SourceFiles []struct {
 		Location string `hcl:"location,label"`
 		VCS      VCS    `hcl:"vcs,block"`
-	} `hcl:"file,block"`
+	} `hcl:"source_file,block"`
 }
 
 // File corresponds to a file that can be brought into the the final

@@ -8,10 +8,10 @@ step "build" {
 
   # declaring a file that can be consumed by the final image
   #
-  file "/usr/local/bin/estaleiro" {
+  source_file "/usr/local/bin/estaleiro" {
     vcs "git" {
-      ref  = "master"
-      root = "https://github.com/cirocosta/estaleiro"
+      ref        = "master"
+      repository = "https://github.com/cirocosta/estaleiro"
     }
   }
 }
@@ -28,7 +28,7 @@ image "cirocosta/estaleiro" {
   #
   file "/usr/local/bin/estaleiro" {
     from_step "build" {
-      path = "/bin/estaleiro"
+      path = "/usr/local/bin/estaleiro"
     }
   }
 }

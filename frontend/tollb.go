@@ -20,24 +20,47 @@ func ToLLB(cfg *config.Config) (state llb.State, err error) {
 	state = llb.Image(cfg.Image.BaseImage.Name)
 
 	for _, file := range cfg.Image.Files {
-		if file.FromStep != nil {
-			configStep := getStepFromConfig(cfg, file.FromStep.StepName)
-			if configStep == nil {
-				err = errors.Errorf("referenced step %s not declared", file.FromStep.StepName)
-				return
-			}
-
-			var step llb.State
-
-			step, err = addStep(configStep)
-			if err != nil {
-				err = errors.Wrapf(err,
-					"failed to add step to image building process")
-				return
-			}
-
-			state = copy(step, file.FromStep.Path, state, file.Destination)
+		if file.FromStep == nil {
+			continue
 		}
+
+		// retrieve file from step
+		//
+
+		configStep := getStepFromConfig(cfg, file.FromStep.StepName)
+		if configStep == nil {
+			err = errors.Errorf("referenced step %s not declared",
+				file.FromStep.StepName)
+			return
+		}
+
+		// the file has a `path`
+		// -- make sure that the `path` matches a `source_file`
+		//    in the `step` definition
+
+		fileFoundInStep := false
+		for _, sourceFile := range configStep.SourceFiles {
+			if file.FromStep.Path == sourceFile.Location {
+				fileFoundInStep = true
+			}
+		}
+
+		if !fileFoundInStep {
+			err = errors.Errorf("file %s not declared in step %s",
+				file.FromStep.Path, configStep.Name)
+			return
+		}
+
+		var step llb.State
+
+		step, err = addStep(configStep)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to add step to image building process")
+			return
+		}
+
+		state = copy(step, file.FromStep.Path, state, file.Destination)
 	}
 
 	return

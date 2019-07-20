@@ -1,11 +1,17 @@
 build:
 	go build -i -v .
 
+run:
+	./estaleiro build -f ./estaleiro.hcl \
+		| buildctl build --local context=.
+
+graph:
+	./estaleiro build -f ./estaleiro.hcl \
+		| buildctl debug dump-llb --dot \
+		| dot -Tsvg > graph.svg
+
 image-frontend:
 	docker build --target frontend -t cirocosta/estaleiro-frontend .
-
-image-estaleiro:
-	./estaleiro build -f ./estaleiro.hcl | buildctl build --local context=.
 
 test:
 	go test -v ./...

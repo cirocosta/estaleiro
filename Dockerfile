@@ -16,7 +16,7 @@ FROM base AS build
 
 	RUN go build \
 		-tags netgo -v -a \
-		-o /usr/local/bin/estaleiro \
+		-o /bin/estaleiro \
 		-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
 
 FROM base AS test
@@ -28,7 +28,7 @@ FROM ubuntu AS release
 
 	COPY \
 		--from=build \
-		/usr/local/bin/estaleiro \
+		/bin/estaleiro \
 		/usr/local/bin/estaleiro
 
 	ENTRYPOINT [ "/usr/bin/estaleiro" ]
