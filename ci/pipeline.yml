@@ -76,7 +76,11 @@ jobs:
                 sanitize-cgroups
 
                 cd ./repository
-                estaleiro build -f ./estaleiro.hcl | buildctl-daemonless.sh build --local context=.
+                estaleiro build \
+                  --filename ./estaleiro.hcl \
+                  --bom ./bom.yml \
+                  --var estaleiro-commit:$(git rev-parse HEAD) \
+                  | buildctl-daemonless.sh build --local context=.
       - in_parallel:
           fail_fast: true
           steps:

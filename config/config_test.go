@@ -60,6 +60,7 @@ var _ = Describe("Config", func() {
 						Name: "ubuntu",
 					},
 					Entrypoint: []string{"/bin/bash"},
+					Env:        []string{"FOO=bar"},
 				},
 				Steps: []config.Step{
 					{
