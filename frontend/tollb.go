@@ -176,6 +176,7 @@ func addStep(step *config.Step) (state llb.State, err error) {
 
 	stepState, _, err = dockerfile.Dockerfile2LLB(
 		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{
+			Target: step.Target,
 			BuildPlatforms: []specs.Platform{
 				{
 					Architecture: "amd64",
