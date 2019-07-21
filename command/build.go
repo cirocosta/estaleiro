@@ -11,12 +11,13 @@ import (
 )
 
 type buildCommand struct {
-	BomDestination string `long:"bom" short:"b" description:"where to save the bill of materials to"`
-	Filename       string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
+	BomDestination string            `long:"bom" short:"b" description:"where to save the bill of materials to"`
+	Filename       string            `long:"filename" short:"f" required:"true" description:"file containing image definition"`
+	Variables      map[string]string `long:"var" short:"v" description:"variables to interpolate"`
 }
 
 func (c *buildCommand) Execute(args []string) (err error) {
-	cfg, err := config.ParseFile(c.Filename)
+	cfg, err := config.ParseFile(c.Filename, c.Variables)
 	if err != nil {
 		err = errors.Wrapf(err, "failed ot parse config file %s", c.Filename)
 		return

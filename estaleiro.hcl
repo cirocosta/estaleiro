@@ -10,7 +10,7 @@ step "build" {
   #
   source_file "/usr/local/bin/estaleiro" {
     vcs "git" {
-      ref        = "master"
+      ref        = "${estaleiro-commit}"
       repository = "https://github.com/cirocosta/estaleiro"
     }
   }

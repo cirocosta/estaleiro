@@ -14,5 +14,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2 // indirect
+	github.com/zclconf/go-cty v1.0.0
 	gopkg.in/yaml.v3 v3.0.0-20190709130402-674ba3eaed22
 )
