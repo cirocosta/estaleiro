@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"time"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,7 +17,16 @@ type File struct {
 	Source Source `yaml:"source"`
 }
 type Bom struct {
-	Files []File `yaml:"files"`
+	Version     string    `yaml:"version"`
+	GeneratedAt time.Time `yaml:"generated_at"`
+
+	BaseImage BaseImage `yaml:"base_image"`
+	Files     []File    `yaml:"files"`
+}
+
+type BaseImage struct {
+	Name   string `yaml:"name"`
+	Digest string `yaml:"digest"`
 }
 
 func (b Bom) ToYAML() (res []byte) {

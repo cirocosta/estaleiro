@@ -17,7 +17,7 @@ func main() {
 
 	_, err := parser.Parse()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed parsing cli arguments: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return
 	}
 

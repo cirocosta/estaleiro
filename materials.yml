@@ -1,5 +1,13 @@
+version: v0.0.1
+generated_at: date
+
+base_image:
+  name: ubuntu
+  tag: bionic
+  digest: sha256:...
+
 files:
-  - name: /usr/local/bin/estaleiro
+  - path: /usr/local/bin/estaleiro
     source: 
       type: git
       version: dev

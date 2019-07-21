@@ -1,3 +1,8 @@
+version: v0.0.1
+generated_at: 2019-07-21T09:03:30.679993-04:00
+base_image:
+    name: ubuntu
+    digest: sha256:9b1702dcfe32c873a770a32cfd306dd7fc1c4fd134adfb783db68defc8894b3c
 files:
   - path: /usr/local/bin/estaleiro
     source:

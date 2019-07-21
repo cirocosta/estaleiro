@@ -29,7 +29,7 @@ func (c *buildCommand) Execute(args []string) (err error) {
 	}
 
 	if c.BomDestination != "" {
-		err = ioutil.WriteFile(c.BomDestination, bom.ToYAML(), 0755)
+		err = ioutil.WriteFile(c.BomDestination, bom.ToYAML(), 0644)
 		if err != nil {
 			err = errors.Wrapf(err,
 				"failed to write bill of materials to file %s",

@@ -2,21 +2,75 @@ package frontend
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/cirocosta/estaleiro/config"
+	"github.com/docker/distribution/reference"
 	"github.com/moby/buildkit/client/llb"
-	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/moby/buildkit/client/llb/imagemetaresolver"
 	"github.com/pkg/errors"
+
+	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
+	gw "github.com/moby/buildkit/frontend/gateway/client"
+	digest "github.com/opencontainers/go-digest"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 const (
 	copyImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
 )
 
+func resolveImage(ctx context.Context, baseName string) (dgst string, err error) {
+	var (
+		metaResolver = imagemetaresolver.Default()
+		ref          reference.Named
+		d            digest.Digest
+	)
+
+	ref, err = reference.ParseNormalizedNamed(baseName)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to parse stage name %q", baseName)
+		return
+	}
+
+	finalName := reference.TagNameOnly(ref).String()
+	fmt.Fprintf(os.Stderr, "finalName = %s\n", finalName)
+
+	d, _, err = metaResolver.ResolveImageConfig(ctx, finalName, gw.ResolveImageConfigOpt{
+		Platform:    &linuxAMD64,
+		ResolveMode: llb.ResolveModeDefault.String(),
+		LogName:     "resolving",
+	})
+	if err != nil {
+		err = errors.Wrapf(err,
+			"couldn't resolve image for %s", finalName)
+		return
+	}
+
+	dgst = string(d)
+
+	return
+}
+
 func ToLLB(cfg *config.Config) (state llb.State, bom Bom, err error) {
+	bom.Version = "v0.0.1"
+	bom.GeneratedAt = time.Now()
+
+	dgst, err := resolveImage(context.TODO(), cfg.Image.BaseImage.Name)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to resolve digest for %s when preparing llb", cfg.Image.BaseImage.Name)
+		return
+	}
+
+	bom.BaseImage = BaseImage{
+		Name:   cfg.Image.BaseImage.Name,
+		Digest: dgst,
+	}
+
 	state = llb.Image(cfg.Image.BaseImage.Name)
 
 	for _, file := range cfg.Image.Files {
