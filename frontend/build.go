@@ -31,7 +31,7 @@ func prepareLLBFromClient(
 		return
 	}
 
-	state, err = ToLLB(&cfg)
+	state, _, err = ToLLB(&cfg)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to generate llb from file")

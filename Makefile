@@ -2,11 +2,11 @@ build:
 	go build -i -v .
 
 run:
-	./estaleiro build -f ./estaleiro.hcl \
+	./estaleiro build -f ./estaleiro.hcl --bom ./bom.yml \
 		| buildctl build --local context=.
 
 graph:
-	./estaleiro build -f ./estaleiro.hcl \
+	./estaleiro build -f ./estaleiro.hcl --bom ./bom.yml \
 		| buildctl debug dump-llb --dot \
 		| dot -Tsvg > graph.svg
 

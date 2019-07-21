@@ -1,6 +1,7 @@
 package command
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/cirocosta/estaleiro/config"
@@ -10,7 +11,8 @@ import (
 )
 
 type buildCommand struct {
-	Filename string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
+	BomDestination string `long:"bom" short:"b" description:"where to save the bill of materials to"`
+	Filename       string `long:"filename" short:"f" required:"true" description:"file containing image definition"`
 }
 
 func (c *buildCommand) Execute(args []string) (err error) {
@@ -20,10 +22,20 @@ func (c *buildCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	state, err := frontend.ToLLB(cfg)
+	state, bom, err := frontend.ToLLB(cfg)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to convert to llb")
 		return
+	}
+
+	if c.BomDestination != "" {
+		err = ioutil.WriteFile(c.BomDestination, bom.ToYAML(), 0755)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to write bill of materials to file %s",
+				c.BomDestination)
+			return
+		}
 	}
 
 	definition, err := state.Marshal(llb.LinuxAmd64)

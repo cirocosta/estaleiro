@@ -1,0 +1,6 @@
+files:
+  - path: /usr/local/bin/estaleiro
+    source:
+        type: git
+        version: master
+        uri: https://github.com/cirocosta/estaleiro

@@ -16,7 +16,7 @@ const (
 	copyImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
 )
 
-func ToLLB(cfg *config.Config) (state llb.State, err error) {
+func ToLLB(cfg *config.Config) (state llb.State, bom Bom, err error) {
 	state = llb.Image(cfg.Image.BaseImage.Name)
 
 	for _, file := range cfg.Image.Files {
@@ -38,11 +38,25 @@ func ToLLB(cfg *config.Config) (state llb.State, err error) {
 		// -- make sure that the `path` matches a `source_file`
 		//    in the `step` definition
 
-		fileFoundInStep := false
+		var (
+			fileFoundInStep = false
+			bomFile         = File{Path: file.Destination}
+		)
+
 		for _, sourceFile := range configStep.SourceFiles {
-			if file.FromStep.Path == sourceFile.Location {
-				fileFoundInStep = true
+			if file.FromStep.Path != sourceFile.Location {
+				continue
 			}
+
+			fileFoundInStep = true
+
+			bomFile.Source = Source{
+				Type:    sourceFile.VCS.Type,
+				Version: sourceFile.VCS.Ref,
+				Uri:     sourceFile.VCS.Repository,
+			}
+
+			bom.Files = append(bom.Files, bomFile)
 		}
 
 		if !fileFoundInStep {
@@ -52,7 +66,6 @@ func ToLLB(cfg *config.Config) (state llb.State, err error) {
 		}
 
 		var step llb.State
-
 		step, err = addStep(configStep)
 		if err != nil {
 			err = errors.Wrapf(err,
@@ -62,6 +75,8 @@ func ToLLB(cfg *config.Config) (state llb.State, err error) {
 
 		state = copy(step, file.FromStep.Path, state, file.Destination)
 	}
+
+	// write bill of materials somewhere?
 
 	return
 }
