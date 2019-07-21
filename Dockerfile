@@ -11,8 +11,6 @@ FROM golang AS base
 	ADD . /src
 	WORKDIR /src
 
-	RUN go mod download
-
 
 FROM base AS build
 
@@ -20,7 +18,7 @@ FROM base AS build
 		--mount=type=cache,target=/root/.cache/go-build \
 		--mount=type=cache,target=/go/pkg/mod \
 		go build \
-		-tags netgo -v -a \
+		-tags netgo -v \
 		-o /bin/estaleiro \
 		-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
 
@@ -42,4 +40,4 @@ FROM ubuntu AS release
 
 FROM release AS frontend
 
-	CMD [ "frontend" ]
+	ENTRYPOINT [ "/usr/local/bin/estaleiro", "frontend" ]

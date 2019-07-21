@@ -9,6 +9,7 @@ import (
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
+	"github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
 	gateway "github.com/moby/buildkit/frontend/gateway/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -16,6 +17,25 @@ import (
 
 var (
 	linuxAMD64 = ocispec.Platform{OS: "linux", Architecture: "amd64"}
+)
+
+const (
+	LocalNameContext      = "context"
+	LocalNameDockerfile   = "dockerfile"
+	keyTarget             = "target"
+	keyFilename           = "filename"
+	keyCacheFrom          = "cache-from"
+	defaultDockerfileName = "estaleiro.hcl"
+	dockerignoreFilename  = ".dockerignore"
+	buildArgPrefix        = "build-arg:"
+	labelPrefix           = "label:"
+	keyNoCache            = "no-cache"
+	keyTargetPlatform     = "platform"
+	keyMultiPlatform      = "multi-platform"
+	keyImageResolveMode   = "image-resolve-mode"
+	keyGlobalAddHosts     = "add-hosts"
+	keyForceNetwork       = "force-network-mode"
+	keyOverrideCopyImage  = "override-copy-image" // remove after CopyOp implemented
 )
 
 // prepareLLBFromClient retrieves the options provided through the client call
@@ -31,7 +51,7 @@ func prepareLLBFromClient(
 		return
 	}
 
-	state, img, _, err = ToLLB(&cfg)
+	state, img, _, err = ToLLB(cfg)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to generate llb from file")
@@ -58,7 +78,62 @@ func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err
 	return
 }
 
-func readConfigFromClient(ctx context.Context, client gateway.Client) (cfg config.Config, err error) {
+func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Config, err error) {
+	opts := c.BuildOpts().Opts
+
+	filename := opts[keyFilename]
+	if filename == "" {
+		filename = defaultDockerfileName
+	}
+
+	name := "load Estaleiro file"
+	if filename != defaultDockerfileName {
+		name += " from " + filename
+	}
+
+	src := llb.Local(LocalNameDockerfile,
+		llb.IncludePatterns([]string{filename}),
+		llb.SessionID(c.BuildOpts().SessionID),
+		llb.SharedKeyHint(defaultDockerfileName),
+		dockerfile2llb.WithInternalName(name),
+	)
+
+	def, err := src.Marshal()
+	if err != nil {
+		err = errors.Wrapf(err, "failed to marshal local source")
+		return
+	}
+
+	var dtDockerfile []byte
+	res, err := c.Solve(ctx, gateway.SolveRequest{
+		Definition: def.ToPB(),
+	})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to resolve dockerfile")
+		return
+	}
+
+	ref, err := res.SingleRef()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to retrieve single ref from resolution")
+		return
+	}
+
+	dtDockerfile, err = ref.ReadFile(ctx, gateway.ReadRequest{
+		Filename: filename,
+	})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to read dockerfile")
+		return
+	}
+
+	cfg, err = config.Parse(dtDockerfile, filename, nil)
+	if err != nil {
+		err = errors.Wrapf(err, "failed parsing config")
+		return
+	}
+
 	return
 }
 
