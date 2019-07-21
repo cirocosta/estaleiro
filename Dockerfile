@@ -1,3 +1,5 @@
+# syntax = docker/dockerfile:experimental
+
 FROM golang AS golang
 
 
@@ -14,10 +16,14 @@ FROM golang AS base
 
 FROM base AS build
 
-	RUN go build \
+	RUN \
+		--mount=type=cache,target=/root/.cache/go-build \
+		--mount=type=cache,target=/go/pkg/mod \
+		go build \
 		-tags netgo -v -a \
 		-o /bin/estaleiro \
 		-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
+
 
 FROM base AS test
 
