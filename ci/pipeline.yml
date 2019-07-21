@@ -81,6 +81,7 @@ jobs:
                   --bom ./bom.yml \
                   --var estaleiro-commit:$(git rev-parse HEAD) \
                   | buildctl-daemonless.sh build --local context=.
+                cat ./bom.yml
       - in_parallel:
           fail_fast: true
           steps:

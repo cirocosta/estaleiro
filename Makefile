@@ -28,10 +28,21 @@ buildctl-integration:
 
 
 docker-integration:
-	docker build -t a -f ./estaleiro.hcl .
+	docker build \
+		--tag a \
+		--file ./estaleiro.hcl \
+		.
 
 image-frontend:
-	docker build --target frontend -t cirocosta/estaleiro-frontend:rc .
+	docker build \
+		--target frontend \
+		--tag cirocosta/estaleiro-frontend:rc \
+		.
 
 run-buildkitd:
-	docker run -d --privileged -p 1234:1234 moby/buildkit:latest --addr tcp://0.0.0.0:1234
+	docker run \
+		--detach \
+		--privileged \
+		--publish 1234:1234 \
+		moby/buildkit:latest \
+		--addr tcp://0.0.0.0:1234
