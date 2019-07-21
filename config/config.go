@@ -70,14 +70,16 @@ type Config struct {
 	Steps []Step `hcl:"step,block" `
 }
 
+type BaseImage struct {
+	Name      string `hcl:"name" `
+	Reference string `hcl:"ref,optional" `
+}
+
 // Image is the final layer that is meant to be shipped as a container
 // image.
 //
 type Image struct {
-	Name      string ` hcl:"name,label" `
-	BaseImage struct {
-		Name      string `hcl:"name" `
-		Reference string `hcl:"ref,optional" `
-	} ` hcl:"base_image,block" `
-	Files []File `hcl:"file,block" `
+	Name      string    ` hcl:"name,label" `
+	BaseImage BaseImage ` hcl:"base_image,block" `
+	Files     []File    `hcl:"file,block" `
 }
