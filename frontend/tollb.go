@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
@@ -23,7 +22,7 @@ const (
 	copyImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
 )
 
-func resolveImage(ctx context.Context, baseName string) (dgst string, err error) {
+func resolveImage(ctx context.Context, baseName string) (canonicalName reference.Canonical, err error) {
 	var (
 		metaResolver = imagemetaresolver.Default()
 		ref          reference.Named
@@ -36,8 +35,8 @@ func resolveImage(ctx context.Context, baseName string) (dgst string, err error)
 		return
 	}
 
-	finalName := reference.TagNameOnly(ref).String()
-	fmt.Fprintf(os.Stderr, "finalName = %s\n", finalName)
+	ref = reference.TagNameOnly(ref)
+	finalName := ref.String()
 
 	d, _, err = metaResolver.ResolveImageConfig(ctx, finalName, gw.ResolveImageConfigOpt{
 		Platform:    &linuxAMD64,
@@ -50,7 +49,12 @@ func resolveImage(ctx context.Context, baseName string) (dgst string, err error)
 		return
 	}
 
-	dgst = string(d)
+	canonicalName, err = reference.WithDigest(ref, d)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"couldn't retrieve canonical name")
+		return
+	}
 
 	return
 }
@@ -59,7 +63,8 @@ func ToLLB(cfg *config.Config) (state llb.State, bom Bom, err error) {
 	bom.Version = "v0.0.1"
 	bom.GeneratedAt = time.Now()
 
-	dgst, err := resolveImage(context.TODO(), cfg.Image.BaseImage.Name)
+	// TODO - consider tag provided
+	canonicalName, err := resolveImage(context.TODO(), cfg.Image.BaseImage.Name)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to resolve digest for %s when preparing llb", cfg.Image.BaseImage.Name)
@@ -67,11 +72,11 @@ func ToLLB(cfg *config.Config) (state llb.State, bom Bom, err error) {
 	}
 
 	bom.BaseImage = BaseImage{
-		Name:   cfg.Image.BaseImage.Name,
-		Digest: dgst,
+		Name:   canonicalName.Name(),
+		Digest: canonicalName.Digest().String(),
 	}
 
-	state = llb.Image(cfg.Image.BaseImage.Name)
+	state = llb.Image(canonicalName.String())
 
 	for _, file := range cfg.Image.Files {
 		if file.FromStep == nil {
