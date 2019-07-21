@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/containerd/containerd/platforms"
@@ -31,7 +32,6 @@ const (
 	labelPrefix           = "label:"
 	keyNoCache            = "no-cache"
 	keyTargetPlatform     = "platform"
-	keyMultiPlatform      = "multi-platform"
 	keyImageResolveMode   = "image-resolve-mode"
 	keyGlobalAddHosts     = "add-hosts"
 	keyForceNetwork       = "force-network-mode"
@@ -128,13 +128,25 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 		return
 	}
 
-	cfg, err = config.Parse(dtDockerfile, filename, nil)
+	vars := filter(opts, buildArgPrefix)
+
+	cfg, err = config.Parse(dtDockerfile, filename, vars)
 	if err != nil {
 		err = errors.Wrapf(err, "failed parsing config")
 		return
 	}
 
 	return
+}
+
+func filter(opt map[string]string, key string) map[string]string {
+	m := map[string]string{}
+	for k, v := range opt {
+		if strings.HasPrefix(k, key) {
+			m[strings.TrimPrefix(k, key)] = v
+		}
+	}
+	return m
 }
 
 func invokeBuild(

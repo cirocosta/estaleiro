@@ -30,6 +30,7 @@ buildctl-integration:
 docker-integration:
 	docker build \
 		--tag a \
+		--build-arg estaleiro-commit=$(GIT_COMMIT) \
 		--file ./estaleiro.hcl \
 		.
 
