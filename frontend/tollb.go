@@ -15,6 +15,7 @@ import (
 	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
 	gw "github.com/moby/buildkit/frontend/gateway/client"
 	digest "github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -59,9 +60,19 @@ func resolveImage(ctx context.Context, baseName string) (canonicalName reference
 	return
 }
 
-func ToLLB(cfg *config.Config) (state llb.State, bom Bom, err error) {
+func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err error) {
 	bom.Version = "v0.0.1"
 	bom.GeneratedAt = time.Now()
+
+	img = ocispec.Image{
+		Architecture: "amd64",
+		OS:           "linux",
+		Config: ocispec.ImageConfig{
+			Env:        cfg.Image.Env,
+			Entrypoint: cfg.Image.Entrypoint,
+			Cmd:        cfg.Image.Cmd,
+		},
+	}
 
 	// TODO - consider tag provided
 	canonicalName, err := resolveImage(context.TODO(), cfg.Image.BaseImage.Name)

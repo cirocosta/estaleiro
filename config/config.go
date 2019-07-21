@@ -57,29 +57,33 @@ type Step struct {
 // ```
 //
 type File struct {
-	Destination string ` hcl:"destination,label" `
+	Destination string ` hcl:"destination,label"`
 
 	FromStep *struct {
-		StepName string `hcl:"step_name,label" `
-		Path     string `hcl:"path" `
-	} ` hcl:"from_step,block" `
+		StepName string `hcl:"step_name,label"`
+		Path     string `hcl:"path"`
+	} `hcl:"from_step,block"`
 }
 
 type Config struct {
-	Image Image  `hcl:"image,block" `
-	Steps []Step `hcl:"step,block" `
+	Image Image  `hcl:"image,block"`
+	Steps []Step `hcl:"step,block"`
 }
 
 type BaseImage struct {
-	Name      string `hcl:"name" `
-	Reference string `hcl:"ref,optional" `
+	Name      string `hcl:"name"`
+	Reference string `hcl:"ref,optional"`
 }
 
 // Image is the final layer that is meant to be shipped as a container
 // image.
 //
 type Image struct {
-	Name      string    ` hcl:"name,label" `
-	BaseImage BaseImage ` hcl:"base_image,block" `
+	Name      string    `hcl:"name,label" `
+	BaseImage BaseImage `hcl:"base_image,block" `
 	Files     []File    `hcl:"file,block" `
+
+	Entrypoint []string `hcl:"entrypoint"`
+	Cmd        []string `hcl:"cmd,optional"`
+	Env        []string `hcl:"env,optional"`
 }

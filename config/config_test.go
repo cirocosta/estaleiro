@@ -45,6 +45,12 @@ var _ = Describe("Config", func() {
 			  base_image {
 			    name = "ubuntu"
 			  }
+
+			  env = [
+			    "FOO=bar",
+			  ]
+
+			  entrypoint = ["/bin/bash"]
 			}
 			`,
 			expected: config.Config{
@@ -53,6 +59,7 @@ var _ = Describe("Config", func() {
 					BaseImage: config.BaseImage{
 						Name: "ubuntu",
 					},
+					Entrypoint: []string{"/bin/bash"},
 				},
 				Steps: []config.Step{
 					{

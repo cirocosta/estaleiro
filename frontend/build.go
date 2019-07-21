@@ -31,20 +31,11 @@ func prepareLLBFromClient(
 		return
 	}
 
-	state, _, err = ToLLB(&cfg)
+	state, img, _, err = ToLLB(&cfg)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to generate llb from file")
 		return
-	}
-
-	// TODO this should come from `2llb`
-	img = ocispec.Image{
-		Architecture: "amd64",
-		OS:           "linux",
-		Config: ocispec.ImageConfig{
-			Cmd: []string{"/bin/false"},
-		},
 	}
 
 	return
