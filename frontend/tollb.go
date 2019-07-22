@@ -207,14 +207,18 @@ func addStep(step *config.Step) (state llb.State, err error) {
 	return
 }
 
+// TODO - keep track of these extra utilities that we're installing
+//        - could, perhaps, just be providing a `bom` that gets mutated?
+//
 func packages(base llb.State, apt config.Apt) llb.State {
-	base = base.Run(shf("apt update && apt install -y apt-transport-https")).Root()
+	// adding two here already
+	base = base.Run(shf("apt update && apt install -y apt-transport-https ca-certificates gnupg-agent")).Root()
 
 	for _, repo := range apt.Repositories {
 		base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
 
 		if repo.Source != "" {
-			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
+			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Source)).Root()
 		}
 	}
 
@@ -230,6 +234,7 @@ func packages(base llb.State, apt config.Apt) llb.State {
 		}
 
 		base = base.Run(sh(pkgInstall)).Root()
+		base = base.Run(sh("rm -rf /var/lib/apt/lists/*")).Root()
 	}
 
 	return base

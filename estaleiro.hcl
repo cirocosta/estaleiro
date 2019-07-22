@@ -26,7 +26,7 @@ image "cirocosta/estaleiro" {
 
   apt {
     repository "docker" {
-      uri = "deb [arch=amd64] https://download.docker.com/linux/ubuntu"
+      uri = "deb https://download.docker.com/linux/ubuntu bionic stable"
     }
 
     key "docker" {
@@ -52,3 +52,4 @@ image "cirocosta/estaleiro" {
   entrypoint = ["/usr/local/bin/estaleiro"]
   cmd        = ["frontend"]
 }
+
