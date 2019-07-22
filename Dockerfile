@@ -15,8 +15,8 @@ FROM golang AS base
 FROM base AS build
 
 	RUN \
-		--mount=type=cache,target=/root/.cache/go-build \
-		--mount=type=cache,target=/go/pkg/mod \
+		# --mount=type=cache,target=/root/.cache/go-build \
+		# --mount=type=cache,target=/go/pkg/mod \
 		go build \
 		-tags netgo -v \
 		-o /bin/estaleiro \

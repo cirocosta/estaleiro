@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
@@ -20,7 +21,7 @@ import (
 )
 
 const (
-	copyImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
+	utilsImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
 )
 
 func resolveImage(ctx context.Context, baseName string) (canonicalName reference.Canonical, err error) {
@@ -88,6 +89,7 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 	}
 
 	state = llb.Image(canonicalName.String())
+	state = packages(state, cfg.Image.Apt)
 
 	for _, file := range cfg.Image.Files {
 		if file.FromStep == nil {
@@ -164,7 +166,7 @@ func getStepFromConfig(cfg *config.Config, name string) *config.Step {
 // copy copies files between 2 states using cp until there is no copyOp
 //
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
-	cpImage := llb.Image(copyImage)
+	cpImage := llb.Image(utilsImage)
 
 	cp := cpImage.Run(llb.Shlexf("cp -a /src%s /dest%s", srcPath, destPath))
 	cp.AddMount("/src", src, llb.Readonly)
@@ -203,6 +205,57 @@ func addStep(step *config.Step) (state llb.State, err error) {
 
 	state = *stepState
 	return
+}
+
+func packages(base llb.State, apt config.Apt) llb.State {
+	base = base.Run(shf("apt update && apt install -y apt-transport-https")).Root()
+
+	for _, repo := range apt.Repositories {
+		base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
+
+		if repo.Source != "" {
+			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
+		}
+	}
+
+	for _, key := range apt.Keys {
+		base = aptAddKey(base, key.Uri)
+	}
+
+	if len(apt.Packages) != 0 {
+		pkgInstall := "apt update && apt install --no-install-recommends --no-install-suggests -y"
+
+		for _, pkg := range apt.Packages {
+			pkgInstall = pkgInstall + " " + pkg.String()
+		}
+
+		base = base.Run(sh(pkgInstall)).Root()
+	}
+
+	return base
+}
+
+func curl() llb.State {
+	return llb.Image(utilsImage).
+		Run(llb.Shlex("apk add --no-cache curl")).Root()
+}
+
+func aptAddKey(dst llb.State, url string) llb.State {
+	downloadSt := curl().Run(llb.Shlexf("curl -Lo /key.gpg %s", url)).Root()
+
+	dst = copy(downloadSt, "/key.gpg", dst, "/key.gpg")
+
+	return dst.
+		Run(sh("apt-key add /key.gpg && rm /key.gpg")).
+		Root()
+}
+
+func sh(cmd string) llb.RunOption {
+	return llb.Args([]string{"/bin/sh", "-c", cmd})
+}
+
+func shf(cmd string, v ...interface{}) llb.RunOption {
+	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
 func readFile(filename string) (content []byte, err error) {

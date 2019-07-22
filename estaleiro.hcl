@@ -24,6 +24,19 @@ image "cirocosta/estaleiro" {
     ref  = "bionic"
   }
 
+  apt {
+    repository "docker" {
+      uri = "deb [arch=amd64] https://download.docker.com/linux/ubuntu"
+    }
+
+    key "docker" {
+      uri = " https://download.docker.com/linux/ubuntu/gpg"
+    }
+
+    package "ca-certificates" {}
+  }
+
+
   # retrieving the file from the step 
   #
   file "/usr/local/bin/estaleiro" {

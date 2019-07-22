@@ -1,5 +1,36 @@
 package config
 
+type AptKey struct {
+	Name string `hcl:"name,label"`
+
+	Uri string `hcl:"uri"`
+}
+
+type AptRepository struct {
+	Name string `hcl:"name,label"`
+
+	Uri    string `hcl:"uri"`
+	Source string `hcl:"source,optional"`
+}
+
+// Package is a debian package to retrieve from the currently installed set of
+// apt repos.
+//
+type Package struct {
+	Name    string `hcl:"name,label"`
+	Version string `hcl:"version,optional"`
+}
+
+func (p Package) String() string {
+	res := p.Name
+
+	if p.Version != "" {
+		res = res + "=" + p.Version
+	}
+
+	return res
+}
+
 // Vcs represents information about a version control system that allows
 // us to retrieve the source code from such file.
 //
@@ -65,23 +96,39 @@ type File struct {
 	} `hcl:"from_step,block"`
 }
 
+// Config represents the high-level aggregation of all that's there to be built
+// as a container image.
+//
 type Config struct {
 	Image Image  `hcl:"image,block"`
 	Steps []Step `hcl:"step,block"`
 }
 
+// BaseImage is the image that is going to be retrieved from a registry (or
+// locally) to base the final layer of.
+//
 type BaseImage struct {
 	Name      string `hcl:"name"`
 	Reference string `hcl:"ref,optional"`
+}
+
+type Apt struct {
+	Packages     []Package       `hcl:"package,block"`
+	Repositories []AptRepository `hcl:"repository,block"`
+	Keys         []AptKey        `hcl:"key,block"`
 }
 
 // Image is the final layer that is meant to be shipped as a container
 // image.
 //
 type Image struct {
-	Name      string    `hcl:"name,label" `
+	Name string `hcl:"name,label" `
+
 	BaseImage BaseImage `hcl:"base_image,block" `
-	Files     []File    `hcl:"file,block" `
+
+	Files []File `hcl:"file,block" `
+
+	Apt Apt `hcl:"apt,block"`
 
 	Entrypoint []string `hcl:"entrypoint"`
 	Cmd        []string `hcl:"cmd,optional"`
