@@ -16,6 +16,8 @@ step "build" {
   }
 }
 
+
+
 # the final image to produce
 #
 image "cirocosta/estaleiro" {
@@ -45,9 +47,9 @@ image "cirocosta/estaleiro" {
     }
   }
 
-  env = [
-    "FOO=bar",
-  ]
+  env = {
+    FOO = "bar"
+  }
 
   entrypoint = ["/usr/local/bin/estaleiro"]
   cmd        = ["frontend"]

@@ -65,11 +65,16 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 	bom.Version = "v0.0.1"
 	bom.GeneratedAt = time.Now()
 
+	env := []string{}
+	for k, v := range cfg.Image.Env {
+		env = append(env, k+"="+v)
+	}
+
 	img = ocispec.Image{
 		Architecture: "amd64",
 		OS:           "linux",
 		Config: ocispec.ImageConfig{
-			Env:        cfg.Image.Env,
+			Env:        env,
 			Entrypoint: cfg.Image.Entrypoint,
 			Cmd:        cfg.Image.Cmd,
 		},
@@ -210,31 +215,36 @@ func addStep(step *config.Step) (state llb.State, err error) {
 // TODO - keep track of these extra utilities that we're installing
 //        - could, perhaps, just be providing a `bom` that gets mutated?
 //
-func packages(base llb.State, apt config.Apt) llb.State {
+func packages(base llb.State, apts []config.Apt) llb.State {
 	// adding two here already
 	base = base.Run(shf("apt update && apt install -y apt-transport-https ca-certificates gnupg-agent")).Root()
 
-	for _, repo := range apt.Repositories {
-		base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
+	// TODO - have all of this hapenning in a single step
 
-		if repo.Source != "" {
-			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Source)).Root()
-		}
-	}
+	for _, apt := range apts {
+		for _, repo := range apt.Repositories {
+			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
 
-	for _, key := range apt.Keys {
-		base = aptAddKey(base, key.Uri)
-	}
-
-	if len(apt.Packages) != 0 {
-		pkgInstall := "apt update && apt install --no-install-recommends --no-install-suggests -y"
-
-		for _, pkg := range apt.Packages {
-			pkgInstall = pkgInstall + " " + pkg.String()
+			if repo.Source != "" {
+				base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Source)).Root()
+			}
 		}
 
-		base = base.Run(sh(pkgInstall)).Root()
-		base = base.Run(sh("rm -rf /var/lib/apt/lists/*")).Root()
+		for _, key := range apt.Keys {
+			base = aptAddKey(base, key.Uri)
+		}
+
+		if len(apt.Packages) != 0 {
+			pkgInstall := "apt update && apt install --no-install-recommends --no-install-suggests -y"
+
+			for _, pkg := range apt.Packages {
+				pkgInstall = pkgInstall + " " + pkg.String()
+			}
+
+			base = base.Run(sh(pkgInstall)).Root()
+			base = base.Run(sh("rm -rf /var/lib/apt/lists/*")).Root()
+		}
+
 	}
 
 	return base

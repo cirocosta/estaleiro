@@ -127,10 +127,9 @@ type Image struct {
 	BaseImage BaseImage `hcl:"base_image,block" `
 
 	Files []File `hcl:"file,block" `
+	Apt   []Apt  `hcl:"apt,block"`
 
-	Apt Apt `hcl:"apt,block"`
-
-	Entrypoint []string `hcl:"entrypoint"`
-	Cmd        []string `hcl:"cmd,optional"`
-	Env        []string `hcl:"env,optional"`
+	Entrypoint []string          `hcl:"entrypoint"`
+	Cmd        []string          `hcl:"cmd,optional"`
+	Env        map[string]string `hcl:"env,optional"`
 }

@@ -22,11 +22,16 @@ type Bom struct {
 
 	BaseImage BaseImage `yaml:"base_image"`
 	Files     []File    `yaml:"files"`
+	Packages  []Package `yaml:"packages"`
 }
 
 type BaseImage struct {
 	Name   string `yaml:"name"`
 	Digest string `yaml:"digest"`
+}
+
+type Package struct {
+	Name string `yaml:"name"`
 }
 
 func (b Bom) ToYAML() (res []byte) {

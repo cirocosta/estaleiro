@@ -46,9 +46,9 @@ var _ = Describe("Config", func() {
 			    name = "ubuntu"
 			  }
 
-			  env = [
-			    "FOO=bar",
-			  ]
+			  env = {
+			    "FOO": "bar",
+			  }
 
 			  entrypoint = ["/bin/bash"]
 			}
@@ -60,7 +60,7 @@ var _ = Describe("Config", func() {
 						Name: "ubuntu",
 					},
 					Entrypoint: []string{"/bin/bash"},
-					Env:        []string{"FOO=bar"},
+					Env:        map[string]string{"FOO": "bar"},
 				},
 				Steps: []config.Step{
 					{
