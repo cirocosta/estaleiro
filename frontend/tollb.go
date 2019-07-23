@@ -70,11 +70,18 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 		env = append(env, k+"="+v)
 	}
 
+	vols := map[string]struct{}{}
+	for _, vol := range cfg.Image.Volumes {
+		vols[vol] = struct{}{}
+	}
+
 	img = ocispec.Image{
 		Architecture: "amd64",
 		OS:           "linux",
 		Config: ocispec.ImageConfig{
 			Env:        env,
+			Volumes:    vols,
+			StopSignal: cfg.Image.StopSignal,
 			Entrypoint: cfg.Image.Entrypoint,
 			Cmd:        cfg.Image.Cmd,
 		},
