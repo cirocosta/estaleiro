@@ -106,10 +106,10 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 
 	// for each tarball:
 	// create a layer that decompressed it (plain tar xvzf)
-	for _, tarball := range cfg.Image.Tarballs {
-		// extract the tarball somewhere
+	// for _, tarball := range cfg.Tarballs {
+	// extract the tarball somewhere
 
-	}
+	// 	}
 
 	for _, file := range cfg.Image.Files {
 		// checking to determine how to deal with the file.
@@ -160,7 +160,7 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 		}
 
 		var step llb.State
-		step, err = addStep(configStep)
+		step, err = addImageBuildStep(configStep)
 		if err != nil {
 			err = errors.Wrapf(err,
 				"failed to add step to image building process")
@@ -185,25 +185,17 @@ func getStepFromConfig(cfg *config.Config, name string) *config.Step {
 	return nil
 }
 
-// copy copies files between 2 states using cp until there is no copyOp
+// copy copies files between 2 states
 //
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
-	src.AddMount("/dest", dest)
-
-	llb.Copy(src, srcPath, destPath, llb.CopyOption{
+	return dest.File(llb.Copy(src, srcPath, destPath, &llb.CopyInfo{
 		AttemptUnpack:  true,
 		CreateDestPath: true,
-	})
+	}))
 
-	cpImage := llb.Image(utilsImage)
-
-	cp := cpImage.Run(llb.Shlexf("cp -a /src%s /dest%s", srcPath, destPath))
-	cp.AddMount("/src", src, llb.Readonly)
-
-	return cp.AddMount("/dest", dest)
 }
 
-func addStep(step *config.Step) (state llb.State, err error) {
+func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 	var (
 		stepState         *llb.State
 		dockerfileContent []byte
