@@ -83,6 +83,23 @@ func (l *Lines) String() string {
 	return strings.Join(l.lines, "\n")
 }
 
+func PrettyDiagnosticFile(filename string, diag *hcl.Diagnostic) (res string) {
+	file, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+
+	return PrettyDiagnostic(string(content), diag)
+
+}
+
 // PrettyDiagnostic generates a human-readable pretty diagnostic.
 //
 func PrettyDiagnostic(content string, diag *hcl.Diagnostic) (res string) {

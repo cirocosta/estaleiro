@@ -1,11 +1,14 @@
 package command
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/cirocosta/estaleiro/frontend"
+	"github.com/fatih/color"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/pkg/errors"
 )
@@ -17,9 +20,17 @@ type buildCommand struct {
 }
 
 func (c *buildCommand) Execute(args []string) (err error) {
+	color.NoColor = false
+
 	cfg, err := config.ParseFile(c.Filename, c.Variables)
 	if err != nil {
-		err = errors.Wrapf(err, "failed ot parse config file %s", c.Filename)
+
+		diagsErr, ok := errors.Cause(err).(hcl.Diagnostics)
+		if ok {
+			fmt.Fprintln(os.Stderr, config.PrettyDiagnosticFile(c.Filename, diagsErr[0]))
+		}
+
+		err = errors.Wrapf(err, "failed to parse config file %s", c.Filename)
 		return
 	}
 
