@@ -51,7 +51,7 @@ func prepareLLBFromClient(
 		return
 	}
 
-	state, img, _, err = ToLLB(cfg)
+	state, img, _, err = ToLLB(ctx, cfg)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to generate llb from file")

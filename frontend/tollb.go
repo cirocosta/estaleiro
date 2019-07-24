@@ -24,153 +24,136 @@ const (
 	utilsImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
 )
 
-func resolveImage(ctx context.Context, baseName string) (canonicalName reference.Canonical, err error) {
-	var (
-		metaResolver = imagemetaresolver.Default()
-		ref          reference.Named
-		d            digest.Digest
-	)
-
-	ref, err = reference.ParseNormalizedNamed(baseName)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to parse stage name %q", baseName)
-		return
-	}
-
-	ref = reference.TagNameOnly(ref)
-	finalName := ref.String()
-
-	d, _, err = metaResolver.ResolveImageConfig(ctx, finalName, gw.ResolveImageConfigOpt{
-		Platform:    &linuxAMD64,
-		ResolveMode: llb.ResolveModeDefault.String(),
-		LogName:     "resolving",
-	})
+// TODO receive a context so that image resolution is not unbound
+//
+func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err error) {
+	// TODO consider tag provided
+	//
+	canonicalName, err := resolveImage(ctx, cfg.Image.BaseImage.Name)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"couldn't resolve image for %s", finalName)
+			"failed to resolve digest for %s when preparing llb",
+			cfg.Image.BaseImage.Name)
 		return
 	}
 
-	canonicalName, err = reference.WithDigest(ref, d)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"couldn't retrieve canonical name")
-		return
-	}
-
-	return
-}
-
-func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err error) {
 	bom.Version = "v0.0.1"
 	bom.GeneratedAt = time.Now()
-
-	env := []string{}
-	for k, v := range cfg.Image.Env {
-		env = append(env, k+"="+v)
-	}
-
-	vols := map[string]struct{}{}
-	for _, vol := range cfg.Image.Volumes {
-		vols[vol] = struct{}{}
-	}
-
-	img = ocispec.Image{
-		Architecture: "amd64",
-		OS:           "linux",
-		Config: ocispec.ImageConfig{
-			Env:        env,
-			Volumes:    vols,
-			StopSignal: cfg.Image.StopSignal,
-			Entrypoint: cfg.Image.Entrypoint,
-			Cmd:        cfg.Image.Cmd,
-		},
-	}
-
-	// TODO - consider tag provided
-	//
-	canonicalName, err := resolveImage(context.TODO(), cfg.Image.BaseImage.Name)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to resolve digest for %s when preparing llb", cfg.Image.BaseImage.Name)
-		return
-	}
-
 	bom.BaseImage = BaseImage{
 		Name:   canonicalName.Name(),
 		Digest: canonicalName.Digest().String(),
 	}
 
 	state = llb.Image(canonicalName.String())
-	state = packages(state, cfg.Image.Apt)
-
-	// for each tarball:
-	// create a layer that decompressed it (plain tar xvzf)
-	// for _, tarball := range cfg.Tarballs {
-	// extract the tarball somewhere
-	// }
+	state = installPackages(state, cfg.Image.Apt)
 
 	for _, file := range cfg.Image.Files {
-		// checking to determine how to deal with the file.
-		//
-		if file.FromStep == nil {
+		switch {
+		case file.FromStep != nil:
+			state, bom, err = copyFilesFromSteps(state, cfg, bom, file)
+		case file.FromTarball != nil:
+			state, bom, err = copyFilesFromTarball(state, cfg, bom, file)
+		}
+
+		if err != nil {
+			return
+		}
+
+	}
+
+	img = prepareImage(cfg.Image)
+
+	return
+}
+
+// prepareImage populates the final definition of the OCI Image spec object
+// that can be used to influence the runtime that runs the container image that
+// we generate.
+//
+func prepareImage(image config.Image) ocispec.Image {
+	env := []string{}
+	for k, v := range image.Env {
+		env = append(env, k+"="+v)
+	}
+
+	vols := map[string]struct{}{}
+	for _, vol := range image.Volumes {
+		vols[vol] = struct{}{}
+	}
+
+	return ocispec.Image{
+		Architecture: "amd64",
+		OS:           "linux",
+		Config: ocispec.ImageConfig{
+			Env:        env,
+			Volumes:    vols,
+			StopSignal: image.StopSignal,
+			Entrypoint: image.Entrypoint,
+			Cmd:        image.Cmd,
+		},
+	}
+}
+
+func copyFilesFromTarball(
+	state llb.State, cfg *config.Config, bom Bom, file config.File,
+) (
+	newState llb.State, newBom Bom, err error,
+) {
+	return
+}
+
+func copyFilesFromSteps(
+	state llb.State, cfg *config.Config, bom Bom, file config.File,
+) (
+	newState llb.State, newBom Bom, err error,
+) {
+	configStep := getStepFromConfig(cfg, file.FromStep.StepName)
+	if configStep == nil {
+		err = errors.Errorf("referenced step %s not declared",
+			file.FromStep.StepName)
+		return
+	}
+
+	// the file has a `path`, thus, make sure that the `path` matches a
+	// `source_file` in the `step` definition
+
+	var (
+		fileFoundInStep = false
+		bomFile         = File{Path: file.Destination}
+	)
+
+	for _, sourceFile := range configStep.SourceFiles {
+		if file.FromStep.Path != sourceFile.Location {
 			continue
 		}
 
-		// retrieve file from step
-		//
+		fileFoundInStep = true
 
-		configStep := getStepFromConfig(cfg, file.FromStep.StepName)
-		if configStep == nil {
-			err = errors.Errorf("referenced step %s not declared",
-				file.FromStep.StepName)
-			return
+		bomFile.Source = Source{
+			Type:    sourceFile.VCS.Type,
+			Version: sourceFile.VCS.Ref,
+			Uri:     sourceFile.VCS.Repository,
 		}
 
-		// the file has a `path`
-		// -- make sure that the `path` matches a `source_file`
-		//    in the `step` definition
-
-		var (
-			fileFoundInStep = false
-			bomFile         = File{Path: file.Destination}
-		)
-
-		for _, sourceFile := range configStep.SourceFiles {
-			if file.FromStep.Path != sourceFile.Location {
-				continue
-			}
-
-			fileFoundInStep = true
-
-			bomFile.Source = Source{
-				Type:    sourceFile.VCS.Type,
-				Version: sourceFile.VCS.Ref,
-				Uri:     sourceFile.VCS.Repository,
-			}
-
-			bom.Files = append(bom.Files, bomFile)
-		}
-
-		if !fileFoundInStep {
-			err = errors.Errorf("file %s not declared in step %s",
-				file.FromStep.Path, configStep.Name)
-			return
-		}
-
-		var step llb.State
-		step, err = addImageBuildStep(configStep)
-		if err != nil {
-			err = errors.Wrapf(err,
-				"failed to add step to image building process")
-			return
-		}
-
-		state = copy(step, file.FromStep.Path, state, file.Destination)
+		bom.Files = append(bom.Files, bomFile)
 	}
 
-	// write bill of materials somewhere?
+	if !fileFoundInStep {
+		err = errors.Errorf("file %s not declared in step %s",
+			file.FromStep.Path, configStep.Name)
+		return
+	}
 
+	var step llb.State
+	step, err = addImageBuildStep(configStep)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to add step to image building process")
+		return
+	}
+
+	newState = copy(step, file.FromStep.Path, state, file.Destination)
+	newBom = bom
 	return
 }
 
@@ -230,7 +213,7 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 // TODO - keep track of these extra utilities that we're installing
 //        - could, perhaps, just be providing a `bom` that gets mutated?
 //
-func packages(base llb.State, apts []config.Apt) llb.State {
+func installPackages(base llb.State, apts []config.Apt) llb.State {
 	// adding two here already
 	base = base.Run(shf("apt update && apt install -y apt-transport-https ca-certificates gnupg-agent")).Root()
 
@@ -265,6 +248,8 @@ func packages(base llb.State, apts []config.Apt) llb.State {
 	return base
 }
 
+// TODO get rid of this and leverage the `HTTP` source instead.
+//
 func curl() llb.State {
 	return llb.Image(utilsImage).
 		Run(llb.Shlex("apk add --no-cache curl")).Root()
@@ -300,6 +285,43 @@ func readFile(filename string) (content []byte, err error) {
 
 	content, err = ioutil.ReadAll(file)
 	if err != nil {
+		return
+	}
+
+	return
+}
+
+func resolveImage(ctx context.Context, baseName string) (canonicalName reference.Canonical, err error) {
+	var (
+		metaResolver = imagemetaresolver.Default()
+		ref          reference.Named
+		d            digest.Digest
+	)
+
+	ref, err = reference.ParseNormalizedNamed(baseName)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to parse stage name %q", baseName)
+		return
+	}
+
+	ref = reference.TagNameOnly(ref)
+	finalName := ref.String()
+
+	d, _, err = metaResolver.ResolveImageConfig(ctx, finalName, gw.ResolveImageConfigOpt{
+		Platform:    &linuxAMD64,
+		ResolveMode: llb.ResolveModeDefault.String(),
+		LogName:     "resolving",
+	})
+	if err != nil {
+		err = errors.Wrapf(err,
+			"couldn't resolve image for %s", finalName)
+		return
+	}
+
+	canonicalName, err = reference.WithDigest(ref, d)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"couldn't retrieve canonical name")
 		return
 	}
 

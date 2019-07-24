@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,7 +35,7 @@ func (c *buildCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	state, _, bom, err := frontend.ToLLB(cfg)
+	state, _, bom, err := frontend.ToLLB(context.TODO(), cfg)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to convert to llb")
 		return
