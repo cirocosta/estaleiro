@@ -17,7 +17,6 @@ step "build" {
 }
 
 
-
 # the final image to produce
 #
 image "cirocosta/estaleiro" {

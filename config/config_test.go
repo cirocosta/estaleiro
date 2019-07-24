@@ -1,14 +1,65 @@
 package config_test
 
 import (
+	"github.com/cirocosta/estaleiro/config"
+	"github.com/fatih/color"
+	"github.com/hashicorp/hcl2/hcl"
+	"github.com/pkg/errors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-
-	"github.com/cirocosta/estaleiro/config"
 )
 
 var _ = Describe("Config", func() {
+
+	const mockFilename = "mock-file"
+
+	BeforeEach(func() {
+		color.NoColor = true
+	})
+
+	Describe("PrettyDiagnostic", func() {
+		var (
+			content string
+			res     string
+		)
+
+		JustBeforeEach(func() {
+			_, err := config.Parse([]byte(content), mockFilename, nil)
+			Expect(err).To(HaveOccurred())
+
+			diags, ok := errors.Cause(err).(hcl.Diagnostics)
+			Expect(ok).To(BeTrue())
+
+			res = config.PrettyDiagnostic(content, diags[0])
+		})
+
+		Context("having hcl problems", func() {
+
+		})
+
+		Context("having semantic problems", func() {
+			BeforeEach(func() {
+				content = `image "something" {
+  base_image {
+    name = "ahah"
+    this_is_wrong = "wrong!"
+  }
+}`
+			})
+
+			It("generates a pretty message", func() {
+				Expect(res).To(Equal(`image "something" {
+  base_image {
+    name = "ahah"
+    this_is_wrong = "wrong!"
+    ^^^^^^^^^^^^^
+  }
+}`))
+			})
+		})
+	})
 
 	type Case struct {
 		content    string
@@ -16,8 +67,6 @@ var _ = Describe("Config", func() {
 		shouldFail bool
 		expected   config.Config
 	}
-
-	const mockFilename = "mock-file"
 
 	DescribeTable("Parse",
 		func(c Case) {

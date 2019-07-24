@@ -108,8 +108,7 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 	// create a layer that decompressed it (plain tar xvzf)
 	// for _, tarball := range cfg.Tarballs {
 	// extract the tarball somewhere
-
-	// 	}
+	// }
 
 	for _, file := range cfg.Image.Files {
 		// checking to determine how to deal with the file.

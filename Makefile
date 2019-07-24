@@ -1,8 +1,8 @@
 GIT_COMMIT = $(shell git rev-parse HEAD)
 
 
-build:
-	go build -i -v .
+install:
+	go install -v .
 
 
 test:
