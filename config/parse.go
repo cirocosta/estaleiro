@@ -103,9 +103,11 @@ func PrettyDiagnosticFile(filename string, diag *hcl.Diagnostic) (res string) {
 // PrettyDiagnostic generates a human-readable pretty diagnostic.
 //
 func PrettyDiagnostic(content string, diag *hcl.Diagnostic) (res string) {
-	lines := NewLines(content)
-
-	lineBytes := []byte{}
+	var (
+		lines     = NewLines(content)
+		red       = color.New(color.FgRed, color.Bold).SprintFunc()
+		lineBytes = []byte{}
+	)
 
 	for i := 1; i < diag.Subject.Start.Column; i++ {
 		lineBytes = append(lineBytes, ' ')
@@ -115,7 +117,7 @@ func PrettyDiagnostic(content string, diag *hcl.Diagnostic) (res string) {
 		lineBytes = append(lineBytes, '^')
 	}
 
-	lines.AddLineAt(diag.Subject.End.Line+1, color.RedString(string(lineBytes)))
+	lines.AddLineAt(diag.Subject.End.Line+1, red(string(lineBytes)))
 
 	res = lines.String()
 	return
