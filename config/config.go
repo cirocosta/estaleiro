@@ -1,5 +1,71 @@
 package config
 
+// Config represents the high-level aggregation of all that's there to be built
+// as a container image, including the sources that bring files to it, and the
+// final definition itself.
+//
+type Config struct {
+	Image    Image     `hcl:"image,block"`
+	Steps    []Step    `hcl:"step,block"`
+	Tarballs []Tarball `hcl:"tarball,block"`
+}
+
+// Image is the final layer that is meant to be shipped as a container
+// image, specifying the desired final intent.
+//
+type Image struct {
+	Name string `hcl:"name,label" `
+
+	BaseImage BaseImage `hcl:"base_image,block" `
+
+	// State providers
+	//
+
+	Apt   []Apt  `hcl:"apt,block"`
+	Files []File `hcl:"file,block" `
+
+	// Final image configuration
+	//
+
+	Cmd        []string          `hcl:"cmd,optional"`
+	Entrypoint []string          `hcl:"entrypoint,optional"`
+	Env        map[string]string `hcl:"env,optional"`
+	StopSignal string            `hcl:"stopsignal,optional"`
+	Volumes    []string          `hcl:"volumes,optional"`
+}
+
+// Step represents a build step that can be done using a regular
+// Dockerfile (essentially, what `docker build` would build).
+//
+// Once referenced in an `image`, its DAG (until the target) gets merged
+// into the tree that represents the build of the final image.
+//
+type Step struct {
+	Name string `hcl:"name,label"`
+
+	Dockerfile string `hcl:"dockerfile"`
+	Target     string `hcl:"target,optional"`
+	Context    string `hcl:"context,optional"`
+
+	SourceFiles []SourceFile `hcl:"source_file,block"`
+}
+
+// Tarball represents a compressed tarball that contains files that can be
+// consumed by the image.
+//
+// ps.: a file must be declarated before consumption by the image.
+//
+type Tarball struct {
+	Name string `hcl:"name,label"`
+
+	SourceFiles []SourceFile `hcl:"source_file,block"`
+}
+
+type SourceFile struct {
+	Location string `hcl:"location,label"`
+	VCS      VCS    `hcl:"vcs,block"`
+}
+
 type AptKey struct {
 	Name string `hcl:"name,label"`
 
@@ -41,34 +107,20 @@ type VCS struct {
 	Repository string `hcl:"repository"`
 }
 
-// Step represents a build step that can be done using a regular
-// Dockerfile (essentially, what `docker build` would build).
-//
-// Once referenced in an `image`, its DAG (until the target) gets merged
-// into the tree that represents the build of the final image.
-//
-// Example:
-//
-// ```
-//
-// step "build" {
-//   dockerfile = "./Dockerfile"
-//   target     = "build"
-// }
-//
-// ```
-//
-type Step struct {
-	Name string ` hcl:"name,label"`
+type TarballFile struct {
+	Name  string   `hcl:"name"`
+	Paths []string `hcl:"paths"`
+	VCS   VCS      `hcl:"vcs,block"`
+}
 
-	Dockerfile string ` hcl:"dockerfile"`
-	Target     string ` hcl:"target,optional"`
-	Context    string ` hcl:"context,optional"`
+type FileFromStep struct {
+	StepName string `hcl:"step_name,label"`
+	Path     string `hcl:"path"`
+}
 
-	SourceFiles []struct {
-		Location string `hcl:"location,label"`
-		VCS      VCS    `hcl:"vcs,block"`
-	} `hcl:"source_file,block"`
+type FileFromTarball struct {
+	TarballName string `hcl:"tarball_name,label"`
+	Path        string `hcl:"path"`
 }
 
 // File corresponds to a file that can be brought into the the final
@@ -90,18 +142,8 @@ type Step struct {
 type File struct {
 	Destination string ` hcl:"destination,label"`
 
-	FromStep *struct {
-		StepName string `hcl:"step_name,label"`
-		Path     string `hcl:"path"`
-	} `hcl:"from_step,block"`
-}
-
-// Config represents the high-level aggregation of all that's there to be built
-// as a container image.
-//
-type Config struct {
-	Image Image  `hcl:"image,block"`
-	Steps []Step `hcl:"step,block"`
+	FromStep    *FileFromStep    `hcl:"from_step,block"`
+	FromTarball *FileFromTarball `hcl:"from_tarball,block"`
 }
 
 // BaseImage is the image that is going to be retrieved from a registry (or
@@ -116,21 +158,4 @@ type Apt struct {
 	Packages     []Package       `hcl:"package,block"`
 	Repositories []AptRepository `hcl:"repository,block"`
 	Keys         []AptKey        `hcl:"key,block"`
-}
-
-// Image is the final layer that is meant to be shipped as a container
-// image.
-//
-type Image struct {
-	Name string `hcl:"name,label" `
-
-	BaseImage BaseImage `hcl:"base_image,block" `
-	Apt       []Apt     `hcl:"apt,block"`
-
-	Cmd        []string          `hcl:"cmd,optional"`
-	Entrypoint []string          `hcl:"entrypoint"`
-	Env        map[string]string `hcl:"env,optional"`
-	Files      []File            `hcl:"file,block" `
-	StopSignal string            `hcl:"stopsignal,optional"`
-	Volumes    []string          `hcl:"volumes,optional"`
 }

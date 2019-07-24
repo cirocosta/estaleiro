@@ -88,6 +88,7 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 	}
 
 	// TODO - consider tag provided
+	//
 	canonicalName, err := resolveImage(context.TODO(), cfg.Image.BaseImage.Name)
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -103,7 +104,16 @@ func ToLLB(cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err
 	state = llb.Image(canonicalName.String())
 	state = packages(state, cfg.Image.Apt)
 
+	// for each tarball:
+	// create a layer that decompressed it (plain tar xvzf)
+	for _, tarball := range cfg.Image.Tarballs {
+		// extract the tarball somewhere
+
+	}
+
 	for _, file := range cfg.Image.Files {
+		// checking to determine how to deal with the file.
+		//
 		if file.FromStep == nil {
 			continue
 		}
@@ -178,6 +188,13 @@ func getStepFromConfig(cfg *config.Config, name string) *config.Step {
 // copy copies files between 2 states using cp until there is no copyOp
 //
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
+	src.AddMount("/dest", dest)
+
+	llb.Copy(src, srcPath, destPath, llb.CopyOption{
+		AttemptUnpack:  true,
+		CreateDestPath: true,
+	})
+
 	cpImage := llb.Image(utilsImage)
 
 	cp := cpImage.Run(llb.Shlexf("cp -a /src%s /dest%s", srcPath, destPath))

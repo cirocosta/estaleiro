@@ -34,13 +34,8 @@ var _ = Describe("Config", func() {
 		Entry("empty content", Case{
 			shouldFail: true,
 		}),
-
-		Entry("success", Case{
+		Entry("minimal", Case{
 			content: `
-			step "build" {
-			  dockerfile = "./Dockerfile"
-			}
-
 			image "something" {
 			  base_image {
 			    name = "ubuntu"
@@ -62,10 +57,102 @@ var _ = Describe("Config", func() {
 					Entrypoint: []string{"/bin/bash"},
 					Env:        map[string]string{"FOO": "bar"},
 				},
+			},
+		}),
+		Entry("with step", Case{
+			content: `
+			step "build" {
+			  dockerfile = "./Dockerfile"
+			}
+
+			image "something" {
+			  base_image {
+			    name = "ubuntu"
+			  }
+
+			  file "/usr/local/bin/estaleiro" {
+			    from_step "build" {
+			      path = "/bin/estaleiro"
+			    }
+			  }
+			}
+			`,
+			expected: config.Config{
+				Image: config.Image{
+					Name: "something",
+					BaseImage: config.BaseImage{
+						Name: "ubuntu",
+					},
+					Files: []config.File{
+						{
+							Destination: "/usr/local/bin/estaleiro",
+							FromStep: &config.FileFromStep{
+								StepName: "build",
+								Path:     "/bin/estaleiro",
+							},
+						},
+					},
+				},
 				Steps: []config.Step{
 					{
 						Name:       "build",
 						Dockerfile: "./Dockerfile",
+					},
+				},
+			},
+		}),
+		Entry("with tarball", Case{
+			content: `
+			tarball "linux-rc" {
+			  source_file "concourse/bin/gdn" {
+			    vcs "git" {
+			      ref        = "master"
+			      repository = "https://github.com/cloudfoundry/guardian"
+			    }
+			  }
+			}
+
+			image "something" {
+			  base_image {
+			    name = "ubuntu"
+			  }
+
+			  file "/usr/local/concourse/bin/gdn" {
+			    from_tarball "linux-rc" {
+			      path = "concourse/bin/gdn"
+			    }
+			  }
+			}
+			`,
+			expected: config.Config{
+				Image: config.Image{
+					Name: "something",
+					BaseImage: config.BaseImage{
+						Name: "ubuntu",
+					},
+					Files: []config.File{
+						{
+							Destination: "/usr/local/concourse/bin/gdn",
+							FromTarball: &config.FileFromTarball{
+								TarballName: "linux-rc",
+								Path:        "concourse/bin/gdn",
+							},
+						},
+					},
+				},
+				Tarballs: []config.Tarball{
+					{
+						Name: "linux-rc",
+						SourceFiles: []config.SourceFile{
+							{
+								Location: "concourse/bin/gdn",
+								VCS: config.VCS{
+									Type:       "git",
+									Ref:        "master",
+									Repository: "https://github.com/cloudfoundry/guardian",
+								},
+							},
+						},
 					},
 				},
 			},
