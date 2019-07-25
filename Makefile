@@ -10,12 +10,12 @@ test:
 
 
 run:
-	estaleiro build -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
+	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl build --local context=.
 
 
 graph:
-	estaleiro build -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
+	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl debug dump-llb --dot \
 		| dot -Tsvg > graph.svg
 	open -a "Firefox" ./graph.svg

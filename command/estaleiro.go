@@ -1,6 +1,6 @@
 package command
 
 var Estaleiro struct {
-	Build    buildCommand    `command:"build" description:"runs a build"`
+	LLB      llbCommand      `command:"llb" description:"generates the llb for a build"`
 	Frontend frontendCommand `command:"frontend" description:"serves as a custom Docker-compatible"`
 }

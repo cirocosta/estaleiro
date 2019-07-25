@@ -14,13 +14,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-type buildCommand struct {
+type llbCommand struct {
 	BomDestination string            `long:"bom" short:"b" description:"where to save the bill of materials to"`
 	Filename       string            `long:"filename" short:"f" required:"true" description:"file containing image definition"`
 	Variables      map[string]string `long:"var" short:"v" description:"variables to interpolate"`
 }
 
-func (c *buildCommand) Execute(args []string) (err error) {
+func (c *llbCommand) Execute(args []string) (err error) {
 	color.NoColor = false
 
 	cfg, err := config.ParseFile(c.Filename, c.Variables)
