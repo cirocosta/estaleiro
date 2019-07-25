@@ -60,6 +60,11 @@ func (c *buildCommand) Execute(args []string) (err error) {
 	eg.Go(func() (err error) {
 		var c console.Console
 
+		c, err = console.ConsoleFromFile(os.Stderr)
+		if err != nil {
+			return err
+		}
+
 		err = progressui.DisplaySolveStatus(context.TODO(), "", c, os.Stderr, ch)
 		if err != nil {
 			err = errors.Wrapf(err,
