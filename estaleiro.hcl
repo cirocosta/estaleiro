@@ -31,7 +31,7 @@ image "cirocosta/estaleiro" {
     }
 
     key "docker" {
-      uri = " https://download.docker.com/linux/ubuntu/gpg"
+      uri = "https://download.docker.com/linux/ubuntu/gpg"
     }
 
     package "ca-certificates" {}

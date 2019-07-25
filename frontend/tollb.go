@@ -11,6 +11,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/client/llb/imagemetaresolver"
+	"github.com/moby/buildkit/solver/pb"
 	"github.com/pkg/errors"
 
 	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
@@ -18,10 +19,6 @@ import (
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
-)
-
-const (
-	utilsImage = "docker.io/library/alpine:latest@sha256:1072e499f3f655a032e88542330cf75b02e7bdf673278f701d7ba61629ee3ebe"
 )
 
 // TODO receive a context so that image resolution is not unbound
@@ -218,9 +215,12 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 		return
 	}
 
+	caps := pb.Caps.CapSet(pb.Caps.All())
+
 	stepState, _, err = dockerfile.Dockerfile2LLB(
 		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{
-			Target: step.Target,
+			Target:  step.Target,
+			LLBCaps: &caps,
 			BuildPlatforms: []specs.Platform{
 				{
 					Architecture: "amd64",
@@ -276,17 +276,10 @@ func installPackages(base llb.State, apts []config.Apt) llb.State {
 	return base
 }
 
-// TODO get rid of this and leverage the `HTTP` source instead.
-//
-func curl() llb.State {
-	return llb.Image(utilsImage).
-		Run(llb.Shlex("apk add --no-cache curl")).Root()
-}
-
 func aptAddKey(dst llb.State, url string) llb.State {
-	downloadSt := curl().Run(llb.Shlexf("curl -Lo /key.gpg %s", url)).Root()
+	downloadSt := llb.HTTP(url, llb.Filename("key.gpg"))
 
-	dst = copy(downloadSt, "/key.gpg", dst, "/key.gpg")
+	dst = copy(downloadSt, "key.gpg", dst, "/key.gpg")
 
 	return dst.
 		Run(sh("apt-key add /key.gpg && rm /key.gpg")).
