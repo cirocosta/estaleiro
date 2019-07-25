@@ -1,0 +1,35 @@
+BOM GENERATION
+
+
+	PACKAGES
+
+		- [ ] list all of the packages that are there in the base image
+		      right in the beginning
+
+			(i.e., gather all from `base image`)
+
+			> read file `/var/lib/dpkg/status`
+
+		
+
+		- [ ] for each package installed
+			
+			- gather their corresponding `apt-cache policy` result
+
+
+				policies := llb.Scratch()
+				state.AddMount(policies, "/policies")
+
+				for _, pkg := range packages {
+					apt-cache policy pkg >> /policies/policies
+				}
+
+
+		- [ ] (internal) image to generate `packages.yml` BOM ?
+			reads `/policies` and then prepares `packages.yml`?
+
+			|
+			*--> 	if we had a way of performing the builds ourselves
+				without the use of `buildctl`, mayba that would
+				make things simpler, leveraging `ref` :thinking:
+

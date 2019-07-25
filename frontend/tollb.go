@@ -71,7 +71,6 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 		if err != nil {
 			return
 		}
-
 	}
 
 	img = prepareImage(cfg.Image)
