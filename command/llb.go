@@ -20,24 +20,41 @@ type llbCommand struct {
 	Variables      map[string]string `long:"var" short:"v" description:"variables to interpolate"`
 }
 
-func (c *llbCommand) Execute(args []string) (err error) {
-	color.NoColor = false
-
-	cfg, err := config.ParseFile(c.Filename, c.Variables)
+func HCLToLLB(filename string, variables map[string]string) (definition *llb.Definition, bom frontend.Bom, err error) {
+	cfg, err := config.ParseFile(filename, variables)
 	if err != nil {
-
 		diagsErr, ok := errors.Cause(err).(hcl.Diagnostics)
 		if ok {
-			fmt.Fprintln(os.Stderr, config.PrettyDiagnosticFile(c.Filename, diagsErr[0]))
+			fmt.Fprintln(os.Stderr, config.PrettyDiagnosticFile(filename, diagsErr[0]))
 		}
 
-		err = errors.Wrapf(err, "failed to parse config file %s", c.Filename)
+		err = errors.Wrapf(err, "failed to parse config file %s", filename)
 		return
 	}
 
-	state, _, bom, err := frontend.ToLLB(context.TODO(), cfg)
+	var state llb.State
+	state, _, bom, err = frontend.ToLLB(context.TODO(), cfg)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to convert to llb")
+		return
+	}
+
+	definition, err = state.Marshal(llb.LinuxAmd64)
+	if err != nil {
+		err = errors.Wrap(err, "marshaling llb state")
+		return
+	}
+
+	return
+}
+
+func init() {
+	color.NoColor = false
+}
+
+func (c *llbCommand) Execute(args []string) (err error) {
+	def, bom, err := HCLToLLB(c.Filename, c.Variables)
+	if err != nil {
 		return
 	}
 
@@ -51,13 +68,7 @@ func (c *llbCommand) Execute(args []string) (err error) {
 		}
 	}
 
-	definition, err := state.Marshal(llb.LinuxAmd64)
-	if err != nil {
-		err = errors.Wrap(err, "marshaling llb state")
-		return
-	}
-
-	llb.WriteTo(definition, os.Stdout)
+	llb.WriteTo(def, os.Stdout)
 
 	return
 }
