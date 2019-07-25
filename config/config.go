@@ -56,6 +56,9 @@ type Step struct {
 // ps.: a file must be declarated before consumption by the image.
 //
 type Tarball struct {
+	// Name corresponds to the path in the context where the tarball can be
+	// found.
+	//
 	Name string `hcl:"name,label"`
 
 	SourceFiles []SourceFile `hcl:"source_file,block"`

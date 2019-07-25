@@ -47,12 +47,28 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	state = llb.Image(canonicalName.String())
 	state = installPackages(state, cfg.Image.Apt)
 
+	tarballStateMap := map[string]llb.State{}
+	for _, tarball := range cfg.Tarballs {
+		src := llb.Local("context")
+		dest := llb.Scratch()
+
+		// how to access the file there?
+		tarballStateMap[tarball.Name] = copy(src, tarball.Name, dest, "/dest")
+	}
+
 	for _, file := range cfg.Image.Files {
 		switch {
 		case file.FromStep != nil:
 			state, bom, err = copyFilesFromSteps(state, cfg, bom, file)
 		case file.FromTarball != nil:
-			state, bom, err = copyFilesFromTarball(state, cfg, bom, file)
+			tarballSourceState, found := tarballStateMap[file.FromTarball.TarballName]
+			if !found {
+				// TODO improve this
+				err = errors.Errorf("not found")
+				return
+			}
+
+			state, bom, err = copyFilesFromTarball(state, cfg, bom, file, tarballSourceState)
 		}
 
 		if err != nil {
@@ -62,6 +78,26 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	}
 
 	img = prepareImage(cfg.Image)
+
+	return
+}
+
+// Copies a file (`file`) from a given state that already has the tarball
+// unpacked (`tarballSource`) into the final state (`finalState`)
+//
+func copyFilesFromTarball(
+	finalState llb.State, cfg *config.Config, bom Bom, file config.File, tarballSource llb.State,
+) (
+	newState llb.State, newBom Bom, err error,
+) {
+	newState = copy(
+		tarballSource,
+		"/dest/"+file.FromTarball.Path,
+		finalState,
+		file.Destination,
+	)
+
+	// func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
 
 	return
 }
@@ -92,14 +128,6 @@ func prepareImage(image config.Image) ocispec.Image {
 			Cmd:        image.Cmd,
 		},
 	}
-}
-
-func copyFilesFromTarball(
-	state llb.State, cfg *config.Config, bom Bom, file config.File,
-) (
-	newState llb.State, newBom Bom, err error,
-) {
-	return
 }
 
 func copyFilesFromSteps(
