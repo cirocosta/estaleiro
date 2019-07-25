@@ -2,9 +2,13 @@ package command
 
 import (
 	"context"
+	"os"
 
+	"github.com/containerd/console"
 	bkclient "github.com/moby/buildkit/client"
+	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 type buildCommand struct {
@@ -15,7 +19,9 @@ type buildCommand struct {
 }
 
 func (c *buildCommand) Execute(args []string) (err error) {
-	client, err := bkclient.New(context.TODO(), c.Address, bkclient.WithFailFast())
+	ctx := context.TODO()
+
+	client, err := bkclient.New(ctx, c.Address, bkclient.WithFailFast())
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to construct client for addr %s", c.Address)
@@ -26,10 +32,44 @@ func (c *buildCommand) Execute(args []string) (err error) {
 		LocalDirs: c.LocalDirectories,
 	}
 
-	def, bom, err := HCLToLLB(c.Filename, c.Variables)
+	def, _, err := HCLToLLB(c.Filename, c.Variables)
 	if err != nil {
 		return
 	}
 
+	var (
+		ch = make(chan *bkclient.SolveStatus)
+		eg *errgroup.Group
+	)
+
+	eg, ctx = errgroup.WithContext(ctx)
+
+	// initiate the request
+	eg.Go(func() (err error) {
+		_, err = client.Solve(ctx, def, solveOpt, ch)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed while solving")
+			return
+		}
+
+		return
+	})
+
+	// display progress
+	eg.Go(func() (err error) {
+		var c console.Console
+
+		err = progressui.DisplaySolveStatus(context.TODO(), "", c, os.Stderr, ch)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed while displaying status")
+			return
+		}
+
+		return
+	})
+
+	err = eg.Wait()
 	return
 }

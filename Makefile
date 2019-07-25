@@ -10,8 +10,11 @@ test:
 
 
 run:
-	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
-		| buildctl build --local context=.
+	estaleiro build \
+		--addr tcp://0.0.0.0:1234 \
+		--filename estaleiro.hcl \
+		--local context:. \
+		--var estaleiro-commit:$(GIT_COMMIT)
 
 
 graph:
