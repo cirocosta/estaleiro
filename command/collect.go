@@ -7,11 +7,25 @@ import (
 
 	"github.com/cirocosta/estaleiro/dpkg"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type collectCommand struct {
 	Input  string `long:"input"  required:"true" description:"path to dpkg status file ('-' for stdin)"`
 	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
+}
+
+type Packages []dpkg.Package
+
+func (p Packages) ToYAML() (res []byte) {
+	var err error
+
+	res, err = yaml.Marshal(&p)
+	if err != nil {
+		panic(err)
+	}
+
+	return
 }
 
 func (c *collectCommand) Execute(args []string) (err error) {
@@ -37,7 +51,7 @@ func (c *collectCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	fmt.Fprintf(writer, "%+v\n", packages)
+	fmt.Fprintf(writer, "%+v\n", string(Packages(packages).ToYAML()))
 
 	return
 }
