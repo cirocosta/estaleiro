@@ -10,40 +10,72 @@ import (
 )
 
 type collectCommand struct {
-	DpkgStatusFilename string `long:"filename" default:"/var/lib/dpkg/status" descritpion:"path to dpkg status file ('-' for stdin)"`
+	Input  string `long:"input"  required:"true" description:"path to dpkg status file ('-' for stdin)"`
+	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
 }
 
 func (c *collectCommand) Execute(args []string) (err error) {
-	var (
-		f        io.Reader
-		packages []dpkg.Package
-	)
+	var packages []dpkg.Package
 
-	if c.DpkgStatusFilename == "-" {
-		f = os.Stdin
-	} else {
-		var file *os.File
-
-		file, err = os.Open(c.DpkgStatusFilename)
-		if err != nil {
-			err = errors.Wrapf(err,
-				"failed to open dpkg status file at %s", c.DpkgStatusFilename)
-			return
-		}
-		defer file.Close()
-		f = file
+	input, err := reader(c.Input)
+	if err != nil {
+		return
 	}
 
-	scanner := dpkg.NewScanner(f)
+	writer, err := writer(c.Output)
+	if err != nil {
+		return
+	}
+
+	scanner := dpkg.NewScanner(input)
+
 	packages, err = scanner.ScanAll()
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed scanning packages from dpkg status file %s",
-			c.DpkgStatusFilename)
+			c.Input)
 		return
 	}
 
-	fmt.Println(packages)
+	fmt.Fprintf(writer, "%+v\n", packages)
 
+	return
+}
+
+func writer(value string) (w io.Writer, err error) {
+	var file *os.File
+
+	if value == "-" {
+		w = os.Stdout
+		return
+	}
+
+	file, err = os.Create(value)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to create file %s", value)
+		return
+	}
+
+	w = file
+	return
+}
+
+func reader(value string) (r io.Reader, err error) {
+	var file *os.File
+
+	if value == "-" {
+		r = os.Stdin
+		return
+	}
+
+	file, err = os.Open(value)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to open dpkg status file at %s", value)
+		return
+	}
+
+	r = file
 	return
 }

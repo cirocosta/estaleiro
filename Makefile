@@ -17,6 +17,11 @@ run:
 		--var estaleiro-commit:$(GIT_COMMIT)
 
 
+llb:
+	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
+		| buildctl debug dump-llb \
+		| jq '.'
+
 graph:
 	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl debug dump-llb --dot \
@@ -42,7 +47,9 @@ image:
 	estaleiro llb \
                   --filename ./estaleiro.hcl \
                   --var estaleiro-commit:$(git rev-parse HEAD) \
-		  | buildctl build --local context=.
+		  | buildctl build \
+		  	--local context=. \
+			--output type=image,name=docker.io/cirocosta/estaleiro,push=true
 
 image-frontend:
 	docker build \

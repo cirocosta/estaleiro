@@ -1,5 +1,5 @@
 version: v0.0.1
-generated_at: 2019-07-24T21:53:03.309442-04:00
+generated_at: 2019-07-26T12:43:49.705727-04:00
 base_image:
     name: docker.io/library/ubuntu
     digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
@@ -7,6 +7,6 @@ files:
   - path: /usr/local/bin/estaleiro
     source:
         type: git
-        version: 58c2fcf9d3fbaaff5504dc7be1c21627b353f87b
+        version: 00055145f89fa2ab2e44417a1eff590e24f8d841
         uri: https://github.com/cirocosta/estaleiro
 packages: []

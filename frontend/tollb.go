@@ -21,6 +21,53 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+// generatePackagesBom performs the retrieval of packages from `base`,
+// generating a bill of materials that gets added to `base` itself.
+//
+//
+//   generate(base state, destFilename string) => state
+//
+//      estaleiro------------- (layer)
+//      |
+//      |  => retrieves packages and produces `bom`
+//      |
+//      |  /src -> base:dpkg-status
+//      |  /dst -> base:bom-dest
+//      |
+//
+// 	base------------------- (layer)
+//      |
+//      |  dpkg-status: /var/lib/dpkg/status
+//      |  bom-dst:     /var/lib/estaleiro/${dest_filename}
+//      |
+//
+//
+func generatePackagesBom(base llb.State, destFilename string) llb.State {
+	const imageName = "cirocosta/estaleiro@sha256:f911bb2553f5fd1d1d578c11ffdd89c62f0bf2509c185110cedb70e6f762f32e"
+
+	var (
+		input  = "/src/status"
+		output = "/dest/bom.yml"
+	)
+
+	args := []string{
+		"/usr/local/bin/estaleiro", "collect",
+		"--input=" + input,
+		"--output=" + output,
+	}
+
+	execution := llb.
+		Image(imageName).
+		Run(llb.Args(args))
+
+	execution.
+		AddMount("/src/status", base,
+			llb.Readonly,
+			llb.SourcePath("/var/lib/dpkg/status"))
+
+	return copy(execution.Root(), output, base, destFilename)
+}
+
 // TODO receive a context so that image resolution is not unbound
 //
 func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispec.Image, bom Bom, err error) {
@@ -43,6 +90,8 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 
 	state = llb.Image(canonicalName.String())
 	state = installPackages(state, cfg.Image.Apt)
+
+	state = generatePackagesBom(state, "/var/lib/estaleiro/initial-packages.yml")
 
 	tarballStateMap := map[string]llb.State{}
 	for _, tarball := range cfg.Tarballs {
@@ -92,8 +141,6 @@ func copyFilesFromTarball(
 		finalState,
 		file.Destination,
 	)
-
-	// func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
 
 	return
 }
@@ -169,6 +216,7 @@ func copyFilesFromSteps(
 	}
 
 	var step llb.State
+
 	step, err = addImageBuildStep(configStep)
 	if err != nil {
 		err = errors.Wrapf(err,
