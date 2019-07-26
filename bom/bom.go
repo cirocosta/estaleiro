@@ -1,10 +1,22 @@
-package frontend
+package bom
 
 import (
+	"github.com/cirocosta/estaleiro/dpkg"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
+
+// Bom represents the final bill of materials.
+//
+type Bom struct {
+	Version     string    `yaml:"version"`
+	GeneratedAt time.Time `yaml:"generated_at"`
+
+	BaseImage BaseImage      `yaml:"base_image"`
+	Files     []File         `yaml:"files"`
+	Packages  []dpkg.Package `yaml:"packages"`
+}
 
 type Source struct {
 	Type    string `yaml:"type"`
@@ -16,22 +28,10 @@ type File struct {
 	Path   string `yaml:"path"`
 	Source Source `yaml:"source"`
 }
-type Bom struct {
-	Version     string    `yaml:"version"`
-	GeneratedAt time.Time `yaml:"generated_at"`
-
-	BaseImage BaseImage `yaml:"base_image"`
-	Files     []File    `yaml:"files"`
-	Packages  []Package `yaml:"packages"`
-}
 
 type BaseImage struct {
 	Name   string `yaml:"name"`
 	Digest string `yaml:"digest"`
-}
-
-type Package struct {
-	Name string `yaml:"name"`
 }
 
 func (b Bom) ToYAML() (res []byte) {

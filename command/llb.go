@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/cirocosta/estaleiro/bom"
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/cirocosta/estaleiro/frontend"
 	"github.com/fatih/color"
@@ -20,7 +21,7 @@ type llbCommand struct {
 	Variables      map[string]string `long:"var" short:"v" description:"variables to interpolate"`
 }
 
-func HCLToLLB(filename string, variables map[string]string) (definition *llb.Definition, bom frontend.Bom, err error) {
+func HCLToLLB(filename string, variables map[string]string) (definition *llb.Definition, bom bom.Bom, err error) {
 	cfg, err := config.ParseFile(filename, variables)
 	if err != nil {
 		diagsErr, ok := errors.Cause(err).(hcl.Diagnostics)

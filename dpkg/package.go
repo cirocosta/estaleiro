@@ -11,11 +11,11 @@ type Package struct {
 	// Name corresponds to the `Package` field in the status file from
 	// `dpkg`, representing the name of the binary package.
 	//
-	Name string
+	Name string `yaml:"name"`
 
 	// Version is the version of the package in the debian policy format.
 	//
-	Version string
+	Version string `yaml:"version"`
 }
 
 func (p *Package) IsFilled() bool {
