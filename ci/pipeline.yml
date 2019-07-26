@@ -76,7 +76,7 @@ jobs:
                 sanitize-cgroups
 
                 cd ./repository
-                estaleiro build \
+                estaleiro llb \
                   --filename ./estaleiro.hcl \
                   --bom ./bom.yml \
                   --var estaleiro-commit:$(git rev-parse HEAD) \

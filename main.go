@@ -8,9 +8,6 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-var cli struct {
-}
-
 func main() {
 	parser := flags.NewParser(&command.Estaleiro, flags.HelpFlag|flags.PassDoubleDash)
 	parser.NamespaceDelimiter = "-"

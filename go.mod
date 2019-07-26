@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/Microsoft/go-winio v0.4.13 // indirect
 	github.com/Microsoft/hcsshim v0.8.6 // indirect
+	github.com/cirocosta/containerdeps v0.0.0-20190628211803-514910298313
 	github.com/containerd/cgroups v0.0.0-20190717030353-c4b9ac5c7601 // indirect
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50
 	github.com/containerd/containerd v1.3.0-0.20190507210959-7c1e88399ec0
