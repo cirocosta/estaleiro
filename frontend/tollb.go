@@ -22,6 +22,8 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+const imageName = "cirocosta/estaleiro@sha256:07389bbeb2f7a6085b46fba65c2c7b3a8cba3095a01e5774c421dbefef44bd1e"
+
 // generatePackagesBom performs the retrieval of packages from `base`,
 // generating a bill of materials that gets added to `base` itself.
 //
@@ -44,29 +46,17 @@ import (
 //
 //
 func generatePackagesBom(base llb.State, destFilename string) llb.State {
-	const imageName = "cirocosta/estaleiro@sha256:f911bb2553f5fd1d1d578c11ffdd89c62f0bf2509c185110cedb70e6f762f32e"
-
-	var (
-		input  = "/src/status"
-		output = "/dest/bom.yml"
-	)
-
-	args := []string{
-		"/usr/local/bin/estaleiro", "collect",
-		"--input=" + input,
-		"--output=" + output,
-	}
-
-	execution := llb.
-		Image(imageName).
-		Run(llb.Args(args))
-
-	execution.
-		AddMount("/src/status", base,
-			llb.Readonly,
-			llb.SourcePath("/var/lib/dpkg/status"))
-
-	return copy(execution.Root(), output, base, destFilename)
+	return base.Run(
+		llb.Args([]string{
+			"/usr/local/bin/estaleiro",
+			"collect",
+			"--input=/var/lib/dpkg/status",
+			"--output=" + destFilename,
+		}), llb.AddMount(
+			"/usr/local/bin/estaleiro",
+			llb.Image(imageName),
+			llb.SourcePath("/usr/local/bin/estaleiro"),
+		)).Root()
 }
 
 // TODO receive a context so that image resolution is not unbound
@@ -90,9 +80,9 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	}
 
 	state = llb.Image(canonicalName.String())
+	state = generatePackagesBom(state, "/initial-bom.yml")
 	state = installPackages(state, cfg.Image.Apt)
-
-	state = generatePackagesBom(state, "/var/lib/estaleiro/initial-packages.yml")
+	state = generatePackagesBom(state, "/final-bom.yml")
 
 	tarballStateMap := map[string]llb.State{}
 	for _, tarball := range cfg.Tarballs {

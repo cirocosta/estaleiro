@@ -18,7 +18,7 @@ run:
 
 
 llb:
-	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
+	@estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl debug dump-llb \
 		| jq '.'
 
