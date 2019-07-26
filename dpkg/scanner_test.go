@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/cirocosta/containerdeps/dpkg"
+	"github.com/cirocosta/estaleiro/dpkg"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

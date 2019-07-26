@@ -8,19 +8,24 @@ FROM golang AS base
 	ENV CGO_ENABLED=0
 	RUN apt update && apt install -y git
 
-	ADD . /src
-	WORKDIR /src
 
 
 FROM base AS build
+	ADD ./go.mod /src/go.mod
+	ADD ./go.sum /src/go.sum
+	WORKDIR /src
+
+	RUN go mod download
+
+	ADD . /src
 
 	RUN \
-		# --mount=type=cache,target=/root/.cache/go-build \
-		# --mount=type=cache,target=/go/pkg/mod \
-		go build \
-		-tags netgo -v \
-		-o /bin/estaleiro \
-		-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
+		--mount=type=cache,target=/root/.cache/go-build \
+		--mount=type=cache,target=/go/pkg/mod \
+			go build -v \
+			-tags "netgo dfrunmount" \
+			-o /bin/estaleiro \
+			-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
 
 
 FROM base AS test

@@ -2,7 +2,7 @@ GIT_COMMIT = $(shell git rev-parse HEAD)
 
 
 install:
-	go install -v .
+	go install -tags "dfrunmount" -v .
 
 
 test:
@@ -24,7 +24,7 @@ graph:
 	open -a "Firefox" ./graph.svg
 
 
-buildctl-integration:
+buildctl-gateway-integration:
 	buildctl build \
 		--frontend gateway.v0 \
 		--opt source=cirocosta/estaleiro-frontend:rc \
@@ -37,6 +37,12 @@ docker-integration:
 		--build-arg estaleiro-commit=$(GIT_COMMIT) \
 		--file ./estaleiro.hcl \
 		.
+
+image:
+	estaleiro llb \
+                  --filename ./estaleiro.hcl \
+                  --var estaleiro-commit:$(git rev-parse HEAD) \
+		  | buildctl build --local context=.
 
 image-frontend:
 	docker build \
