@@ -21,8 +21,8 @@ var (
 )
 
 const (
-	LocalNameContext      = "context"
-	LocalNameDockerfile   = "dockerfile"
+	localNameContext      = "context"
+	localNameDockerfile   = "dockerfile"
 	keyTarget             = "target"
 	keyFilename           = "filename"
 	keyCacheFrom          = "cache-from"
@@ -31,12 +31,25 @@ const (
 	buildArgPrefix        = "build-arg:"
 	labelPrefix           = "label:"
 	keyNoCache            = "no-cache"
-	keyTargetPlatform     = "platform"
 	keyImageResolveMode   = "image-resolve-mode"
-	keyGlobalAddHosts     = "add-hosts"
-	keyForceNetwork       = "force-network-mode"
-	keyOverrideCopyImage  = "override-copy-image" // remove after CopyOp implemented
 )
+
+func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err error) {
+	state, img, err := prepareLLBFromClient(ctx, client)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to build for linux amd64")
+		return
+	}
+
+	res, err = invokeBuild(ctx, client, state, img)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"faoled to make build call")
+		return
+	}
+
+	return
+}
 
 // prepareLLBFromClient retrieves the options provided through the client call
 // and assemblies the LLB to build it.
@@ -61,19 +74,44 @@ func prepareLLBFromClient(
 	return
 }
 
-func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err error) {
-	state, img, err := prepareLLBFromClient(ctx, client)
+func invokeBuild(
+	ctx context.Context, client gateway.Client, state llb.State, img ocispec.Image,
+) (
+	res *gateway.Result, err error,
+) {
+	def, err := state.Marshal()
 	if err != nil {
-		err = errors.Wrapf(err, "failed to build for linux amd64")
+		err = errors.Wrapf(err,
+			"failed to marshal llb state into protobuf definition")
 		return
 	}
 
-	res, err = invokeBuild(ctx, client, state, img)
+	res, err = client.Solve(ctx, gateway.SolveRequest{
+		Definition: def.ToPB(),
+	})
 	if err != nil {
 		err = errors.Wrapf(err,
-			"faoled to make build call")
+			"failed performing solve request")
 		return
 	}
+
+	ref, err := res.SingleRef()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to retrieve single ref")
+		return
+	}
+
+	config, err := json.Marshal(img)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to marshal image config")
+		return
+	}
+
+	k := platforms.Format(platforms.DefaultSpec())
+
+	res.AddMeta(fmt.Sprintf("%s/%s", exptypes.ExporterImageConfigKey, k), config)
+	res.SetRef(ref)
 
 	return
 }
@@ -91,7 +129,7 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 		name += " from " + filename
 	}
 
-	src := llb.Local(LocalNameDockerfile,
+	src := llb.Local(localNameDockerfile,
 		llb.IncludePatterns([]string{filename}),
 		llb.SessionID(c.BuildOpts().SessionID),
 		llb.SharedKeyHint(defaultDockerfileName),
@@ -147,46 +185,4 @@ func filter(opt map[string]string, key string) map[string]string {
 		}
 	}
 	return m
-}
-
-func invokeBuild(
-	ctx context.Context, client gateway.Client, state llb.State, img ocispec.Image,
-) (
-	res *gateway.Result, err error,
-) {
-	def, err := state.Marshal()
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to marshal llb state into protobuf definition")
-		return
-	}
-
-	res, err = client.Solve(ctx, gateway.SolveRequest{
-		Definition: def.ToPB(),
-	})
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed performing solve request")
-		return
-	}
-
-	ref, err := res.SingleRef()
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to retrieve single ref")
-		return
-	}
-
-	config, err := json.Marshal(img)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to marshal image config")
-		return
-	}
-
-	k := platforms.Format(platforms.DefaultSpec())
-
-	res.AddMeta(fmt.Sprintf("%s/%s", exptypes.ExporterImageConfigKey, k), config)
-	res.SetRef(ref)
-
-	return
 }

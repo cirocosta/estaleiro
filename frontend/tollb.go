@@ -24,27 +24,6 @@ import (
 
 const imageName = "cirocosta/estaleiro@sha256:07389bbeb2f7a6085b46fba65c2c7b3a8cba3095a01e5774c421dbefef44bd1e"
 
-// generatePackagesBom performs the retrieval of packages from `base`,
-// generating a bill of materials that gets added to `base` itself.
-//
-//
-//   generate(base state, destFilename string) => state
-//
-//      estaleiro------------- (layer)
-//      |
-//      |  => retrieves packages and produces `bom`
-//      |
-//      |  /src -> base:dpkg-status
-//      |  /dst -> base:bom-dest
-//      |
-//
-// 	base------------------- (layer)
-//      |
-//      |  dpkg-status: /var/lib/dpkg/status
-//      |  bom-dst:     /var/lib/estaleiro/${dest_filename}
-//      |
-//
-//
 func generatePackagesBom(base llb.State, destFilename string) llb.State {
 	return base.Run(
 		llb.Args([]string{
@@ -259,6 +238,9 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{
 			Target:  step.Target,
 			LLBCaps: &caps,
+			MetaResolver: imagemetaresolver.New(
+				imagemetaresolver.WithDefaultPlatform(&linuxAMD64),
+			),
 			BuildPlatforms: []specs.Platform{
 				{
 					Architecture: "amd64",

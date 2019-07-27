@@ -9,12 +9,13 @@ test:
 	go test -v ./...
 
 
+# TODO include estaleiro-commit through `--var`
 run:
 	estaleiro build \
 		--addr tcp://0.0.0.0:1234 \
 		--filename estaleiro.hcl \
 		--local context:. \
-		--var estaleiro-commit:$(GIT_COMMIT)
+		--local dockerfile:.
 
 
 llb:

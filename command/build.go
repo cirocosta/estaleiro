@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/cirocosta/estaleiro/frontend"
 	"github.com/containerd/console"
 	bkclient "github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/util/progress/progressui"
@@ -30,11 +31,9 @@ func (c *buildCommand) Execute(args []string) (err error) {
 
 	solveOpt := bkclient.SolveOpt{
 		LocalDirs: c.LocalDirectories,
-	}
-
-	def, _, err := HCLToLLB(c.Filename, c.Variables)
-	if err != nil {
-		return
+		FrontendAttrs: map[string]string{
+			"build-arg:estaleiro-commit": "master",
+		},
 	}
 
 	var (
@@ -46,10 +45,10 @@ func (c *buildCommand) Execute(args []string) (err error) {
 
 	// initiate the request
 	eg.Go(func() (err error) {
-		_, err = client.Solve(ctx, def, solveOpt, ch)
+		_, err = client.Build(ctx, solveOpt, "", frontend.Build, ch)
 		if err != nil {
 			err = errors.Wrapf(err,
-				"failed while solving")
+				"failed while building")
 			return
 		}
 
