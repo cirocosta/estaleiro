@@ -12,7 +12,6 @@ test:
 # TODO include estaleiro-commit through `--var`
 run:
 	estaleiro build \
-		--addr tcp://0.0.0.0:1234 \
 		--filename estaleiro.hcl \
 		--local context:. \
 		--local dockerfile:.

@@ -2,8 +2,10 @@ package frontend
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/cirocosta/estaleiro/config"
@@ -102,11 +104,27 @@ func invokeBuild(
 		return
 	}
 
+	// read a file from this part
+
+	initialBom, err := ref.ReadFile(ctx, gateway.ReadRequest{
+		Filename: "/initial-bom.yml",
+	})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to read initial bom")
+		return
+	}
+
+	img.Config.Labels = map[string]string{
+		"estaleiro.bom": base64.StdEncoding.EncodeToString(initialBom),
+	}
+
 	config, err := json.Marshal(img)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal image config")
 		return
 	}
+
+	ioutil.WriteFile("/tmp/config", config, 0644)
 
 	k := platforms.Format(platforms.DefaultSpec())
 
