@@ -10,7 +10,7 @@ test:
 
 ubuntu:
 	DOCKER_BUILDKIT=1 docker build -t cirocosta/estaleiro-with-ubuntu .
-	docker run --entrypoint /bin/bash cirocosta/estaleiro-with-ubuntu -cex 'apt update && estaleiro apt vim'
+	docker run --entrypoint estaleiro cirocosta/estaleiro-with-ubuntu apt vim
 
 # TODO include estaleiro-commit through `--var`
 run:
