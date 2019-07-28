@@ -26,7 +26,8 @@ type AptDebLocation struct {
 
 type Package struct {
 	DebControl `yaml:",inline"`
-	Source     AptDebLocation `yaml:"source,omitempty"`
+	Location   AptDebLocation   `yaml:"location,omitempty"`
+	Source     []AptDebLocation `yaml:"source,omitempty"`
 }
 
 var (
@@ -105,7 +106,20 @@ func createPackages(ctx context.Context, dir string, locations []AptDebLocation)
 				return
 			}
 
-			pkgs[idx] = Package{DebControl: control, Source: location}
+			ref := control.Name + "=" + control.Version
+			sourceLocations, err := aptSourcePackageUris(ctx, ref)
+			if err != nil {
+				err = errors.Wrapf(err,
+					"failed to retrieve source for package %s",
+					ref)
+				return
+			}
+
+			pkgs[idx] = Package{
+				DebControl: control,
+				Location:   location,
+				Source:     sourceLocations,
+			}
 			return
 		})
 	}
@@ -175,8 +189,8 @@ func aptInstallPackagesUris(ctx context.Context, packages []string) ([]AptDebLoc
 	return aptUris(ctx, "install", packages)
 }
 
-func aptSourcePackagesUris(ctx context.Context, packages []string) ([]AptDebLocation, error) {
-	return aptUris(ctx, "source", packages)
+func aptSourcePackageUris(ctx context.Context, packageName string) ([]AptDebLocation, error) {
+	return aptUris(ctx, "source", []string{packageName})
 }
 
 func aptUris(ctx context.Context, command string, packages []string) (uris []AptDebLocation, err error) {

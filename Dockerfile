@@ -45,7 +45,9 @@ FROM release AS frontend
 
 FROM ubuntu AS ubuntu-with-estaleiro
 
-	RUN apt update
+	RUN set -x && \
+		sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list && \
+		apt update
 
 	COPY \
 		--from=build \

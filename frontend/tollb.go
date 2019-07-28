@@ -263,7 +263,12 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 //
 func installPackages(base llb.State, apts []config.Apt) llb.State {
 	// adding two here already
-	base = base.Run(shf("apt update && apt install -y apt-transport-https ca-certificates gnupg-agent")).Root()
+	// TODO get rid of these afterwards
+	base = base.Run(shf(
+		`sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list && ` +
+			`apt update && ` +
+			`apt install -y apt-transport-https ca-certificates gnupg-agent`),
+	).Root()
 
 	// TODO - have all of this done through the binary
 	for _, apt := range apts {
