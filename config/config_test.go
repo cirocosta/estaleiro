@@ -36,7 +36,7 @@ var _ = Describe("Config", func() {
 		})
 
 		Context("having hcl problems", func() {
-
+			// TODO text hcl syntax problems
 		})
 
 		Context("having semantic problems", func() {

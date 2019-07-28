@@ -185,6 +185,8 @@ func aptUris(ctx context.Context, command string, packages []string) (uris []Apt
 
 		cmd = exec.CommandContext(ctx, "apt-get", append([]string{
 			"--print-uris",
+			"--no-install-recommends",
+			"--no-install-suggests",
 			command},
 			packages...)...)
 	)

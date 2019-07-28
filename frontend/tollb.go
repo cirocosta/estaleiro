@@ -265,8 +265,7 @@ func installPackages(base llb.State, apts []config.Apt) llb.State {
 	// adding two here already
 	base = base.Run(shf("apt update && apt install -y apt-transport-https ca-certificates gnupg-agent")).Root()
 
-	// TODO - have all of this hapenning in a single step
-
+	// TODO - have all of this done through the binary
 	for _, apt := range apts {
 		for _, repo := range apt.Repositories {
 			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
@@ -281,16 +280,27 @@ func installPackages(base llb.State, apts []config.Apt) llb.State {
 		}
 
 		if len(apt.Packages) != 0 {
-			pkgInstall := "apt update && apt install --no-install-recommends --no-install-suggests -y"
+			base = base.Run(llb.Args([]string{"apt", "update"})).Root()
 
-			for _, pkg := range apt.Packages {
-				pkgInstall = pkgInstall + " " + pkg.String()
+			pkgs := make([]string, len(apt.Packages))
+			for idx, pkg := range apt.Packages {
+				pkgs[idx] = pkg.String()
 			}
 
-			base = base.Run(sh(pkgInstall)).Root()
+			base = base.Run(
+				llb.Args(append([]string{
+					"/usr/local/bin/estaleiro",
+					"apt",
+				}, pkgs...)),
+				llb.AddMount(
+					"/usr/local/bin/estaleiro",
+					llb.Image(imageName),
+					llb.SourcePath("/usr/local/bin/estaleiro"),
+				),
+			).Root()
+
 			base = base.Run(sh("rm -rf /var/lib/apt/lists/*")).Root()
 		}
-
 	}
 
 	return base
