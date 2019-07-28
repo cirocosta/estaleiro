@@ -45,6 +45,8 @@ FROM release AS frontend
 
 FROM ubuntu AS ubuntu-with-estaleiro
 
+	RUN apt update
+
 	COPY \
 		--from=build \
 		/bin/estaleiro \

@@ -17,11 +17,6 @@ type DebControl struct {
 	//
 	Version string `yaml:"version"`
 
-	// Repository is a repository that can bring the particular version of
-	// the package that has been installed.
-	//
-	Repository string `yaml:"repository"`
-
 	// SourcePackage is a field that gets set for binary packages indicating
 	// what's the name of the source package that brings this one.
 	//

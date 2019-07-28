@@ -70,6 +70,8 @@ func (p *Scanner) Scan() (pkg DebControl, done bool, err error) {
 		switch key {
 		case "Package":
 			pkg.Name = value
+		case "Source":
+			pkg.SourcePackage = value
 		case "Version":
 			pkg.Version = value
 		}

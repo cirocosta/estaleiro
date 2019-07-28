@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 
+	"code.cloudfoundry.org/lager"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,11 +25,21 @@ type AptDebLocation struct {
 }
 
 type Package struct {
-	DebControl
-	Source AptDebLocation `yaml:"source,omitempty"`
+	DebControl `yaml:",inline"`
+	Source     AptDebLocation `yaml:"source,omitempty"`
+}
+
+var (
+	logger = lager.NewLogger("estaleiro")
+)
+
+func init() {
+	logger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
 }
 
 func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, err error) {
+	logger.Info("install-packages", lager.Data{"packages": packages})
+
 	locations, err := aptInstallPackagesUris(ctx, packages)
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -50,10 +61,59 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 		return
 	}
 
-	err = installDebianPackages(ctx, dir)
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() (err error) {
+		err = installDebianPackages(ctx, dir)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to install downloaded debian packages")
+			return
+		}
+
+		return
+	})
+
+	eg.Go(func() (err error) {
+		pkgs, err = createPackages(ctx, dir, locations)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to create packages bom")
+			return
+		}
+
+		return
+	})
+
+	err = eg.Wait()
+
+	return
+}
+
+func createPackages(ctx context.Context, dir string, locations []AptDebLocation) (pkgs []Package, err error) {
+	var eg *errgroup.Group
+
+	pkgs = make([]Package, len(locations))
+	eg, ctx = errgroup.WithContext(ctx)
+
+	for idx, location := range locations {
+		idx, location := idx, location
+
+		eg.Go(func() (err error) {
+			control, err := getDebianPackageInfo(ctx, path.Join(dir, location.Name))
+			if err != nil {
+				return
+			}
+
+			pkgs[idx] = Package{DebControl: control, Source: location}
+			return
+		})
+	}
+
+	err = eg.Wait()
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to install downloaded debian packages")
+			"failed retrieving debian packages info")
 		return
 	}
 
@@ -64,8 +124,12 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 	var (
 		cmd = exec.CommandContext(ctx,
 			"dpkg-deb", "--info", filename, "control")
-		out bytes.Buffer
+		out  bytes.Buffer
+		sess = logger.Session("get-deb-pkg-info", lager.Data{"filename": filename})
 	)
+
+	sess.Info("start")
+	defer sess.Info("finish")
 
 	cmd.Stderr = &out
 	cmd.Stdout = &out
@@ -80,17 +144,12 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 
 	var (
 		scanner = NewScanner(&out)
-		done    bool
 	)
-	pkg, done, err = scanner.Scan()
+
+	pkg, _, err = scanner.Scan()
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed scaning pkg info from `dpkg-deb --info` on %s", filename)
-		return
-	}
-
-	if done {
-		err = errors.Errorf("no package info retrieved for %s", filename)
 		return
 	}
 
@@ -177,6 +236,11 @@ func downloadDebianPackages(ctx context.Context, dir string, locations []AptDebL
 }
 
 func downloadDebianPackage(ctx context.Context, dir string, location AptDebLocation) (err error) {
+	sess := logger.Session("download-debian-package", lager.Data{"name": location.Name})
+
+	sess.Info("start")
+	defer sess.Info("finish")
+
 	out, err := os.Create(path.Join(dir, location.Name))
 	if err != nil {
 		err = errors.Wrapf(err,

@@ -3,6 +3,7 @@ module github.com/cirocosta/estaleiro
 go 1.12
 
 require (
+	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50
 	github.com/containerd/containerd v1.3.0-0.20190426060238-3a3f0aac8819
 	github.com/docker/distribution v2.7.1+incompatible
