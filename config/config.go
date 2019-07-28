@@ -85,12 +85,12 @@ type AptRepository struct {
 // Package is a debian package to retrieve from the currently installed set of
 // apt repos.
 //
-type Package struct {
+type DebControl struct {
 	Name    string `hcl:"name,label"`
 	Version string `hcl:"version,optional"`
 }
 
-func (p Package) String() string {
+func (p DebControl) String() string {
 	res := p.Name
 
 	if p.Version != "" {
@@ -158,7 +158,7 @@ type BaseImage struct {
 }
 
 type Apt struct {
-	Packages     []Package       `hcl:"package,block"`
+	Packages     []DebControl    `hcl:"package,block"`
 	Repositories []AptRepository `hcl:"repository,block"`
 	Keys         []AptKey        `hcl:"key,block"`
 }

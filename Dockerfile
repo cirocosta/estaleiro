@@ -41,3 +41,11 @@ FROM ubuntu AS release
 FROM release AS frontend
 
 	ENTRYPOINT [ "/usr/local/bin/estaleiro", "frontend" ]
+
+
+FROM ubuntu AS ubuntu-with-estaleiro
+
+	COPY \
+		--from=build \
+		/bin/estaleiro \
+		/usr/local/bin/estaleiro

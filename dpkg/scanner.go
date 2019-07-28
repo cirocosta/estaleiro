@@ -18,9 +18,9 @@ func NewScanner(reader io.Reader) Scanner {
 	}
 }
 
-func (p *Scanner) ScanAll() (pkgs []Package, err error) {
+func (p *Scanner) ScanAll() (pkgs []DebControl, err error) {
 	var (
-		pkg  Package
+		pkg  DebControl
 		done bool
 	)
 
@@ -42,7 +42,7 @@ func (p *Scanner) ScanAll() (pkgs []Package, err error) {
 	return
 }
 
-func (p *Scanner) Scan() (pkg Package, done bool, err error) {
+func (p *Scanner) Scan() (pkg DebControl, done bool, err error) {
 	for {
 		done = !p.scanner.Scan()
 		if done {

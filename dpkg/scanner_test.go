@@ -16,9 +16,9 @@ var _ = Describe("Dpkg", func() {
 
 		var (
 			content string
-			pkg     dpkg.Package
 			done    bool
 			err     error
+			pkg     dpkg.DebControl
 			scanner dpkg.Scanner
 		)
 
@@ -67,7 +67,7 @@ var _ = Describe("Dpkg", func() {
 
 			It("has package fields correctly filled", func() {
 				Expect(pkg).NotTo(BeNil())
-				Expect(pkg).To(Equal(dpkg.Package{
+				Expect(pkg).To(Equal(dpkg.DebControl{
 					Name:    "software-properties-common",
 					Version: "0.96.24.32.9",
 				}))
@@ -92,7 +92,7 @@ var _ = Describe("Dpkg", func() {
 
 			It("retrieves the contents of just the first package", func() {
 				Expect(pkg).NotTo(BeNil())
-				Expect(pkg).To(Equal(dpkg.Package{
+				Expect(pkg).To(Equal(dpkg.DebControl{
 					Name:    "binutils-x86-64-linux-gnu",
 					Version: "2.30-21ubuntu1~18.04.2",
 				}))
@@ -114,7 +114,7 @@ var _ = Describe("Dpkg", func() {
 
 				It("retrieves the contents of just the second package", func() {
 					Expect(pkg).NotTo(BeNil())
-					Expect(pkg).To(Equal(dpkg.Package{
+					Expect(pkg).To(Equal(dpkg.DebControl{
 						Name:    "software-properties-common",
 						Version: "0.96.24.32.9",
 					}))

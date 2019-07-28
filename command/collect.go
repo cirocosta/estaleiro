@@ -15,7 +15,7 @@ type collectCommand struct {
 	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
 }
 
-type Packages []dpkg.Package
+type Packages []dpkg.DebControl
 
 func (p Packages) ToYAML() (res []byte) {
 	var err error
@@ -29,7 +29,7 @@ func (p Packages) ToYAML() (res []byte) {
 }
 
 func (c *collectCommand) Execute(args []string) (err error) {
-	var packages []dpkg.Package
+	var packages []dpkg.DebControl
 
 	input, err := reader(c.Input)
 	if err != nil {

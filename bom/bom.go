@@ -1,9 +1,9 @@
 package bom
 
 import (
-	"github.com/cirocosta/estaleiro/dpkg"
 	"time"
 
+	"github.com/cirocosta/estaleiro/dpkg"
 	"gopkg.in/yaml.v3"
 )
 
@@ -13,9 +13,10 @@ type Bom struct {
 	Version     string    `yaml:"version"`
 	GeneratedAt time.Time `yaml:"generated_at"`
 
-	BaseImage BaseImage      `yaml:"base_image"`
-	Files     []File         `yaml:"files"`
-	Packages  []dpkg.Package `yaml:"packages"`
+	BaseImage BaseImage `yaml:"base_image"`
+
+	Files    []File         `yaml:"added_files"`
+	Packages []dpkg.Package `yaml:"added_packages"`
 }
 
 type Source struct {
@@ -30,8 +31,9 @@ type File struct {
 }
 
 type BaseImage struct {
-	Name   string `yaml:"name"`
-	Digest string `yaml:"digest"`
+	Name     string         `yaml:"name"`
+	Digest   string         `yaml:"digest"`
+	Packages []dpkg.Package `yaml:"packages"`
 }
 
 func (b Bom) ToYAML() (res []byte) {

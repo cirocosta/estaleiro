@@ -8,6 +8,9 @@ install:
 test:
 	go test -v ./...
 
+ubuntu:
+	DOCKER_BUILDKIT=1 docker build -t cirocosta/estaleiro-with-ubuntu .
+	docker run -it cirocosta/estaleiro-with-ubuntu /bin/bash
 
 # TODO include estaleiro-commit through `--var`
 run:
@@ -37,7 +40,7 @@ buildctl-gateway-integration:
 
 
 docker-integration:
-	docker build \
+	DOCKER_BUILDKIT=true docker build \
 		--tag a \
 		--build-arg estaleiro-commit=$(GIT_COMMIT) \
 		--file ./estaleiro.hcl \
