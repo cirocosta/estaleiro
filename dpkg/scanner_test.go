@@ -68,8 +68,9 @@ var _ = Describe("Dpkg", func() {
 			It("has package fields correctly filled", func() {
 				Expect(pkg).NotTo(BeNil())
 				Expect(pkg).To(Equal(dpkg.DebControl{
-					Name:    "software-properties-common",
-					Version: "0.96.24.32.9",
+					Name:          "software-properties-common",
+					Version:       "0.96.24.32.9",
+					SourcePackage: "software-properties",
 				}))
 			})
 		})
@@ -93,8 +94,9 @@ var _ = Describe("Dpkg", func() {
 			It("retrieves the contents of just the first package", func() {
 				Expect(pkg).NotTo(BeNil())
 				Expect(pkg).To(Equal(dpkg.DebControl{
-					Name:    "binutils-x86-64-linux-gnu",
-					Version: "2.30-21ubuntu1~18.04.2",
+					Name:          "binutils-x86-64-linux-gnu",
+					Version:       "2.30-21ubuntu1~18.04.2",
+					SourcePackage: "binutils",
 				}))
 			})
 
@@ -115,8 +117,9 @@ var _ = Describe("Dpkg", func() {
 				It("retrieves the contents of just the second package", func() {
 					Expect(pkg).NotTo(BeNil())
 					Expect(pkg).To(Equal(dpkg.DebControl{
-						Name:    "software-properties-common",
-						Version: "0.96.24.32.9",
+						Name:          "software-properties-common",
+						Version:       "0.96.24.32.9",
+						SourcePackage: "software-properties",
 					}))
 				})
 
