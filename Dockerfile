@@ -65,6 +65,7 @@ FROM ubuntu AS deb-sample
 	RUN mkdir -p /var/lib/estaleiro/deb
 	WORKDIR /var/lib/estaleiro/deb
 
+	# download everything
 	RUN set -x && \
 		apt-get install \
 			--print-uris --no-install-recommends --no-install-suggests \
@@ -72,6 +73,9 @@ FROM ubuntu AS deb-sample
 			| grep 'http' | cut -d "'" -f2 > uris && \
 		wget -i uris
 
+	# could perform a source retrieval here too
+
+	# generate a local packages index
 	RUN set -x && \
 		dpkg-scanpackages . | gzip -c9  > Packages.gz && \
 		echo "deb [trusted=yes] file:$(pwd) ./" > /etc/apt/sources.list && \

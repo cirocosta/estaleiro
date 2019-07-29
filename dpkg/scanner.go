@@ -74,6 +74,12 @@ func (p *Scanner) Scan() (pkg DebControl, done bool, err error) {
 			pkg.SourcePackage = value
 		case "Version":
 			pkg.Version = value
+		case "Architecture":
+			pkg.Architecture = value
+		case "Maintainer":
+			pkg.Maintainer = value
+		case "Description":
+			pkg.Description = value
 		}
 	}
 

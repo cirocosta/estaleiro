@@ -71,6 +71,9 @@ var _ = Describe("Dpkg", func() {
 					Name:          "software-properties-common",
 					Version:       "0.96.24.32.9",
 					SourcePackage: "software-properties",
+					Architecture:  "all",
+					Maintainer:    "Michael Vogt <michael.vogt@ubuntu.com>",
+					Description:   "manage the repositories that you install software from (common)",
 				}))
 			})
 		})
@@ -97,6 +100,9 @@ var _ = Describe("Dpkg", func() {
 					Name:          "binutils-x86-64-linux-gnu",
 					Version:       "2.30-21ubuntu1~18.04.2",
 					SourcePackage: "binutils",
+					Architecture:  "amd64",
+					Maintainer:    "Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>",
+					Description:   "GNU binary utilities, for x86-64-linux-gnu target",
 				}))
 			})
 
@@ -120,6 +126,9 @@ var _ = Describe("Dpkg", func() {
 						Name:          "software-properties-common",
 						Version:       "0.96.24.32.9",
 						SourcePackage: "software-properties",
+						Architecture:  "all",
+						Maintainer:    "Michael Vogt <michael.vogt@ubuntu.com>",
+						Description:   "manage the repositories that you install software from (common)",
 					}))
 				})
 
