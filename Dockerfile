@@ -54,6 +54,8 @@ FROM ubuntu AS ubuntu-with-estaleiro
 		/bin/estaleiro \
 		/usr/local/bin/estaleiro
 
+	RUN estaleiro apt btrfs-tools 
+
 
 
 FROM ubuntu AS deb-sample

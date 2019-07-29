@@ -14,7 +14,6 @@ ubuntu:
 			--tag cirocosta/estaleiro-with-ubuntu \
 			--target ubuntu-with-estaleiro \
 			.
-	docker run --entrypoint estaleiro cirocosta/estaleiro-with-ubuntu apt btrfs-tools
 
 
 # TODO include estaleiro-commit through `--var`
