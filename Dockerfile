@@ -53,3 +53,32 @@ FROM ubuntu AS ubuntu-with-estaleiro
 		--from=build \
 		/bin/estaleiro \
 		/usr/local/bin/estaleiro
+
+
+
+FROM ubuntu AS deb-sample
+
+	RUN set -x && \
+		apt update && \
+		apt install -y wget dpkg-dev
+
+	RUN mkdir -p /var/lib/estaleiro/deb
+	WORKDIR /var/lib/estaleiro/deb
+
+	RUN set -x && \
+		apt-get install \
+			--print-uris --no-install-recommends --no-install-suggests \
+				btrfs-tools \
+			| grep 'http' | cut -d "'" -f2 > uris && \
+		wget -i uris
+
+	RUN set -x && \
+		dpkg-scanpackages . | gzip -c9  > Packages.gz && \
+		echo "deb [trusted=yes] file:$(pwd) ./" > /etc/apt/sources.list && \
+		rm -rf /var/lib/apt/lists
+
+	RUN set -x && \
+		apt update -y && \
+		apt install --no-install-recommends --no-install-suggests -y \
+			btrfs-tools
+

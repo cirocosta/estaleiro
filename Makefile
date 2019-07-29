@@ -10,7 +10,7 @@ test:
 
 ubuntu:
 	DOCKER_BUILDKIT=1 docker build -t cirocosta/estaleiro-with-ubuntu .
-	docker run --entrypoint estaleiro cirocosta/estaleiro-with-ubuntu apt vim
+	docker run --entrypoint estaleiro cirocosta/estaleiro-with-ubuntu apt btrfs-tools
 
 
 # TODO include estaleiro-commit through `--var`
