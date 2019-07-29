@@ -9,7 +9,11 @@ test:
 	go test -v ./...
 
 ubuntu:
-	DOCKER_BUILDKIT=1 docker build -t cirocosta/estaleiro-with-ubuntu .
+	DOCKER_BUILDKIT=1 \
+		docker build \
+			--tag cirocosta/estaleiro-with-ubuntu \
+			--target ubuntu-with-estaleiro \
+			.
 	docker run --entrypoint estaleiro cirocosta/estaleiro-with-ubuntu apt btrfs-tools
 
 

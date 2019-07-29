@@ -41,17 +41,20 @@ func init() {
 func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, err error) {
 	logger.Info("install-packages", lager.Data{"packages": packages})
 
-	locations, err := aptInstallPackagesUris(ctx, packages)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to install packages %v", packages)
-		return
-	}
-
 	dir, err := ioutil.TempDir("", "estaleiro-deb-packages")
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed creating temp directory for debian packages")
+		return
+	}
+
+	// TODO enable this
+	// defer os.RemoveAll(dir)
+
+	locations, err := gatherDebLocations(ctx, packages)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to install packages %v", packages)
 		return
 	}
 
@@ -62,31 +65,65 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 		return
 	}
 
-	eg, ctx := errgroup.WithContext(ctx)
+	pkgs, err = createPackages(ctx, dir, locations)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to create packages bom")
+		return
+	}
 
-	eg.Go(func() (err error) {
-		err = installDebianPackages(ctx, dir)
+	err = createDebianRepositoryIndex(dir, pkgs)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed creating debian repository index")
+		return
+	}
+
+	err = forceLocalSourcesList(ctx, dir)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to force apt to use local repositories")
+	}
+
+	err = installDebianPackages(ctx, pkgs)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to install downloaded debian packages")
+		return
+	}
+
+	return
+}
+
+func createDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
+	var buffer bytes.Buffer
+
+	for _, pkg := range pkgs {
+		_, err = buffer.WriteString(pkg.DebControl.ControlString())
 		if err != nil {
 			err = errors.Wrapf(err,
-				"failed to install downloaded debian packages")
+				"failed writing package control string to memory buffer")
 			return
 		}
+	}
 
+	filename := path.Join(dir, "Releases")
+
+	f, err := os.Create(filename)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed creating Releases file in %s",
+			filename)
 		return
-	})
+	}
+	defer f.Close()
 
-	eg.Go(func() (err error) {
-		pkgs, err = createPackages(ctx, dir, locations)
-		if err != nil {
-			err = errors.Wrapf(err,
-				"failed to create packages bom")
-			return
-		}
-
+	_, err = io.Copy(f, &buffer)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to write control string buffer to file %s", filename)
 		return
-	})
-
-	err = eg.Wait()
+	}
 
 	return
 }
@@ -106,6 +143,9 @@ func createPackages(ctx context.Context, dir string, locations []AptDebLocation)
 				return
 			}
 
+			control.Filename = location.Name
+			control.Size = location.Size
+
 			ref := control.Name + "=" + control.Version
 			sourceLocations, err := aptSourcePackageUris(ctx, ref)
 			if err != nil {
@@ -120,6 +160,7 @@ func createPackages(ctx context.Context, dir string, locations []AptDebLocation)
 				Location:   location,
 				Source:     sourceLocations,
 			}
+
 			return
 		})
 	}
@@ -170,22 +211,92 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 	return
 }
 
-func installDebianPackages(ctx context.Context, dir string) (err error) {
-	var cmd = exec.CommandContext(ctx,
-		"dpkg", "--install", "--recursive", dir)
-
-	out, err := cmd.CombinedOutput()
+// forceLocalSource ensures that we're only able to retrieve debian packages
+// from the directory where we downloaded our stuff to so that no other
+// repositories can provide those (which wouldn't be appropriately tracked).
+//
+// as this involves performing changes in the filesystem, this may lead to a
+// system without proper configuration for `apt`.
+//
+// ps.: backup files/dirs are kept with `-backup` suffixed names.
+//
+func forceLocalSourcesList(ctx context.Context, repositoryDir string) (err error) {
+	err = os.Rename("etc/apt/sources.d", "/etc/apt/sources-d-backup")
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to install debian packages from directory %s - %s",
-			dir, string(out))
+			"failed to create backup dir for `sources.d`")
+		return
+	}
+
+	err = os.Rename("etc/apt/sources.list", "/etc/apt/sources-list-backup")
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to create backup dir for `sources.list`")
+		return
+	}
+
+	err = ioutil.WriteFile("/etc/apt/sources.list",
+		[]byte("deb [trusted=yes] file:"+repositoryDir+" ./"),
+		0644,
+	)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to write local apt source repository to sources.list")
+		return
+	}
+
+	err = removeAptLists()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to remove apt repository listing")
+		return
+	}
+
+	err = updateApt(ctx)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"couldn't update apt repositories")
 		return
 	}
 
 	return
 }
 
-func aptInstallPackagesUris(ctx context.Context, packages []string) ([]AptDebLocation, error) {
+func removeAptLists() error {
+	return os.RemoveAll("/var/lib/apt/lists")
+}
+
+func updateApt(ctx context.Context) (err error) {
+	var cmd = exec.CommandContext(ctx, "apt", "update")
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to perform `apt update` %s", string(out))
+		return
+	}
+
+	return
+}
+
+func installDebianPackages(ctx context.Context, pkgs []Package) (err error) {
+	args := []string{"install", "--no-install-recommends", "--no-install-suggests"}
+
+	for _, pkg := range pkgs {
+		args = append(args, pkg.Name+"="+pkg.Version)
+	}
+
+	out, err := exec.CommandContext(ctx, "apt", args...).CombinedOutput()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to install packages %v - %s", args[3:], string(out))
+		return
+	}
+
+	return
+}
+
+func gatherDebLocations(ctx context.Context, packages []string) ([]AptDebLocation, error) {
 	return aptUris(ctx, "install", packages)
 }
 

@@ -80,6 +80,25 @@ func (p *Scanner) Scan() (pkg DebControl, done bool, err error) {
 			pkg.Maintainer = value
 		case "Description":
 			pkg.Description = value
+		case "Depends":
+			pkg.Depends = value
+		case "Pre-Depends":
+			pkg.PreDepends = value
+		case "Recommends":
+			pkg.Recommends = value
+		case "Suggests":
+			pkg.Suggests = value
+		case "Breaks":
+			pkg.Breaks = value
+		case "Conflicts":
+			pkg.Conflicts = value
+		case "Provides":
+			pkg.Provides = value
+		case "Replaces":
+			pkg.Replaces = value
+		case "Enhances":
+			pkg.Enhances = value
+
 		}
 	}
 
