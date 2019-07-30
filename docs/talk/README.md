@@ -144,10 +144,28 @@ building container images today, we can summarize the creation of that image as:
 2. installing some dependencies
 3. configuring some runtime parameters (environment variables, volumes, etc)
 
+
+
+```
+
+      local files -----------------.
+                                   |
+           +                       |
+                                   |
+      debian packages -------------+---(magic building)---==> container image
+                                   |
+           +                       |
+                                   |
+      container runtime configs ---*
+
+
+```
+
+
 i.e., regardless of how we get to that final container image, all we have to do
 is get those pieces in, install some packages and configure some stuff.
 
-What it we tried to replicate what a Dockerfile does with bash?
+Now, what it we tried to replicate what a Dockerfile does, but with `docker` and `bash`, instead?
 
 
 ## a primitive container image builder
@@ -187,6 +205,29 @@ Nest that multiple times, and one can have any Dockerfile built.
 
 The good about Dockerfiles though is that you don't need to know any of that
 stuff - just use the Dockerfile syntax and you're good.
+
+
+
+
+
+```
+
+./linux-rc
+  |
+  |       .--------- ubuntu:bionic ------------------
+  |       |
+  *--- mounted --> /linux-rc.tgz
+          |
+          |
+          |   /bin/sh -c "tar xzf /linux-rc.tgz -C /usr/local"
+          |
+          |
+          *------------------------------------------
+
+
+              ==> once execution finishes
+```
+
 
 
 
