@@ -322,11 +322,12 @@ The good about Dockerfiles though is that you don't need to know any of that
 stuff - just use the Dockerfile syntax and you're good.
 
 
+
 ## compilers 
 
-
-If we then think of what `docker build` really is under the hood, it's not very
-different from a traditional compiler:
+If we compare Dockerfiles to regular compiled programming languages, and for a
+moment, assume that the process of going from a Dockerfile to a container image
+is a compilation process, we could start drawing some quite neat analogies.
 
 ```
 
@@ -336,20 +337,74 @@ different from a traditional compiler:
                    |            |
                    *------------*
 
-   Dockerfile       docker engine      container image
+       c            C compiler           binary
+
 
 ```
 
 
+As there's a clear distinction between the types of jobs that the compiler do in
+different phases, and that innovation can happen differently in each front, some
+compiler infrastructures like LLVM separate that quite clearly in two fronts,
+with a common "lower level language" in the middle (the intermediary
+representation - IR):
 
-Going deep into the analogy, if we were to create something similar that takes
-some file that describes how to get to an image and does so, we could think
-about splitting it into multiple parts:
+- the `frontend`, dealing with syntax and semantics
+- the `backend`, dealing with the process of optimizing the code and creating
+  the final output.
+
+
 
 ```
 
-    source --->  frontend --->  backend ---> container image
-      
+    source ---> frontend  ----> IR  ---> backend  ---> output
+
+
+   C code       clang       LLVM IR      LLVM          binary
+
+```
+
+
+That way,  C language designers can develop code that makes the C language
+specification move forwards, not having to deal with the dragons of optimizing
+the compilation steps, alongside Fortran developers, who target the same
+intermediary representation, that can benefit from the same backend.
+
+
+
+
+```
+
+    source ---> frontend  ----> IR  ---> backend  ---> output
+
+
+   C code       clang       LLVM IR      LLVM          binary
+   FORTRAN      flang
+   Swift        ...
+   Rust         ...
+   ...          ...
+
+
+```
+
+An, that's what's hapenning right now for container images.
+
+
+## buildkit
+
+Buildkit comes with the same mindset as LLVM - provide a common infrastructure
+for building container image, separating the concerns of developing frontends
+from the backend infrastructure.
+
+
+```
+
+
+    source -------> frontend  ----> IR  ---> backend  ---> output
+
+
+    Dockerfile    dockerfile.v0    LLB      buildkitd    containerimage
+
 
 ```
 
