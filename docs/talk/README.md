@@ -45,33 +45,39 @@ through. Thinking of it as a Makefile, that'd look like:
 ```Makefile
 customer_artifact: download_from_pivnet
 
+
 download_from_pivnet: artifact_with_osl_file
+
 
 artifact_with_osl_file: container_image_that_is_scannable
 
+
 container_image_that_is_scannable:
-  echo "¯\_(ツ)_/¯"
+    echo "¯\_(ツ)_/¯"
 ```
 
-
-With a single goal in mind - shipping Concourse container images to customers
-running Kubernetes -, we can see that there's a problem to solve right in the
-bottom of the preparation of our artifact to be distributed:
+That is,
 
 
-
-
-1. to get that to customers, it needs to be on PivNet,
+1. **to get that to customers**, *it needs to be on PivNet,*
   - so that we can attest what has been distributed to who
 
-2. to have it on PivNet, it needs an OSL file
+2. **to have it on PivNet**, *it needs an OSL file*
   - so that we can disitribute the copyright and prove that we don't have any
     licenses that would hurt our customers
 
-3. to get the OSL file, it needs to let norsk know where to scan source code
+3. **to get the OSL file**, *it needs to let norsk know where to scan source code*
   - so that it can know what are those licenses, and gather copyright info
 
-4. to let Norsk know where to scan, it needs to provide a bill of materials
+4. **to let Norsk know where to scan**, *it needs to provide a bill of materials*
+
+Thus, with a single goal in mind - shipping Concourse container images to
+customers running Kubernetes -, we can see that there's a problem to solve right
+in the bottom of the preparation of our artifact to be distributed:
+
+
+
+
 
 
 Naturally, if the bottommost - generating a container image that is scannable -
