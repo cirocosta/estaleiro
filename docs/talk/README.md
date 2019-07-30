@@ -60,40 +60,35 @@ That is,
 
 
 1. **to get that to customers**, *it needs to be on PivNet,*
-  - so that we can attest what has been distributed to who
+> so that we can attest what has been distributed to who
 
 2. **to have it on PivNet**, *it needs an OSL file*
-  - so that we can disitribute the copyright and prove that we don't have any
-    licenses that would hurt our customers
+> so that we can disitribute the copyright and prove that we don't have any
+> licenses that would hurt our customers
 
 3. **to get the OSL file**, *it needs to let norsk know where to scan source code*
-  - so that it can know what are those licenses, and gather copyright info
+> so that it can know what are those licenses, and gather copyright info
 
-4. **to let Norsk know where to scan**, *it needs to provide a bill of materials*
+4. **to let Norsk know where to scan**, *it needs to `¯\_(ツ)_/¯`*
+
 
 Thus, with a single goal in mind - shipping Concourse container images to
-customers running Kubernetes -, we can see that there's a problem to solve right
-in the bottom of the preparation of our artifact to be distributed:
+customers running Kubernetes -, we can see that if at the very bottom of it -
+creating a container image that is scannable -, there's friction, the whole
+process can get delayed, impacting all of the rest of the process of getting the
+great features that the team developed to the hands of our customers.
 
 
-
-
-
-
-Naturally, if the bottommost - generating a container image that is scannable -
-impacts the rest of the process, that means that we can't get the great features
-that our teams produce to the hand of our customers.
-
-
-To get real, let's look at one of the container images that we need to scan to
-ship Concourse.
-
+To make things more concrete, let's look at one of the container images that we
+need to scan to ship Concourse.
 
 
 ## the Concourse container image
 
-As an example of a container image that we'd like to ship, let's look at how
-`concourse/concourse` is created (with few modifications):
+Although Concourse has more then 10 container images that we publish on
+DockerHub as of today that are consumed by OSS folks, we can look at the case of
+`concourse/concourse` - the image that provides the Concourse binaries with all
+bateries included:
 
 
 ```dockerfile
