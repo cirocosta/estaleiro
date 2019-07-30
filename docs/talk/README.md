@@ -250,7 +250,7 @@ ADD ./file.txt /file.txt
                     |    │   └── test.conf
                     |    ├── var
      file.txt-------+----└── mnt
-                    |        └── test.conf (readonly mount)
+                    |        └── file.txt (readonly mount)
                     |
                     |
                     |   --> /bin/sh -c cp /mnt/test.conf /file.txt
