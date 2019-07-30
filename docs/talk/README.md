@@ -194,19 +194,6 @@ main () {
 
 (see https://github.com/cirocosta/sample-manual-dockerfile)
 
-Although that's quite primitive, the point is that all that it takes is to have
-a way of:
-
-1. creating a container from a given image
-2. mutating that filesystem
-3. taking a snapshot of that filesystem at a given point in time
-
-Nest that multiple times, and one can have any Dockerfile built. 
-
-The good about Dockerfiles though is that you don't need to know any of that
-stuff - just use the Dockerfile syntax and you're good.
-
-
 
 
 ```
@@ -322,7 +309,49 @@ RUN apt update && apt install -y vim
 ```
 
 
+Although this might seem quite primitive, the point is that all that it takes is
+to have a way of:
 
+1. creating a container from a given image
+2. mutating that filesystem
+3. taking a snapshot of that filesystem at a given point in time
+
+Nest that multiple times, and one can have any Dockerfile built. 
+
+The good about Dockerfiles though is that you don't need to know any of that
+stuff - just use the Dockerfile syntax and you're good.
+
+
+## compilers 
+
+
+If we then think of what `docker build` really is under the hood, it's not very
+different from a traditional compiler:
+
+```
+
+                   .------------.
+                   |            |
+      source ----> |  compiler  | ------>  output
+                   |            |
+                   *------------*
+
+   Dockerfile       docker engine      container image
+
+```
+
+
+
+Going deep into the analogy, if we were to create something similar that takes
+some file that describes how to get to an image and does so, we could think
+about splitting it into multiple parts:
+
+```
+
+    source --->  frontend --->  backend ---> container image
+      
+
+```
 
 
 ## installing packages
