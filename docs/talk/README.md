@@ -4,9 +4,14 @@
 
 - [rethinking the way container images are built](#rethinking-the-way-container-images-are-built)
   - [the Concourse container image](#the-concourse-container-image)
+  - [what's hard about dockerfiles](#whats-hard-about-dockerfiles)
+    - [1. tracking what was added](#1-tracking-what-was-added)
+    - [2. ensuring consistenty](#2-ensuring-consistenty)
+  - [the bare minimum of building container images](#the-bare-minimum-of-building-container-images)
   - [a primitive container image builder](#a-primitive-container-image-builder)
   - [compilers](#compilers)
   - [buildkit](#buildkit)
+  - [a frontend for Concourse](#a-frontend-for-concourse)
   - [installing packages](#installing-packages)
   - [container image as an artifact](#container-image-as-an-artifact)
   - [what enabled this](#what-enabled-this)
@@ -153,6 +158,59 @@ FROM ubuntu
   STOPSIGNAL SIGUSR2
   ENTRYPOINT ["dumb-init", "/usr/local/concourse/bin/concourse"]
 ```
+
+
+
+## what's hard about dockerfiles
+
+While dockerfiles are great for the versatility that they provide, some
+challanges start arising for Rachel.
+
+### 1. tracking what was added
+
+Although the above Dockerfile seems very straightforward, it presents some
+difficulties when it comes to preciselly telling what's there:
+
+- what was the SHA of that tarball that brought contents?
+- how can I tie that tarball to source code?
+- what are the versions of those packages?
+- can I get the source of those packages?
+- what debian repository brought those packages?
+
+It turns out that due to the extreme versatility of a Dockerfile, it's very
+tough for a company to get that information precisely.
+
+```
+
+     concourse/concourse
+    .-------------------.
+    | 
+    |   btrfs-progs                           version=?
+    |   btrfs-tools                           sha=?
+    |   ca-certificates                       repository?
+    |   /usr/local/concourse/bin/concourse    tarball_sha=?
+    |   /usr/local/concourse/bin/gdn          source=?
+    |   ...
+
+
+```
+
+### 2. ensuring consistenty
+
+While it's known that some best practices exist around creating container
+images, Dockerfiles lack ways of enforcing those (or at least letting the user
+known that they are missing something out).
+
+Some examples:
+
+- ensuring all container images are built from a particular base image
+- guaranteeing that packages added have their `deb-src` counterpart providing
+  the source code
+- enforcing the use of non-root users
+- avoiding compile-time dependencies
+
+
+## the bare minimum of building container images
 
 
 If we erase from our minds the fact that `Dockerfile` is the de-facto way of
@@ -408,6 +466,7 @@ intermediary representation, that can benefit from the same backend.
 An, that's what's hapenning right now for container images.
 
 
+
 ## buildkit
 
 Buildkit comes with the same mindset as LLVM - provide a common infrastructure
@@ -446,6 +505,9 @@ final container image -, that is:
 Aside from that, just like a compiler backend, it takes care of all of the
 optimizations that would be hard for us to implement in our very primiter
 builder - caching and running steps in parallel.
+
+
+## a frontend for Concourse
 
 
 ## installing packages
