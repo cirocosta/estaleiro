@@ -421,10 +421,31 @@ from the backend infrastructure.
     source -------> frontend  ----> IR  ---> backend  ---> output
 
 
-    Dockerfile    dockerfile.v0    LLB      buildkitd    containerimage
 
+    Dockerfile    dockerfile.v0     LLB      buildkitd    containerimage
+
+     
+
+    |                           |    |                    |
+    *---------------------------*    *--------------------*
+
+     understanding what to build      figuring out how to build
+                                       +  actually doing so
 
 ```
+
+That backend infrastructure leverages those exact same three concepts that we talked
+before when we were creating the primitive image builder - using containers that
+run on top of snapshots to mutate their state and advance in the creation of a
+final container image -, that is:
+
+1. creating a container from a given image
+2. mutating that filesystem
+3. taking a snapshot of that filesystem at a given point in time
+
+Aside from that, just like a compiler backend, it takes care of all of the
+optimizations that would be hard for us to implement in our very primiter
+builder - caching and running steps in parallel.
 
 
 ## installing packages
