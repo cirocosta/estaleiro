@@ -209,23 +209,116 @@ stuff - just use the Dockerfile syntax and you're good.
 
 
 
-
 ```
 
-./linux-rc
-  |
-  |       .--------- ubuntu:bionic ------------------
-  |       |
-  *--- mounted --> /linux-rc.tgz
-          |
-          |
-          |   /bin/sh -c "tar xzf /linux-rc.tgz -C /usr/local"
-          |
-          |
-          *------------------------------------------
+FROM ubuntu:bionic
 
 
-              ==> once execution finishes
+    1. pull initial root filesystem (ubuntu:bionic)
+
+
+
+    FS_1: ubuntu
+
+                    .--------------------
+                    |
+                    |    .
+                    |    ├── etc
+                    |    │   └── test.conf
+                    |    └── var
+                    |
+
+
+
+
+ADD ./file.txt /file.txt
+
+
+    1. create a container from a snapshot `FS_1`
+      1.1 mount `file.txt` inside the container
+    2. copy the file to the desired location
+
+
+    FS_2 = snapshot(FS_1)
+
+
+              
+                    .--------------------
+                    |
+                    |    .
+                    |    ├── etc
+                    |    │   └── test.conf
+                    |    ├── var
+     file.txt------------└── mnt
+                    |        └── test.conf (readonly mount)
+                    |
+                    |
+                    |   --> /bin/sh -c cp /mnt/test.conf /file.txt
+                    |
+                    |
+
+
+
+                    .--------------------
+                    |
+                    |    .
+                    |    ├── etc
+                    |    │   └── test.conf
+                    |    ├── file.txt  <<<< new file! 
+                    |    └── var
+                    |
+
+
+              >> we just mutated the filesystem.
+
+
+
+RUN apt update && apt install -y vim
+
+
+
+    FS_3 = snapshot(FS_2)
+
+
+                    .--------------------
+                    |
+                    |    .
+                    |    ├── etc
+                    |    │   └── test.conf
+                    |    ├── file.txt  <<<< new file! 
+                    |    └── var
+                    |
+                    |
+                    |   --> /bin/sh -c apt update && apt install -y vim
+                    |
+
+
+      
+                ==> mutates the filesystem, adding the contents of the
+                    vim package and some other `apt` stuff
+
+
+
+                    .--------------------
+                    |
+                    |    .
+                    |    ├── etc
+                    |    │   └── test.conf
+                    |    ├── file.txt
+                    |    ├── usr                  //
+                    |    │   └── bin              //  
+                    |    │        └── vim         //   new!!!1
+                    |    └── var
+                    |        └── lib              //
+                    |             └── apt         //
+                    |                  └── lists  //  neww!!1
+                    |
+
+
+
+                ==> take a snapshot of this final stage and distribute it
+
+
 ```
 
 
