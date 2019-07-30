@@ -1,3 +1,21 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [rethinking the way container images are built](#rethinking-the-way-container-images-are-built)
+  - [the Concourse container image](#the-concourse-container-image)
+  - [a primitive container image builder](#a-primitive-container-image-builder)
+  - [compilers](#compilers)
+  - [buildkit](#buildkit)
+  - [installing packages](#installing-packages)
+  - [container image as an artifact](#container-image-as-an-artifact)
+  - [what enabled this](#what-enabled-this)
+  - [from syntax to container image](#from-syntax-to-container-image)
+    - [snapshots](#snapshots)
+  - [concourse images as an example](#concourse-images-as-an-example)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # rethinking the way container images are built
 
 Hey,
