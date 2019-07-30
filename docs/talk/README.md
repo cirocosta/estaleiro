@@ -249,7 +249,7 @@ ADD ./file.txt /file.txt
                     |    ├── etc
                     |    │   └── test.conf
                     |    ├── var
-     file.txt------------└── mnt
+     file.txt-------+----└── mnt
                     |        └── test.conf (readonly mount)
                     |
                     |
