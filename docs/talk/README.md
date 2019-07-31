@@ -11,13 +11,14 @@
   - [a primitive container image builder](#a-primitive-container-image-builder)
   - [compilers](#compilers)
   - [buildkit](#buildkit)
-  - [a frontend for Concourse](#a-frontend-for-concourse)
+  - [a frontend for building a concourse image](#a-frontend-for-building-a-concourse-image)
   - [installing packages](#installing-packages)
   - [container image as an artifact](#container-image-as-an-artifact)
   - [what enabled this](#what-enabled-this)
   - [from syntax to container image](#from-syntax-to-container-image)
     - [snapshots](#snapshots)
   - [concourse images as an example](#concourse-images-as-an-example)
+  - [references](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
