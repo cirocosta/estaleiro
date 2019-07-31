@@ -126,40 +126,40 @@ FROM ubuntu:bionic AS ubuntu
 
 FROM ubuntu AS assets
 
-  # retrieve the concourse tarball that contains all of the concourse
-  # binaries and other necessary artifacts.
-  #
-  COPY ./linux-rc/*.tgz /tmp
-  RUN tar xzf /tmp/*tgz -C /usr/local
+        # retrieve the concourse tarball that contains all of the concourse
+        # binaries and other necessary artifacts.
+        #
+        COPY ./linux-rc/*.tgz /tmp
+        RUN tar xzf /tmp/*tgz -C /usr/local
 
 
 FROM ubuntu
 
-  # some environment variables (there are more)
-  ENV CONCOURSE_SESSION_SIGNING_KEY     /concourse-keys/session_signing_key
-  ENV CONCOURSE_TSA_AUTHORIZED_KEYS     /concourse-keys/authorized_worker_keys
+        # some environment variables (there are more)
+        ENV CONCOURSE_SESSION_SIGNING_KEY     /concourse-keys/session_signing_key
+        ENV CONCOURSE_TSA_AUTHORIZED_KEYS     /concourse-keys/authorized_worker_keys
 
 
 
-  # volume for non-aufs/etc. mount for baggageclaim's driver
-  VOLUME /worker-state
+        # volume for non-aufs/etc. mount for baggageclaim's driver
+        VOLUME /worker-state
 
 
-  # packages needed at runtime
-  RUN apt update && apt install -y \
-      btrfs-tools \
-      ca-certificates \
-      dumb-init \
-      iproute2 \
-      file
+        # packages needed at runtime
+        RUN apt update && apt install -y \
+            btrfs-tools \
+            ca-certificates \
+            dumb-init \
+            iproute2 \
+            file
 
 
-  # retrieve the bits that were extracted in the previous step.
-  #
-  COPY --from=assets /usr/local/concourse /usr/local/concourse
+        # retrieve the bits that were extracted in the previous step.
+        #
+        COPY --from=assets /usr/local/concourse /usr/local/concourse
 
-  STOPSIGNAL SIGUSR2
-  ENTRYPOINT ["dumb-init", "/usr/local/concourse/bin/concourse"]
+        STOPSIGNAL SIGUSR2
+        ENTRYPOINT ["dumb-init", "/usr/local/concourse/bin/concourse"]
 ```
 
 
