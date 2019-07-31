@@ -22,7 +22,7 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-const imageName = "cirocosta/estaleiro@sha256:07389bbeb2f7a6085b46fba65c2c7b3a8cba3095a01e5774c421dbefef44bd1e"
+const imageName = "cirocosta/estaleiro@sha256:c85809e528a3433a993ac3d1425b4fcce7d1b9aa32c7fec1722f969957f611bb"
 
 func generatePackagesBom(base llb.State, destFilename string) llb.State {
 	return base.Run(
@@ -262,50 +262,46 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 //        - could, perhaps, just be providing a `bom` that gets mutated?
 //
 func installPackages(base llb.State, apts []config.Apt) llb.State {
-	// adding two here already
-	// TODO get rid of these afterwards
-	base = base.Run(shf(
-		`sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list && ` +
-			`apt update && ` +
-			`apt install -y apt-transport-https ca-certificates gnupg-agent`),
-	).Root()
-
 	// TODO - have all of this done through the binary
 	for _, apt := range apts {
-		for _, repo := range apt.Repositories {
-			base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
+		// TODO - bring repositories back
+		//      - these could be added through `estaleiro apt`
+		//
+		// for _, repo := range apt.Repositories {
+		// 	base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
+		// 	if repo.Source != "" {
+		// 		base = base.Run(
+		// 			shf("echo \"%s\" >> /etc/apt/sources.list", repo.Source),
+		// 		).Root()
+		// 	}
+		// }
 
-			if repo.Source != "" {
-				base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Source)).Root()
-			}
+		// TODO - bring keys back
+		//
+		// for _, key := range apt.Keys {
+		// 	base = aptAddKey(base, key.Uri)
+		// }
+
+		if len(apt.Packages) == 0 {
+			return base
 		}
 
-		for _, key := range apt.Keys {
-			base = aptAddKey(base, key.Uri)
+		pkgs := make([]string, len(apt.Packages))
+		for idx, pkg := range apt.Packages {
+			pkgs[idx] = pkg.String()
 		}
 
-		if len(apt.Packages) != 0 {
-			base = base.Run(llb.Args([]string{"apt", "update"})).Root()
-
-			pkgs := make([]string, len(apt.Packages))
-			for idx, pkg := range apt.Packages {
-				pkgs[idx] = pkg.String()
-			}
-
-			base = base.Run(
-				llb.Args(append([]string{
-					"/usr/local/bin/estaleiro",
-					"apt",
-				}, pkgs...)),
-				llb.AddMount(
-					"/usr/local/bin/estaleiro",
-					llb.Image(imageName),
-					llb.SourcePath("/usr/local/bin/estaleiro"),
-				),
-			).Root()
-
-			base = base.Run(sh("rm -rf /var/lib/apt/lists/*")).Root()
-		}
+		base = base.Run(
+			llb.Args(append([]string{
+				"/usr/local/bin/estaleiro",
+				"apt",
+			}, pkgs...)),
+			llb.AddMount(
+				"/usr/local/bin/estaleiro",
+				llb.Image(imageName),
+				llb.SourcePath("/usr/local/bin/estaleiro"),
+			),
+		).Root()
 	}
 
 	return base

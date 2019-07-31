@@ -116,6 +116,13 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 		return
 	}
 
+	err = removeAptLists()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to remove apt repository listing after installation")
+		return
+	}
+
 	return
 }
 
