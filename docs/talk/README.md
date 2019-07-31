@@ -207,7 +207,25 @@ Some examples:
 - guaranteeing that packages added have their `deb-src` counterpart providing
   the source code
 - enforcing the use of non-root users
-- avoiding compile-time dependencies
+- avoiding leaving garbage from compile-time dependencies
+
+
+
+
+```
+    
+    .-----------------------.
+    |                       |
+    |  concourse/concourse  |
+    |                       | --> does it come from `ubuntu:bionic`?
+    *-----------------------*     what's the version of each package?
+                                  does it run as non-user?
+
+
+
+```
+
+
 
 
 ## the bare minimum of building container images
@@ -474,6 +492,11 @@ for building container image, separating the concerns of developing frontends
 from the backend infrastructure.
 
 
+PS.: and now we're at a turning point where we can focus on the innovation where
+it matters, and don't need to reivent the wheel when it comes to creating those
+container images
+
+
 ```
 
 
@@ -507,7 +530,18 @@ optimizations that would be hard for us to implement in our very primiter
 builder - caching and running steps in parallel.
 
 
-## a frontend for Concourse
+## a frontend for building a concourse image
+
+Knowing that we could come up with a frontend that emits that intermediary
+representation that would then lead to the building of a container image, I
+started prototyping how that would look like, coming with the following:
+
+
+```
+
+```
+
+
 
 
 ## installing packages
@@ -546,3 +580,8 @@ This means that there's a lot of source code to be scanned by the OSLO
 team to ensure that we're not shipping licenses that hurt our customers.
 
 
+
+## references
+
+
+- [alternatives to distroless requirements and recommendations](https://docs.google.com/document/d/14jYh0YpCJ2NNYXzSye46JsL8eSFRgysP6TVeSZu7SD4/edit) 

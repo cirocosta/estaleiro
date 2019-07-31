@@ -52,6 +52,8 @@ type DebControl struct {
 
 	Filename string `yaml:"-"`
 	Size     string `yaml:"-"`
+	MD5sum   string `yaml:"-"`
+	SHA256   string `yaml:"-"`
 }
 
 // ControlString generates a multiline-string that corresponds to the format
@@ -111,6 +113,22 @@ func (d DebControl) ControlString() (str string) {
 
 	if d.Enhances != "" {
 		str += "Enhances: " + d.Enhances + "\n"
+	}
+
+	if d.Filename != "" {
+		str += "Filename: " + d.Filename + "\n"
+	}
+
+	if d.Size != "" {
+		str += "Size: " + d.Size + "\n"
+	}
+
+	if d.MD5sum != "" {
+		str += "MD5sum: " + d.MD5sum + "\n"
+	}
+
+	if d.SHA256 != "" {
+		str += "SHA256: " + d.SHA256 + "\n"
 	}
 
 	str += "\n"

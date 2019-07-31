@@ -47,15 +47,14 @@ FROM ubuntu AS ubuntu-with-estaleiro
 
 	RUN set -x && \
 		sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list && \
-		apt update
+		apt update && apt install -y strace
 
 	COPY \
 		--from=build \
 		/bin/estaleiro \
 		/usr/local/bin/estaleiro
 
-	RUN estaleiro apt btrfs-tools 
-
+	RUN estaleiro apt btrfs-tools
 
 
 FROM ubuntu AS deb-sample
@@ -79,7 +78,7 @@ FROM ubuntu AS deb-sample
 
 	# generate a local packages index
 	RUN set -x && \
-		dpkg-scanpackages . | gzip -c9  > Packages.gz && \
+		dpkg-scanpackages . > Packages && \
 		echo "deb [trusted=yes] file:$(pwd) ./" > /etc/apt/sources.list && \
 		rm -rf /var/lib/apt/lists
 

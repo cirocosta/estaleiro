@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +23,7 @@ type AptDebLocation struct {
 	URI    string `yaml:"uri"`
 	Name   string `yaml:"name"`
 	Size   string `yaml:"size"`
-	Digest string `yaml:"digest"`
+	MD5sum string `yaml:"md5sum"`
 }
 
 type Package struct {
@@ -50,6 +52,13 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 
 	// TODO enable this
 	// defer os.RemoveAll(dir)
+
+	err = os.Chmod(dir, 0755)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed changing permissions of temporary deb directory %s", dir)
+		return
+	}
 
 	locations, err := gatherDebLocations(ctx, packages)
 	if err != nil {
@@ -83,6 +92,7 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to force apt to use local repositories")
+		return
 	}
 
 	err = installDebianPackages(ctx, pkgs)
@@ -96,6 +106,8 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 }
 
 func createDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
+	logger.Info("create-deb-repository", lager.Data{"dir": dir})
+
 	var buffer bytes.Buffer
 
 	for _, pkg := range pkgs {
@@ -107,12 +119,12 @@ func createDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
 		}
 	}
 
-	filename := path.Join(dir, "Releases")
+	filename := path.Join(dir, "Packages")
 
-	f, err := os.Create(filename)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0777)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed creating Releases file in %s",
+			"failed creating Packages file in %s",
 			filename)
 		return
 	}
@@ -126,6 +138,29 @@ func createDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
 	}
 
 	return
+}
+
+func computeSHA256(filename string) (sum string, err error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to open file %s when compute sha256", filename)
+		return
+	}
+	defer f.Close()
+
+	h := sha256.New()
+
+	_, err = io.Copy(h, f)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed copying contents from file %s to sha256 hasher", filename)
+		return
+	}
+
+	sum = fmt.Sprintf("%x", h.Sum(nil))
+	return
+
 }
 
 func createPackages(ctx context.Context, dir string, locations []AptDebLocation) (pkgs []Package, err error) {
@@ -145,6 +180,11 @@ func createPackages(ctx context.Context, dir string, locations []AptDebLocation)
 
 			control.Filename = location.Name
 			control.Size = location.Size
+			control.MD5sum = location.MD5sum
+			control.SHA256, err = computeSHA256(path.Join(dir, location.Name))
+			if err != nil {
+				return
+			}
 
 			ref := control.Name + "=" + control.Version
 			sourceLocations, err := aptSourcePackageUris(ctx, ref)
@@ -221,22 +261,10 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 // ps.: backup files/dirs are kept with `-backup` suffixed names.
 //
 func forceLocalSourcesList(ctx context.Context, repositoryDir string) (err error) {
-	err = os.Rename("etc/apt/sources.d", "/etc/apt/sources-d-backup")
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to create backup dir for `sources.d`")
-		return
-	}
-
-	err = os.Rename("etc/apt/sources.list", "/etc/apt/sources-list-backup")
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to create backup dir for `sources.list`")
-		return
-	}
+	logger.Info("force-local-sources", lager.Data{"repository-dir": repositoryDir})
 
 	err = ioutil.WriteFile("/etc/apt/sources.list",
-		[]byte("deb [trusted=yes] file:"+repositoryDir+" ./"),
+		[]byte("deb [trusted=yes allow-weak-repositories=yes] file:"+repositoryDir+" ./"),
 		0644,
 	)
 	if err != nil {
@@ -423,11 +451,17 @@ func ScanAptDebLocations(reader io.Reader) (locations []AptDebLocation, err erro
 			return
 		}
 
+		digestFields := strings.Split(fields[3], ":")
+		if len(digestFields) != 2 {
+			err = errors.Errorf("malformed digest field: `%s`", fields[3])
+			return
+		}
+
 		locations = append(locations, AptDebLocation{
 			URI:    strings.Trim(fields[0], "'"),
 			Name:   fields[1],
 			Size:   fields[2],
-			Digest: fields[3],
+			MD5sum: strings.TrimSpace(digestFields[1]),
 		})
 	}
 
