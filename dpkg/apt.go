@@ -64,8 +64,7 @@ func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, er
 		return
 	}
 
-	// TODO enable this
-	// defer os.RemoveAll(dir)
+	defer os.RemoveAll(dir)
 
 	err = os.Chmod(dir, 0755)
 	if err != nil {
