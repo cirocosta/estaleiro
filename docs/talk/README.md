@@ -413,7 +413,9 @@ to have a way of:
 Nest that multiple times, and one can have any Dockerfile built. 
 
 The good about Dockerfiles though is that you don't need to know any of that
-stuff - just use the Dockerfile syntax and you're good.
+stuff - just like with a traditional compiler you don't need to care about the
+bare details of crafting machine-readable code (you focus on the higher-level
+language), Dockerfiles give you the same.
 
 
 
@@ -487,6 +489,19 @@ An, that's what's hapenning right now for container images.
 
 ## buildkit
 
+In 2017, some folks at Docker started working on ways of decoupling Docker's
+build mechanism so that it could be iterated on in a faster way.
+
+
+```
+                            .-------> dockerd
+  docker engine --> moby  --+-------> docker cli
+                            *-------> buildkit
+                            ... other components
+
+```
+
+
 Buildkit comes with the same mindset as LLVM - provide a common infrastructure
 for building container image, separating the concerns of developing frontends
 from the backend infrastructure.
@@ -522,8 +537,64 @@ run on top of snapshots to mutate their state and advance in the creation of a
 final container image -, that is:
 
 1. creating a container from a given image
+
+
+```
+  
+
+
+  run () ...........................
+    .
+    .  .--------------------------.
+    .  |                          |
+    .  |  image                   |
+    .  |   - filesystem + config  |    =======>      container ----------------
+    .  |                          |                  |  
+    .  *--------------------------*                  |  leveraging that filesystem
+                                                     |             +
+                                                     |     using that config
+
+
+
+```
+
+
 2. mutating that filesystem
+
+
+
+```
+
+
+
+  
+    container ----                                     container ---------
+    |                                                  |
+    |   filesystem       ==> "run some commands ..."   |  modified filesystem
+    |                                                  |
+    
+
+```
+
+
+
+
 3. taking a snapshot of that filesystem at a given point in time
+
+
+```
+
+
+      container ---------
+      |
+      |  modified filesystem        ===> snapshot() ===>    image
+      |
+    
+
+
+```
+
+
 
 Aside from that, just like a compiler backend, it takes care of all of the
 optimizations that would be hard for us to implement in our very primiter
