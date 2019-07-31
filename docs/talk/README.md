@@ -813,8 +813,62 @@ the form of labels:
 ```
 
 
+Building on those premises, let's move on with package installation.
+
+
 
 ## installing packages
+
+
+While installing packages might seem like a very simple deterministic task to
+do, it turns out that there are many things involved:
+
+
+
+```hcl
+# declaration of how we want the final image to
+# look like once it gets built.
+#
+image "cirocosta/sample" {
+
+
+  # the base image that powers the final container
+  # image that we're building.
+  #
+  base_image {
+    name = "ubuntu"
+    ref  = "bionic"
+  }
+
+
+  # a package that we want to have included in our
+  # final container image.
+  #
+  apt {
+    package "vim" {}
+  }
+
+
+}
+```
+
+![](./assets/packages-graph-minimal.png)
+
+
+
+1. write initial list
+  - include just those repositories that we can rely on
+
+2. update apt
+  - update the local listing of packages that we can install
+
+3. for each package
+  - get a deterministic url to retrieve and verify the debian packages
+  - retrieve information about the source code (if possible)
+  
+4. install those packages
+  - create a local debian repository
+  - use straight `apt` to solve any dependencies problems
 
 
 
