@@ -949,7 +949,7 @@ should from the interpretation of what `main`, `restricted`, `universe`, and
 
 |                 | FREE     | NON-FREE
 |-----------------|----------|-----------
-|  SUPPORTED      | main     | restricted
+| **SUPPORTED**   | main     | restricted
 | **UNSUPPORTED** | universe | multiverse
 
 
