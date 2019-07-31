@@ -9,7 +9,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type aptCommand struct{}
+type aptCommand struct {
+	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
+}
 
 func (c *aptCommand) Execute(args []string) (err error) {
 	pkgs, err := dpkg.InstallPackages(context.TODO(), args)
@@ -19,12 +21,22 @@ func (c *aptCommand) Execute(args []string) (err error) {
 		return
 	}
 
+	writer, err := writer(c.Output)
+	if err != nil {
+		return
+	}
+
 	res, err := yaml.Marshal(pkgs)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(string(res))
+	_, err = fmt.Fprintf(writer, "%+v", string(res))
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed writing bill of materials to %s", c.Output)
+		return
+	}
 
 	return
 }

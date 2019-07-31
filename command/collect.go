@@ -51,7 +51,12 @@ func (c *collectCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	fmt.Fprintf(writer, "%+v\n", string(Packages(packages).ToYAML()))
+	_, err = fmt.Fprintf(writer, "%+v\n", string(Packages(packages).ToYAML()))
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed writing packages list to %s", err)
+		return
+	}
 
 	return
 }

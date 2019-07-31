@@ -22,7 +22,7 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-const imageName = "cirocosta/estaleiro@sha256:c85809e528a3433a993ac3d1425b4fcce7d1b9aa32c7fec1722f969957f611bb"
+const imageName = "cirocosta/estaleiro@sha256:f27dd2a0011116a05346f966c79699a0bb10ff197240af3d90efd11543dfa43a"
 
 func generatePackagesBom(base llb.State, destFilename string) llb.State {
 	return base.Run(
@@ -61,7 +61,6 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	state = llb.Image(canonicalName.String())
 	state = generatePackagesBom(state, "/initial-bom.yml")
 	state = installPackages(state, cfg.Image.Apt)
-	state = generatePackagesBom(state, "/final-bom.yml")
 
 	tarballStateMap := map[string]llb.State{}
 	for _, tarball := range cfg.Tarballs {
@@ -295,6 +294,7 @@ func installPackages(base llb.State, apts []config.Apt) llb.State {
 			llb.Args(append([]string{
 				"/usr/local/bin/estaleiro",
 				"apt",
+				"--output=/final-bom.yml",
 			}, pkgs...)),
 			llb.AddMount(
 				"/usr/local/bin/estaleiro",
