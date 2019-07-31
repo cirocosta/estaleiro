@@ -543,18 +543,17 @@ final container image -, that is:
 ```
   
 
+  run (image + config) 
 
-  run () ...........................
-    .
-    .  .--------------------------.
-    .  |                          |
-    .  |  image                   |
-    .  |   - filesystem + config  |    =======>      container ----------------
-    .  |                          |                  |  
-    .  *--------------------------*                  |  leveraging that filesystem
-                                                     |             +
-                                                     |     using that config
 
+        ===> materialize as ==>
+
+
+               container ----------------
+               |  
+               |  leveraging that filesystem
+               |             +
+               |     using that config
 
 
 ```
