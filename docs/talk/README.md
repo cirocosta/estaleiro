@@ -12,6 +12,7 @@
   - [compilers](#compilers)
   - [buildkit](#buildkit)
   - [a minimally viable frontend for our container images](#a-minimally-viable-frontend-for-our-container-images)
+  - [gathering the base image](#gathering-the-base-image)
   - [installing packages](#installing-packages)
   - [container image as an artifact](#container-image-as-an-artifact)
   - [what enabled this](#what-enabled-this)
