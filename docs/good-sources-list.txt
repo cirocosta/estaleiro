@@ -1,0 +1,18 @@
+# There are four official repositories that one can retrieve directly from
+# `ubuntu`:
+#
+#
+#                | FREE     | NON-FREE
+#    ------------+----------+-----------
+#      SUPPORTED | main     | restricted
+#    -----------------------------------
+#    UNSUPPORTED | universe | multiverse
+#
+deb http://archive.ubuntu.com/ubuntu/ bionic main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ bionic main restricted
+
+deb http://archive.ubuntu.com/ubuntu/ bionic-updates main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ bionic-updates main restricted
+
+deb http://archive.ubuntu.com/ubuntu/ bionic-security main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ bionic-secufity main restricted
