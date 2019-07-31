@@ -754,7 +754,7 @@ As that all boils down to a directed acyclic graph (DAG), we can represent that
 as such:
 
 
-![](./assets/simplified-graph-minimal.png)
+![](./graph.svg)
 
 
 ## installing packages
