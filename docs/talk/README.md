@@ -623,19 +623,142 @@ builder - caching and running steps in parallel.
 
 ## a minimally viable frontend for our container images
 
-Knowing that we could come up with a frontend that emits that intermediary
-representation that would then lead to the building of a container image, I
-started prototyping how that would look like, coming with the following:
+With that idea of what most of our container images are, I went on defining a
+syntax that could represent those concepts.
 
 
 ```
 
+
+      local files -----------------.
+                                   |
+           +                       |
+                                   |
+      debian packages -------------+---(magic building)---==> container image
+                                   |
+           +                       |
+                                   |
+      container runtime configs ---*
+
+
+```
+
+To build that syntax up right from actual needs, we can break those down into
+certain "content installation steps":
+
+- setting up a base image
+- installing debian packages
+- getting local files in
+- setting container runtime configurations
+
+
+## gathering the base image
+
+As Concourse always leverages a base image that is not just plain scratch, it
+made sense for me to start with the retrieval of an image that the user
+specifies to move forward with the mutations later on.
+
+
+```hcl
+# declaration of how we want the final image to
+# look like once it gets built.
+#
+image "cirocosta/sample" {
+
+  # the base image that powers the final container
+  # image that we're building.
+  #
+  base_image {
+    name = "ubuntu"
+    ref  = "bionic"
+  }
+
+}
+```
+
+Putting that through what would be the equivalent of a compilation pipeline,
+we'd translate such syntax into LLB in our frontend:
+
+
+```
+
+      estaleiro.hcl  ===>  estaleiro frontend ==> LLB  ==> buildkitd ==> image
+
+
+```
+
+Looking at the LLB generated:
+
+
+```yaml
+op:
+  source.image: "docker-image://docker.io/library/ubuntu:latest@sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a"
+  digest: "sha256:9d0df2288a6f52c368c12a5fc188130f6db0125cd446bbf882cb2d513760bc73"
+
+op:
+  source.image: "docker-image://docker.io/cirocosta/estaleiro@sha256:f27dd2a0011116a05346f966c79699a0bb10ff197240af3d90efd11543dfa43a"
+  digest: "sha256:d9e85dc882e618445ae8164dd5dee13d7ba8bc9b18487cca4338e5fa51aa3913"
+
+op:
+  inputs:
+    - sha256:9d0df2288a6f52c368c12a5fc188130f6db0125cd446bbf882cb2d513760bc73
+    - sha256:d9e85dc882e618445ae8164dd5dee13d7ba8bc9b18487cca4338e5fa51aa3913
+  exec:
+    args: ["/usr/local/bin/estaleiro", "collect", "-i=/var/lib/dpkg/status"]
+  mounts:
+    - input: 0
+      dest: "/"
+    - input: 1
+      dest: "/usr/local/bin/estaleiro"
+  digest: "sha256:155669101ce3ce82852d075af1a68fb32730100c720993b764fbfac886dffe12"
+
+op:
+  inputs: 
+    - sha256:155669101ce3ce82852d075af1a68fb32730100c720993b764fbfac886dffe12
+  digest: "sha256:031e04205cbb52e5ad87530ca0fc659586048bf8bc7b028d47397fd4a3cf6fc8"
+```
+
+We could rewrite that to some more simpler terms:
+
 ```
 
 
+op:
+  source.image: "docker-image://docker.io/library/ubuntu:latest"
+  digest: "ubuntu"
+
+op:
+  source.image: "docker-image://docker.io/cirocosta/estaleiro"
+  digest: "estaleiro"
+
+op:
+  inputs:
+    - ubuntu
+    - estaleiro
+  exec:
+    args: ["/usr/local/bin/estaleiro", "collect", "-i=/var/lib/dpkg/status"]
+  mounts:
+    - input: 0
+      dest: "/"
+    - input: 1
+      dest: "/usr/local/bin/estaleiro"
+  digest: "modified-fs"
+
+op:
+  inputs: 
+    - modified-fs
+  digest: "final-digest"
+```
+
+As that all boils down to a directed acyclic graph (DAG), we can represent that
+as such:
+
+
+![](./assets/simplified-graph-minimal.png)
 
 
 ## installing packages
+
 
 
 ## container image as an artifact
