@@ -921,9 +921,36 @@ RUN apt update
 RUN apt install -y vim
 ```
 
-There we're updating our local view of where packages can be fetched from, and
-then, following some rules, installating `vim`.
+Breaking that down to a two-step process:
 
+
+1. follow what's included in the default `/etc/apc/sources.list` that ships with
+   the Ubuntu base image, retrieving the index of packages that each of them
+   holds, which can then be used later.
+
+
+```
+deb http://archive.ubuntu.com/ubuntu/  bionic           main restricted
+deb http://archive.ubuntu.com/ubuntu/  bionic-updates   main restricted
+deb http://archive.ubuntu.com/ubuntu/  bionic           universe
+deb http://archive.ubuntu.com/ubuntu/  bionic-updates   universe
+deb http://archive.ubuntu.com/ubuntu/  bionic           multiverse
+deb http://archive.ubuntu.com/ubuntu/  bionic-updates   multiverse
+deb http://archive.ubuntu.com/ubuntu/  bionic-backports main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu/ bionic-security  main restricted
+deb http://security.ubuntu.com/ubuntu/ bionic-security  universe
+deb http://security.ubuntu.com/ubuntu/ bionic-security  multiverse
+```
+
+Interestingly though, this set of repositories is, by default, broader than it
+should from the interpretation of what `main`, `restricted`, `universe`, and
+`multiverse` means:
+
+
+|                 | FREE     | NON-FREE
+|-----------------|----------|-----------
+|  SUPPORTED      | main     | restricted
+| **UNSUPPORTED** | universe | multiverse
 
 
 While installing packages might seem like a very simple task to do, it turns out
