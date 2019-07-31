@@ -899,11 +899,15 @@ Which, translating to LLB, turns into:
 ![](./assets/packages-graph-minimal.png)
 
 As you can see, there's a little encantation there - `estaleiro apt [...]` -,
-and that's  on purpose: using just plain `apt-get` like in a regular Dockerfile,
-we wouldn't be able to get all of the information that we'd like to form a
-comprehensive bill of materials.
+and that's  on purpose: 
 
-For instance, consider the following:
+- using just plain `apt-get` like in a regular Dockerfile, we wouldn't be able
+  to get all of the information that we'd like to form a comprehensive bill of
+  materials.
+
+Even more: there are certain defaults there that might not be desireable.
+
+For instance, consider the following sample Dockerfile:
 
 ```Dockerfile
 FROM ubuntu
@@ -924,9 +928,12 @@ RUN apt install -y vim
 Breaking that down to a two-step process:
 
 
-1. follow what's included in the default `/etc/apc/sources.list` that ships with
-   the Ubuntu base image, retrieving the index of packages that each of them
-   holds, which can then be used later.
+1. follow what's included in `/etc/apt/sources.list` 
+
+During this step, `apt` looks at the file `/etc/apt`
+
+Ththat ships with the Ubuntu base image, retrieving the index of packages that
+each of them holds, which can then be used later.
 
 
 ```
@@ -953,27 +960,190 @@ should from the interpretation of what `main`, `restricted`, `universe`, and
 | **UNSUPPORTED** | universe | multiverse
 
 
-While installing packages might seem like a very simple task to do, it turns out
-that there quite few details to pay attention to regardless of the base image:
+And, if we don't take into account where those packages that we install come
+from, we essentially can't say whether we're consuming software that is
+supported or not by Canonical.
 
-1. determining that trusted (and supported) debian repositories are being used
-2. (for scanning) having corresponding `deb-src` entries
+Consider, for instance, the output of `dpkg -l`, a simple listing of all of the
+packages installed in the system:
+
+```
+
+||/ Name            Version            Architecture  Description
+=======================================================================
+ii  adduser         3.116ubuntu1       all           add and remove ...
+ii  apt             1.6.11             amd64         commandline pac...
+ii  base-files      10.1ubuntu2.5      amd64         Debian base sys...
+ii  base-passwd     3.5.44             amd64         Debian base sys...
+ii  bash            4.4.18-2ubuntu1.2  amd64         GNU Bourne Agai...
+ii  bsdutils        1:2.31.1-0.4ubuntu amd64         basic utilities...
+
+```
+
+We simply can't tell where things are coming from.
+
+Another problem with using that default list of repositories is that we can't
+tell if a particular version of a package that we fetched at a given time even
+has sources that a team like OSLO would be able to scan.
+
+```
+
+
+      apt install vim
+
+        ===> fetched `vim.deb` from a debian repository
+
+            ==> brings a bunch of dependencies together
+
+                |
+                *---> did all of them have source packages too?
+
+
+```
+
+That's all because to be able to let `apt` retrieve a package, we'd need to tell
+it that there are debian source repositories that it could reach.
+
+For instance:
+
+```
+deb     http://archive.ubuntu.com/ubuntu/  bionic  main restricted
+deb-src http://archive.ubuntu.com/ubuntu/  bionic  main restricted
+```
+
+
+To solve those problems, the approach that we take here is to do the debian
+package fetching ourselves, after `apt` had already figured out for us what are
+the packages that we'd need to download.
+
+
+```
+
+    ESTALEIRO
+        |
+        |
+        *---> "Hey `apt`, I'd like to install `vim`
+
+                which debian packages should I download?
+                  oh, and by the way, from where?
+
+                  kthx!
+
+                                                                   APT
+                                                                    |
+                            ooh hey, go fetch these:            <---*
+                              - stdlib at `http://blabla` w/ md5sum=foo      
+                              - vim at `http://blelble`   w/ md5sum=bar
+
+        
+        ESTALEIRO
+          |
+          |
+          *--> "awesome! thx!"
+            |
+            *---->  (writes down where all those debs will come from)
+              
+
+              " packages:
+                  - name: vim
+                    version: 1.2.3
+                    uri: https://archive.ubuntu.bla/blabla
+                    md5sum: dadssdsd
+              "
+
+
+```
+
+As, at this point, we know not only where those debian packages would come from,
+but also what are all of the other side dependencies that the package would
+bring, we take advantage of that and start the process of figuring out whether
+the source packages for not only `vim,` but its dependencies too, can be found:
+
+
+```
+
+  ESTALEIRO
+    |
+    |
+    *---> "hey apt, btw, would you mind also
+           checking out where could I get the source
+           of some packages?
+
+              - vim=1.2.3
+              - stdlib=3.1.2
+
+           thx!
+
+                                                            APT
+                                                             |
+                                                  ¬_¬   <----*
+                                              sure ...
+
+
+                                                            APT
+                                                             |
+                   vim: http://archive...blabla/source  <----*
+                   stdlib: sry, didn't find it!         <----*
 
 
 
-1. write initial list
-  - include just those repositories that we can rely on
 
-2. update apt
-  - update the local listing of packages that we can install
+```
 
-3. for each package
-  - get a deterministic url to retrieve and verify the debian packages
-  - retrieve information about the source code (if possible)
+
+In case everything went well, we then concurrently fetch them all, storing them
+at a particular directory, and then set that up as a perfectly valid debian
+repository that just turns out to be served from a local directory (just like
+you can do that with a `cdrom` if you're bringing packages to an offline machine
+back in the day):
+
+
+```
   
-4. install those packages
-  - create a local debian repository
-  - use straight `apt` to solve any dependencies problems
+      ESTALEIRO
+        |
+        *----> concurrently fetches all debs
+                  |
+                  *---> creates a package listing (deb repo index)
+                          |
+                          |
+                          *---> modifies `/etc/apt/sources.list` to point to it
+
+```
+
+With all of the debs installed, and having a local debian repository, we can use
+a plain `apt install` to install those debian packages - as we just have the
+local debian repository set, there's external connections being made, just plain
+file retrieval from the filesystem.
+
+
+
+```
+
+
+    ESTALEIRO
+      |
+      *-------> hey apt, would you mind installing `vim`?
+
+
+                                                            APT
+                                                             |
+                                           sure!        <----*
+
+                                  (figures out the interdependency
+                                   between them and installs them
+                                   directly from the filesystem)
+
+
+
+```
+
+
+## talk about
+
+- you can try it out right now with a recent-enough version of Docker
+- developer productivity when checking if you got all right
+
 
 
 ## references
