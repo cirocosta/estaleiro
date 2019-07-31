@@ -905,11 +905,25 @@ comprehensive bill of materials.
 
 For instance, consider the following:
 
-```
+```Dockerfile
 FROM ubuntu
 
-RUN apt update && apt install -y vim
+
+# update the local apt database that powers `apt` to know from which
+# repositories it can fetch specific packages from.
+#
+RUN apt update
+
+
+# retrieve the `vim` package (as well as suggestions and recommendations)
+# following what's present in the current database
+#
+RUN apt install -y vim
 ```
+
+There we're updating our local view of where packages can be fetched from, and
+then, following some rules, installating `vim`.
+
 
 
 While installing packages might seem like a very simple task to do, it turns out
