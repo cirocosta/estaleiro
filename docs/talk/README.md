@@ -720,9 +720,7 @@ op:
 
 We could rewrite that to some more simpler terms:
 
-```
-
-
+```yaml
 op:
   source.image: "docker-image://docker.io/library/ubuntu:latest"
   digest: "ubuntu"
