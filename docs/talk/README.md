@@ -754,6 +754,65 @@ as such:
 
 ![](./assets/simplified-graph-minimal.png)
 
+And, here's where `estaleiro` comes as a nice addition to the flow of creating
+container images - because it curates how the final snapshot gets produced, it
+can already give us two things:
+
+
+1. the digest of the base image that was used at build time
+2. the list of packages that were originally included in it.
+
+
+```
+
+
+    1. fetch base image
+
+        ==> digest
+
+
+    2. gather packages included in the base image
+
+        ==> initial bill of materials
+
+
+    3. snapshot
+      
+        |
+        |
+        *---------->   snapshot (filesystem) + configuration ==> container
+                                                                 image to be pushed
+                                                                 to a registry
+
+
+```
+
+And, again, as we have control of all of those steps, and a container image is
+composed of both the filesystem and an image configuration (which we control),
+we can embed that bill of materials right into the final image configuration in
+the form of labels:
+
+
+```
+
+
+      syntax
+
+              ==> 
+                  
+                   mutations
+                      (+ bill of materials as a an artifact)
+
+
+                        ==>
+
+                              final image
+                                (+ labels with the bill of materials)
+
+
+```
+
+
 
 ## installing packages
 
