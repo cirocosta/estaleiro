@@ -1083,8 +1083,15 @@ the source packages for not only `vim,` but its dependencies too, can be found:
                                                             APT
                                                              |
                    vim: http://archive...blabla/source  <----*
-                   stdlib: sry, didn't find it!         <----*
+                   stdlib: http://sources.blabla        <----*
 
+
+    ESTALEIRO
+        |
+        |
+        *--> thx again!
+
+              (writes down that extra info)
 
 
 
