@@ -7,18 +7,14 @@
   - [what's hard about dockerfiles](#whats-hard-about-dockerfiles)
     - [1. tracking what was added](#1-tracking-what-was-added)
     - [2. ensuring consistenty](#2-ensuring-consistenty)
+  - [what if Dockerfiles didn't exist?](#what-if-dockerfiles-didnt-exist)
   - [the bare minimum of building container images](#the-bare-minimum-of-building-container-images)
   - [a primitive container image builder](#a-primitive-container-image-builder)
-  - [compilers](#compilers)
-  - [buildkit](#buildkit)
+    - [compilers](#compilers)
+    - [buildkit](#buildkit)
   - [a minimally viable frontend for our container images](#a-minimally-viable-frontend-for-our-container-images)
-  - [gathering the base image](#gathering-the-base-image)
-  - [installing packages](#installing-packages)
-  - [container image as an artifact](#container-image-as-an-artifact)
-  - [what enabled this](#what-enabled-this)
-  - [from syntax to container image](#from-syntax-to-container-image)
-    - [snapshots](#snapshots)
-  - [concourse images as an example](#concourse-images-as-an-example)
+    - [gathering the base image](#gathering-the-base-image)
+    - [installing packages](#installing-packages)
   - [references](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -459,11 +455,13 @@ higher-level language), Dockerfiles give you the same.
 
 
 
-## compilers 
+### compilers 
 
 If we compare Dockerfiles to regular compiled programming languages, and for a
 moment, assume that the process of going from a Dockerfile to a container image
 is a compilation process, we could start drawing some quite neat analogies.
+
+
 
 ```
 
@@ -527,7 +525,7 @@ An, that's what's hapenning right now for container images.
 
 
 
-## buildkit
+### buildkit
 
 In 2017, some folks at Docker started working on ways of decoupling Docker's
 build mechanism so that it could be iterated on in a faster way.
@@ -691,7 +689,7 @@ certain "content installation steps":
 - setting container runtime configurations
 
 
-## gathering the base image
+### gathering the base image
 
 As Concourse always leverages a base image that is not just plain scratch, it
 made sense for me to start with the retrieval of an image that the user
@@ -856,7 +854,7 @@ Building on those premises, let's move on with package installation.
 
 
 
-## installing packages
+### installing packages
 
 
 Continuing with the approach of going from syntax to the final execution graph,
@@ -924,42 +922,6 @@ that there quite few details to pay attention to regardless of the base image:
   - use straight `apt` to solve any dependencies problems
 
 
-
-## container image as an artifact
-
-two concepts:
-
-- sources
-  - base image
-  - static
-    - files
-    - tarballs
-  - dynamic
-    - packages
-- runtime configuration
-
-
-
-## what enabled this
-
-## from syntax to container image
-
-### snapshots
-
-
-## concourse images as an example
-
-Concourse has quite a few number of images to build:
-
-- `concourse/concourse`
-- `concourse/*-resource` (13 of them)
-
-This means that there's a lot of source code to be scanned by the OSLO
-team to ensure that we're not shipping licenses that hurt our customers.
-
-
-
 ## references
-
 
 - [alternatives to distroless requirements and recommendations](https://docs.google.com/document/d/14jYh0YpCJ2NNYXzSye46JsL8eSFRgysP6TVeSZu7SD4/edit) 
