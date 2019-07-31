@@ -421,8 +421,7 @@ RUN apt update && apt install -y vim
 ```
 
 
-Although this might seem quite primitive, the point is that all that it takes is
-to have a way of:
+The point is  - all that it takes is to have a way of:
 
 1. creating a container from a given image
 2. mutating that filesystem
@@ -430,10 +429,33 @@ to have a way of:
 
 Nest that multiple times, and one can have any Dockerfile built. 
 
-The good about Dockerfiles though is that you don't need to know any of that
-stuff - just like with a traditional compiler you don't need to care about the
-bare details of crafting machine-readable code (you focus on the higher-level
-language), Dockerfiles give you the same.
+
+
+```
+
+
+  IMAGE
+
+      ==> mutate
+
+          ==> IMAGE+mutations
+            
+              ==> mutate
+
+                  ==> IMAGE+mutations+mutations
+
+                      ...
+
+
+```
+
+
+The good thing about Dockerfiles though is that you don't need to know any of
+the runtime stuff - just like with a traditional compiler you don't need to
+care about the bare details of crafting machine-readable code (you focus on the
+higher-level language), Dockerfiles give you the same.
+
+  // TODO - improve on this one
 
 
 
