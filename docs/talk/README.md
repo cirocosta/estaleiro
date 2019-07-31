@@ -11,7 +11,7 @@
   - [a primitive container image builder](#a-primitive-container-image-builder)
   - [compilers](#compilers)
   - [buildkit](#buildkit)
-  - [a frontend for building a concourse image](#a-frontend-for-building-a-concourse-image)
+  - [a minimally viable frontend for our container images](#a-minimally-viable-frontend-for-our-container-images)
   - [installing packages](#installing-packages)
   - [container image as an artifact](#container-image-as-an-artifact)
   - [what enabled this](#what-enabled-this)
@@ -546,7 +546,7 @@ final container image -, that is:
   run (image + config) 
 
 
-        ===> materialize as ==>
+        ===> materialized as ==>
 
 
                container ----------------
@@ -601,7 +601,27 @@ optimizations that would be hard for us to implement in our very primiter
 builder - caching and running steps in parallel.
 
 
-## a frontend for building a concourse image
+```
+
+
+                        SYNTAX                 --------.
+                           ===>                        |
+                                                       |
+                             FRONTEND                  |  what we care about
+                                  ===>                 |
+                                                       |
+             .------                LLB        --------*
+             |                        ===> 
+ buildkitd   |
+             |                          STATE MUTATIONS 
+             *------                                 ===> final container image
+
+
+
+```
+
+
+## a minimally viable frontend for our container images
 
 Knowing that we could come up with a frontend that emits that intermediary
 representation that would then lead to the building of a container image, I
