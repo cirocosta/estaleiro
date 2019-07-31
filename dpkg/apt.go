@@ -43,6 +43,20 @@ func init() {
 func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, err error) {
 	logger.Info("install-packages", lager.Data{"packages": packages})
 
+	err = writeInitialList()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed setting up initial sources.list")
+		return
+	}
+
+	err = updateApt(ctx)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed initial apt update")
+		return
+	}
+
 	dir, err := ioutil.TempDir("", "estaleiro-deb-packages")
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -295,6 +309,8 @@ func removeAptLists() error {
 }
 
 func updateApt(ctx context.Context) (err error) {
+	logger.Info("update-apt")
+
 	var cmd = exec.CommandContext(ctx, "apt", "update")
 
 	out, err := cmd.CombinedOutput()
@@ -359,6 +375,89 @@ func aptUris(ctx context.Context, command string, packages []string) (uris []Apt
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to scan packages uris")
+		return
+	}
+
+	return
+}
+
+func writeInitialList() (err error) {
+	logger.Info("write-initial-list")
+
+	const sourcesListFmt = `
+# There are four official repositories that one
+# can retrieve directly from ubuntu:
+#
+#
+#                | FREE     | NON-FREE
+#    ------------+----------+-----------
+#      SUPPORTED | main     | restricted
+#    -----------------------------------
+#    UNSUPPORTED | universe | multiverse
+#
+deb http://archive.ubuntu.com/ubuntu/ %s main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ %s main restricted
+
+deb http://archive.ubuntu.com/ubuntu/ %s-updates main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ %s-updates main restricted
+
+deb http://archive.ubuntu.com/ubuntu/ %s-security main restricted
+deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
+`
+
+	f, err := os.OpenFile("/etc/apt/sources.list", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to open `/etc/apt/sources.list` file to write initial apt sources list")
+		return
+	}
+	defer f.Close()
+
+	codename, err := detectCodename()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to detect codename to be used for initial sources.list")
+		return
+	}
+
+	_, err = fmt.Fprintf(f, sourcesListFmt,
+		codename, codename, codename, codename, codename, codename,
+	)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed writing initial sources.list to `/etc/apt/sources.list`")
+		return
+	}
+
+	return
+}
+
+func detectCodename() (codename string, err error) {
+	f, err := os.Open("/etc/os-release")
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to open `/etc/os-release` file to determine distro codename")
+		return
+	}
+	defer f.Close()
+
+	codename = scanCodename(f)
+
+	return
+}
+
+func scanCodename(reader io.Reader) (codename string) {
+	scanner := bufio.NewScanner(reader)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if !strings.HasPrefix(line, "VERSION_CODENAME=") {
+			continue
+		}
+
+		fields := strings.Split(line, "=")
+		codename = fields[1]
 		return
 	}
 

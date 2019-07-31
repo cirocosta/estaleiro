@@ -45,16 +45,12 @@ FROM release AS frontend
 
 FROM ubuntu AS ubuntu-with-estaleiro
 
-	RUN set -x && \
-		sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list && \
-		apt update && apt install -y strace
-
 	COPY \
 		--from=build \
 		/bin/estaleiro \
 		/usr/local/bin/estaleiro
 
-	RUN estaleiro apt btrfs-tools
+	# RUN estaleiro apt btrfs-tools
 
 
 FROM ubuntu AS deb-sample
