@@ -820,9 +820,12 @@ Building on those premises, let's move on with package installation.
 ## installing packages
 
 
-While installing packages might seem like a very simple deterministic task to
-do, it turns out that there are many things involved:
+Continuing with the approach of going from syntax to the final execution graph,
+things are not much different for packages - in a given part of that step, we
+run the equivalent of an `apt install`, mutating the filesystem in a way that
+end up with the packages installed.
 
+Here's how the syntax looks like:
 
 
 ```hcl
@@ -852,7 +855,18 @@ image "cirocosta/sample" {
 }
 ```
 
+Which, translating to LLB, turns into:
+
 ![](./assets/packages-graph-minimal.png)
+
+As you can see, there's a little encantation there: `estaleiro apt [...]`.
+
+
+While installing packages might seem like a very simple task to do, it turns out
+that there quite few details to pay attention to regardless of the base image:
+
+1. determining that trusted (and supported) debian repositories are being used
+2. (for scanning) having corresponding `deb-src` entries
 
 
 
