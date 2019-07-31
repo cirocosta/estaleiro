@@ -233,6 +233,9 @@ Some examples:
 
 My attempt with this tool was to tackle those two.
 
+But, before we jump to the tool, let's imagine that `docker build` doesn't
+exist, and Dockerfiles aren't a thing.
+
 
 ## the bare minimum of building container images
 
