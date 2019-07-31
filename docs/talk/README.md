@@ -719,12 +719,14 @@ we'd translate such syntax into LLB in our frontend:
 
 ```
 
+
       estaleiro.hcl  ===>  estaleiro frontend ==> LLB  ==> buildkitd ==> image
 
 
 ```
 
-Looking at the LLB generated:
+
+To get a sense of how the LLB looks like, let's dig in:
 
 
 ```yaml
@@ -896,7 +898,18 @@ Which, translating to LLB, turns into:
 
 ![](./assets/packages-graph-minimal.png)
 
-As you can see, there's a little encantation there: `estaleiro apt [...]`.
+As you can see, there's a little encantation there - `estaleiro apt [...]` -,
+and that's  on purpose: using just plain `apt-get` like in a regular Dockerfile,
+we wouldn't be able to get all of the information that we'd like to form a
+comprehensive bill of materials.
+
+For instance, consider the following:
+
+```
+FROM ubuntu
+
+RUN apt update && apt install -y vim
+```
 
 
 While installing packages might seem like a very simple task to do, it turns out
