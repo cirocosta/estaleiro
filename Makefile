@@ -8,6 +8,7 @@ install:
 test:
 	go test -v ./...
 
+
 ubuntu:
 	DOCKER_BUILDKIT=1 \
 		docker build \
@@ -28,6 +29,7 @@ llb:
 	@estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl debug dump-llb \
 		| jq '.'
+
 
 graph:
 	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
@@ -50,6 +52,7 @@ docker-integration:
 		--file ./estaleiro.hcl \
 		.
 
+
 image:
 	estaleiro llb \
                   --filename ./estaleiro.hcl \
@@ -58,11 +61,13 @@ image:
 		  	--local context=. \
 			--output type=image,name=docker.io/cirocosta/estaleiro,push=true
 
+
 image-frontend:
 	docker build \
 		--target frontend \
 		--tag cirocosta/estaleiro-frontend:rc \
 		.
+
 
 run-buildkitd:
 	docker run \
