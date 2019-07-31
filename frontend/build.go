@@ -46,7 +46,7 @@ func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err
 	res, err = invokeBuild(ctx, client, state, img)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"faoled to make build call")
+			"failed to make build call")
 		return
 	}
 

@@ -15,8 +15,10 @@ type Bom struct {
 
 	BaseImage BaseImage `yaml:"base_image"`
 
-	Files    []File         `yaml:"added_files"`
-	Packages []dpkg.Package `yaml:"added_packages"`
+	ChangeSet struct {
+		Files    []File         `yaml:"files"`
+		Packages []dpkg.Package `yaml:"packages"`
+	} `yaml:"changeset"`
 }
 
 type Source struct {

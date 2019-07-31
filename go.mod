@@ -7,16 +7,23 @@ require (
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50
 	github.com/containerd/containerd v1.3.0-0.20190426060238-3a3f0aac8819
 	github.com/docker/distribution v2.7.1+incompatible
+	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.7.0
+	github.com/frankban/quicktest v1.4.0 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/hashicorp/hcl2 v0.0.0-20190725010614-0c3fe388e450
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/mattn/go-colorable v0.1.2 // indirect
+	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/moby/buildkit v0.5.1
+	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.7.0
 	github.com/onsi/gomega v1.4.3
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1
+	github.com/pierrec/lz4 v2.2.5+incompatible // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/zclconf/go-cty v1.1.0
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	gopkg.in/yaml.v3 v3.0.0-20190709130402-674ba3eaed22

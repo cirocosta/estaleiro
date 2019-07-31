@@ -160,7 +160,7 @@ func createDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
 	return
 }
 
-func computeSHA256(filename string) (sum string, err error) {
+func ComputeSHA256(filename string) (sum string, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -201,7 +201,7 @@ func createPackages(ctx context.Context, dir string, locations []AptDebLocation)
 			control.Filename = location.Name
 			control.Size = location.Size
 			control.MD5sum = location.MD5sum
-			control.SHA256, err = computeSHA256(path.Join(dir, location.Name))
+			control.SHA256, err = ComputeSHA256(path.Join(dir, location.Name))
 			if err != nil {
 				return
 			}

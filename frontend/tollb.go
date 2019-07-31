@@ -22,7 +22,11 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-const imageName = "cirocosta/estaleiro@sha256:f27dd2a0011116a05346f966c79699a0bb10ff197240af3d90efd11543dfa43a"
+const (
+	imageName                  = "cirocosta/estaleiro@sha256:f27dd2a0011116a05346f966c79699a0bb10ff197240af3d90efd11543dfa43a"
+	initialPackagesBomFilepath = "/initial-packages-bom.yml"
+	finalPackagesBomFilepath   = "/final-packages-bom.yml"
+)
 
 func generatePackagesBom(base llb.State, destFilename string) llb.State {
 	return base.Run(
@@ -59,13 +63,18 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	}
 
 	state = llb.Image(canonicalName.String())
-	state = generatePackagesBom(state, "/initial-bom.yml")
+	state = generatePackagesBom(state, initialPackagesBomFilepath)
 	state = installPackages(state, cfg.Image.Apt)
 
+	// create states for the tarballs where they have their contents
+	// already extracted so that we can consume the files later
+	//
 	tarballStateMap := map[string]llb.State{}
 	for _, tarball := range cfg.Tarballs {
 		src := llb.Local("context")
 		dest := llb.Scratch()
+
+		// what if we did the `untar`ing? :thinking:
 
 		// how to access the file there?
 		tarballStateMap[tarball.Name] = copy(src, tarball.Name, dest, "/dest")
@@ -175,7 +184,7 @@ func copyFilesFromSteps(
 			Uri:     sourceFile.VCS.Repository,
 		}
 
-		materials.Files = append(materials.Files, bomFile)
+		materials.ChangeSet.Files = append(materials.ChangeSet.Files, bomFile)
 	}
 
 	if !fileFoundInStep {
@@ -294,7 +303,7 @@ func installPackages(base llb.State, apts []config.Apt) llb.State {
 			llb.Args(append([]string{
 				"/usr/local/bin/estaleiro",
 				"apt",
-				"--output=/final-bom.yml",
+				"--output=" + finalPackagesBomFilepath,
 			}, pkgs...)),
 			llb.AddMount(
 				"/usr/local/bin/estaleiro",
