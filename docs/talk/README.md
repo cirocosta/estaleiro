@@ -229,7 +229,8 @@ Some examples:
 ```
 
 
---- 
+## what if Dockerfiles didn't exist?
+
 
 My attempt with this tool was to tackle those two.
 
@@ -237,11 +238,13 @@ But, before we jump to the tool, let's imagine that `docker build` doesn't
 exist, and Dockerfiles aren't a thing.
 
 
+
 ## the bare minimum of building container images
 
 
 If we erase from our minds the fact that `Dockerfile` is the de-facto way of
-building container images today, we can summarize the creation of that image as:
+building container images today, we could perhaps summarize the creation of
+that image as:
 
 1. bringing some content from a local directory
 2. installing some dependencies
@@ -251,7 +254,7 @@ building container images today, we can summarize the creation of that image as:
 
 ```
 
-      local files -----------------.
+      files -----------------------.
                                    |
            +                       |
                                    |
@@ -266,15 +269,21 @@ building container images today, we can summarize the creation of that image as:
 
 
 i.e., regardless of how we get to that final container image, all we have to do
-is get those pieces in, install some packages and configure some stuff.
+is get some stuff in, install some packages and configure how a runtime would
+be configured to properly run our software.
 
-Now, what it we tried to replicate what a Dockerfile does, but with `docker` and `bash`, instead?
+
+Let's see how we could try achieving that with pure `bash` and `docker`
+commands (just like Docker did in its very infancy).
 
 
 ## a primitive container image builder
 
-Leveraging `docker` as the tool for running containers, we can achieve the same
-as a Dockerfile:
+Having the ability to run a container from a given image (using the `docker`
+engine), we could think of each step in the container creation pipeline as a
+mutation to a previous image, and subsequent creation of other images.
+
+Let's dig in:
 
 
 ```bash
