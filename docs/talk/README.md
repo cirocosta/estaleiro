@@ -368,7 +368,7 @@ trying to achieve what they can achieve without it.
 
 If we erase from our minds the fact that `Dockerfile` is the de-facto way of
 building container images today, we could perhaps summarize the creation of
-that image as:
+an image as:
 
 
 1. bringing some content from a local directory
@@ -407,6 +407,16 @@ commands (just like Docker did in its very infancy).
 Having the ability to run a container from a given image (using the `docker`
 engine), we could think of each step in the container creation pipeline as a
 mutation to a previous image, and subsequent creation of other images.
+
+```
+
+  IMAGE
+
+      ==> mutate
+
+          IMAGE + mutations
+
+```
 
 Let's dig in:
 
