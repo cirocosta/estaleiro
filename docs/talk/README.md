@@ -558,9 +558,13 @@ RUN apt update && apt install -y vim
 
 The point is  - all that it takes is to have a way of:
 
+<br />
+
 1. creating a container from a given image
 2. mutating that filesystem
 3. taking a snapshot of that filesystem at a given point in time
+
+<br />
 
 Nest that multiple times, and one can have any Dockerfile built. 
 
