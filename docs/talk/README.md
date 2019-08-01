@@ -1494,6 +1494,29 @@ tarball "./linux-rc.tgz" {
 ```
 
 
+### leveraging builds from dockerfiles
+
+At this moment you can start noticing that we've been always just adding things
+that have been already built, but that's the only thing that we do with
+Dockerfiles - there's usually some step building a given binary (specially with
+Go).
+
+
+```             
+
+
+                                .----------------------.
+                                |                      |
+                                |     binary building  |
+      source + local code  =====|           +          |===> final container image
+                                | image runtime config |
+                                |                      |
+                                *----------------------*
+
+
+
+```
+
 
 
 
