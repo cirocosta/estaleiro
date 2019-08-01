@@ -1,0 +1,31 @@
+FIDELITY
+
+
+	- just started perf testing
+	- trouble with `yaml` anchors?
+	  	what's that about?
+			> https://github.com/concourse/concourse/issues/3714
+		> we should perhaps document this
+
+	- happy with the rebalancing :D
+	- didn't try the new container placement strategy yet
+		- having to restart web nodes in some cases
+		- direction on the ratio
+		- knowing when to properly scale
+
+
+	- give them references to the issues that we've been working on
+	  regarding web nodes having to be restarted
+
+	  	https://github.com/concourse/concourse/issues/3928
+
+	  
+
+	two issues:
+		- jobs pending
+		- jobs not even going to pending
+
+			--> give them a link to the new sched alg work
+				https://github.com/concourse/concourse/issues/3602
+
+
