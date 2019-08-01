@@ -295,8 +295,9 @@ Which, when it comes to shipping to customers, leads to questions like:
 ### 2. ensuring consistenty
 
 While it's known that some best practices exist around creating container
-images, Dockerfiles lack ways of enforcing those (or at least letting the user
-known that they are missing something out).
+images, [Dockerfile](https://docs.docker.com/engine/reference/builder/)s lack 
+ways of enforcing those (or at least letting the user known that they are
+missing something out).
 
 Some examples:
 
