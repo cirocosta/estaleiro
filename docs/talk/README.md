@@ -49,36 +49,45 @@ involved.
 
   OSS USERS
 
-    `helm/charts/stable/Concourse` ---> powers `hush-house`!
 
-        :D
+          `helm/charts/stable/Concourse` ---> powers `hush-house`!
+
+            :D
+
+
+
 
 
   CUSTOMERS
 
 
-        I'd like that too!
+          I'd like that too!
 
 
-  WE
 
-        we're still figuring it out
 
-        ¯\_(ツ)_/¯
+
+  US
+
+          we're still figuring it out
+
+          ¯\_(ツ)_/¯
 
 
 ```
 
 
 Although we're fairly used to the traditional ways of getting the Concourse code
-in a state where it can be distributed as a BOSH release artifact on PivNet,
-we're very new to doing so for customers who would like to have it on their PKS
-installations - differently from a BOSH release, now there are container images
-and some wrapping around the formation of those Kubernetes objects.
+in a state where it can be distributed as a [BOSH release](https://bosh.io/docs/release/) 
+artifact on [PivNet](https://network.pivotal.io/), we're very new to doing so
+for customers who would like to have it on their PKS installations - differently
+from a BOSH release, now there are container images and some wrapping around
+the formation of those Kubernetes objects.
 
 If we consider that there are several steps to go from "we have a container
 image" and want to get that to customer hands, there's clearly some steps to go
 through. Thinking of it as a Makefile, that'd look like:
+
 
 
 ```Makefile
