@@ -7,5 +7,5 @@ var Estaleiro struct {
 
 	Collect collectCommand `command:"collect" hidden:"true" description:"retrieves dpkg packages information"`
 	Apt     aptCommand     `command:"apt" hidden:"true"`
-	Extract extractCommand `command:"extract" hidden:"true"`
+	// Extract extractCommand `command:"extract" hidden:"true"`
 }

@@ -54,13 +54,13 @@ var _ = Describe("Apt", func() {
 						URI:    `http://archive.ubuntu.com/ubuntu/pool/main/p/perl/perl-modules-5.26_5.26.1-6ubuntu0.3_all.deb`,
 						Name:   `perl-modules-5.26_5.26.1-6ubuntu0.3_all.deb`,
 						Size:   `2762592`,
-						Digest: `MD5Sum:e3bb462a24dda2bed9eeb0136b8d0b87`,
+						MD5sum: `e3bb462a24dda2bed9eeb0136b8d0b87`,
 					},
 					{
 						URI:    `http://archive.ubuntu.com/ubuntu/pool/main/g/gdbm/libgdbm5_1.14.1-6_amd64.deb`,
 						Name:   `libgdbm5_1.14.1-6_amd64.deb`,
 						Size:   `26040`,
-						Digest: `MD5Sum:99523c29e5ed1272dff7abc066eec3f9`,
+						MD5sum: `99523c29e5ed1272dff7abc066eec3f9`,
 					},
 				}))
 			})
