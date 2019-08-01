@@ -855,11 +855,12 @@ certain "content installation steps":
 - setting container runtime configurations
 
 
-### gathering the base image
+### the base image
 
-As Concourse always leverages a base image that is not just plain scratch, it
-made sense for me to start with the retrieval of an image that the user
-specifies to move forward with the mutations later on.
+As Concourse always leverages a base image that is not just plain
+[scratch](https://hub.docker.com/_/scratch), it made sense for me to start with
+the retrieval of an image that the user specifies to move forward with the
+mutations later on.
 
 
 ```hcl
