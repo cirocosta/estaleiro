@@ -312,6 +312,7 @@ Some examples:
 
 ```
     
+
     .-----------------------.
     |                       |
     |  concourse/concourse  |
@@ -323,14 +324,23 @@ Some examples:
 
 ```
 
+While the traditional way of going over these enforcements have been post-facto,
+there's the potential to standardize across the definition of what "good means"
+in ways that developers wouldn't shoot themselves in their foots.
+
+---
+
+
+
 
 ## what if Dockerfiles didn't exist?
 
 
-My attempt with this tool was to tackle those two.
+In order to go after some of those problems, we could start reminding ourselves
+of the basic principles that allows a `docker build` to work with Dockerfiles.
 
-But, before we jump to the tool, let's imagine that `docker build` doesn't
-exist, and Dockerfiles aren't a thing.
+A nice way of doing so is pretending that Dockerfiles don't even exist, and
+trying to achieve what they can achieve without it.
 
 
 
@@ -340,6 +350,7 @@ exist, and Dockerfiles aren't a thing.
 If we erase from our minds the fact that `Dockerfile` is the de-facto way of
 building container images today, we could perhaps summarize the creation of
 that image as:
+
 
 1. bringing some content from a local directory
 2. installing some dependencies
