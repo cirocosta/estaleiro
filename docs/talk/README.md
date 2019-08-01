@@ -15,9 +15,9 @@ reach out to me on the Pivotal Slack channel (`@cscosta`), or even Twitter
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**
 
-- [rethinking the way container images are built](#rethinking-the-way-container-images-are-built)
+
+- [a proof of concept container image builder that plays nice with OSLO](#a-proof-of-concept-container-image-builder-that-plays-nice-with-oslo)
   - [the Concourse container image](#the-concourse-container-image)
   - [what's hard about dockerfiles](#whats-hard-about-dockerfiles)
     - [1. tracking what was added](#1-tracking-what-was-added)
@@ -27,16 +27,19 @@ reach out to me on the Pivotal Slack channel (`@cscosta`), or even Twitter
   - [a primitive container image builder](#a-primitive-container-image-builder)
     - [compilers](#compilers)
     - [buildkit](#buildkit)
-  - [a minimally viable frontend for our container images](#a-minimally-viable-frontend-for-our-container-images)
-    - [gathering the base image](#gathering-the-base-image)
+  - [a minimally viable frontend for our container images - `estaleiro`](#a-minimally-viable-frontend-for-our-container-images---estaleiro)
+    - [the base image](#the-base-image)
     - [installing packages](#installing-packages)
+    - [adding local files](#adding-local-files)
+    - [leveraging builds from dockerfiles](#leveraging-builds-from-dockerfiles)
+  - [next steps](#next-steps)
   - [talk about](#talk-about)
   - [references](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
-# rethinking the way container images are built
+# a proof of concept container image builder that plays nice with OSLO
 
 Hey,
 
