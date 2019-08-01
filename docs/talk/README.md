@@ -328,9 +328,6 @@ While the traditional way of going over these enforcements have been post-facto,
 there's the potential to standardize across the definition of what "good means"
 in ways that developers wouldn't shoot themselves in their foots.
 
----
-
-
 
 
 ## what if Dockerfiles didn't exist?
