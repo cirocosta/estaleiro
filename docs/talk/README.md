@@ -183,7 +183,7 @@ need to scan to ship Concourse.
 
 Although Concourse has more then 10 container [images that we publish on
 DockerHub](https://hub.docker.com/u/concourse) (as of today) that are consumed
-by OSS folks, we can look at the case of [`concourse/concourse`](https://hub.docker.com/u/concourse) - 
+by OSS folks, we can look at the case of [`concourse/concourse`](https://github.com/concourse/concourse-docker) - 
 the image that provides the Concourse binaries with all bateries included:
 
 
@@ -236,12 +236,12 @@ FROM ubuntu
         ENTRYPOINT ["dumb-init", "/usr/local/concourse/bin/concourse"]
 ```
 
+While this has worked great for us for a long time, when it comes to now making
+sure that not only this, but all of our other 10+ images are all scannable, some
+challanges start arising.
 
 
 ## what's hard about dockerfiles
-
-While dockerfiles are great for the versatility that they provide, some
-challanges start arising for Rachel.
 
 ### 1. tracking what was added
 
