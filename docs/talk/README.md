@@ -30,6 +30,7 @@ reach out to me on the Pivotal Slack channel (`@cscosta`), or even Twitter
   - [a minimally viable frontend for our container images](#a-minimally-viable-frontend-for-our-container-images)
     - [gathering the base image](#gathering-the-base-image)
     - [installing packages](#installing-packages)
+  - [talk about](#talk-about)
   - [references](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
