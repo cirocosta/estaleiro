@@ -1516,10 +1516,10 @@ base_image:
 
 changeset:
   files:
-    - name: "/usr/local/concourse/bin/concourse"
+    - name: "/usr/local/concourse/bin/gdn"
       digest: "sha256:89f687d4744cd779303ddc7ef56f77c303f19cfe9ee92badbbbd7567bc1ca47a"
       source:
-        - url: https://github.com/concourse/concourse
+        - url: https://github.com/cloudfoundry/garden-runc-release
           type: git
           ref: v1.19.4
       from_tarball:
@@ -1577,6 +1577,159 @@ Go).
 
 
 ```
+
+But, as I mentioned that Docker itself has been leveraging `buildkit` under the
+hood recently, that means that it has Go code that takes a given Dockerfile,
+translates to that same set of low level operations that we do too (LLB), and
+sends them to buildkit.
+
+
+
+```
+
+
+      Dockerfile ===> dockerfile frontend ===> LLB ===> buildkitd
+                                                |
+                                                .
+                                          same thing that
+                                             we target
+
+
+```
+
+
+
+What that means is that if we wanted to leverage that frontend, all that we'd
+need to do is merge those two directed acyclic graphs (DAGs) is we wanted to,
+for instance, build something first, and then as the very last step, retrieve a
+file that was build at a given point.
+
+
+```
+
+
+        local repository:
+
+          .
+          ├── Dockerfile
+          ├── estaleiro.hcl     ===> ESTALEIRO
+          └── src                       |
+                                        |
+                                        *-> interprets `estaleiro.hcl`
+                                                  |
+                                                  .
+                                        notices that there's a build step declared
+                                                  |
+                                                  .
+                                 builds the dockerfile, then copies a given result
+                                        to the final container image.
+
+
+```
+
+For an example of that, let's look at how this tool builds itself.
+
+First, there's a Dockerfile that deals with building the Go binary:
+
+
+```Dockerfile
+# syntax = docker/dockerfile:experimental
+
+FROM golang AS golang
+
+
+FROM golang AS base
+
+	ENV CGO_ENABLED=0
+	RUN apt update && apt install -y git
+
+	ADD . /src
+	WORKDIR /src
+
+
+FROM base AS build
+
+	RUN \
+		--mount=type=cache,target=/root/.cache/go-build \
+		--mount=type=cache,target=/go/pkg/mod \
+			go build -v \
+			-tags "netgo dfrunmount" \
+			-o /bin/estaleiro \
+			-ldflags "-X main.version=$(cat ./VERSION) -extldflags \"-static\""
+```
+
+While this Dockerfile is still perfectly fine for building the binary and giving
+us a working container image that we could use without any changes to our
+workflow, when it comes to shipping, it doesn't give us any of those materials
+that we'd need to make it shippable.
+
+Here's where `estaleiro` comes in then:
+
+
+```hcl
+# the final image to produce
+#
+image "cirocosta/estaleiro" {
+
+  base_image {
+    name = "ubuntu"
+    ref  = "bionic"
+  }
+
+
+  apt {
+    package "ca-certificates" {}
+  }
+
+
+  # in the final image, `/usr/local/bin/estaleiro`
+  # should exist, with the file # coming from the
+  # `build` step defined below
+  #
+  file "/usr/local/bin/estaleiro" {
+    from_step "build" {
+      path = "/bin/estaleiro"
+    }
+  }
+
+  entrypoint = ["/usr/local/bin/estaleiro", "frontend"]
+}
+
+
+# performs the build of `estaleiro`.
+#
+step "build" {
+
+  # where the dockerfile exists in the current
+  # context, and which step we should target.
+  #
+  dockerfile = "./Dockerfile"
+  target     = "build"
+
+
+  # a file in the final layer after building
+  # everything targetting the `build` step.
+  #
+  # as this file is meant to be consumed in an
+  # image to be shipped, it needs to declare its
+  # source.
+  #
+  source_file "/bin/estaleiro" {
+    vcs "git" {
+      ref        = "${estaleiro-commit}"
+      repository = "https://github.com/cirocosta/estaleiro"
+    }
+  }
+}
+```
+
+If we now look at the graph that `buildkit` is meant to traverse to get to the
+final container image that represents the materialization of our desire to have
+the `cirocosta/estaleiro` image:
+
+
+![](./assets/estaleiro-graph.png)
+
 
 
 ## next steps
