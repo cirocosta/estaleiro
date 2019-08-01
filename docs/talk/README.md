@@ -126,13 +126,6 @@ That is,
 4. **to let Norsk know where to scan**, *it needs to `¯\_(ツ)_/¯`*
 
 
-Thus, with a single goal in mind - shipping Concourse container images to
-customers -, we can see that if at the very bottom of it - creating a container
-image that is scannable -, there's friction, the whole process can get delayed,
-impacting all of the rest of the process of getting the great features that the
-team developed to the hands of our customers.
-
-
 ```
 
 
@@ -156,6 +149,28 @@ team developed to the hands of our customers.
                                      the team develops don't get
                                      to the hands of customers
                                       
+
+```
+
+
+Thus, with a single goal in mind - shipping Concourse container images to
+customers -, we can see that if at the very bottom of it - creating a container
+image that is scannable -, there's friction, the whole process can get delayed,
+impacting all of the rest of the process of getting the great features that the
+team developed to the hands of our customers.
+
+
+```
+
+
+                        .----------------------------------------.
+      .---------.       |                                        |
+      |  source | ====> |   container image that is scannable    |
+      *---------*   .   |                                        |
+                    .   *----------------------------------------*
+                    .
+                    .
+                    ..... could this be better?
 
 ```
 
