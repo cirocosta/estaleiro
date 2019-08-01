@@ -1,3 +1,14 @@
+## DISCLAIMER
+
+The content here has definitely a bunch of rough edges and is not polished at
+all.
+
+Nothing on it is set in stone, and it has even been barely reviewed by me - it's
+a brain dump to foster discussions around the idea of building container images
+leveraging some cool new tech that is out there in a way that might solve some
+of our problems.
+
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
