@@ -1438,6 +1438,63 @@ changeset:
       # ...
 ```
 
+### adding local files
+
+As files are not strictly tied to source code like debian packages can be, for
+these, we end up relying on the work of developers to properly curate that.
+
+Using the syntax, it'd look like the following:
+
+
+```hcl
+# declaration of how we want the final image to
+# look like once it gets built.
+#
+image "cirocosta/sample" {
+
+
+  # the base image that powers the final container
+  # image that we're building.
+  #
+  base_image {
+    name = "ubuntu"
+    ref  = "bionic"
+  }
+
+
+  # the file that will exist at such location in
+  # the image comes from the `linux-rc` tarball.
+  #
+  # as the tarball was defined before, we know
+  # where the file comes from too.
+  #
+  file "/usr/local/concourse/bin/gdn" {
+    from_tarball "./linux-rc.tgz" {
+      path = "concourse/bin/gdn"
+    }
+  }
+
+}
+
+
+# declaring the source code that provides specific
+# files within the tarball.
+#
+# files can only be added to the final image once
+# their sources have been declared.
+#
+tarball "./linux-rc.tgz" {
+  source_file "concourse/bin/gdn" {
+    vcs "git" {
+      ref        = "master"
+      repository = "https://github.com/cloudfoundry/guardian"
+    }
+  }
+}
+```
+
+
+
 
 
 ## talk about
