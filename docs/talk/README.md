@@ -1731,13 +1731,18 @@ the `cirocosta/estaleiro` image:
 ![](./assets/estaleiro-graph.png)
 
 
+Just like in the case of adding a local file, to get that file into the final
+image, it needs to have declared where it came from, thus, we can ensure that
+eveyrthing that lands into that final image has been specified at some point.
+
+
 
 ## next steps
 
 
 - CF RFC
 - more samples
-- consolidated BOM
+- consolidated bill of materials
 - testing it more throughly with Dockerd
 
 
