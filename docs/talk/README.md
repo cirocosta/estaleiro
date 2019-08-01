@@ -1518,6 +1518,14 @@ Go).
 ```
 
 
+## next steps
+
+
+- CF RFC
+- more samples
+- consolidated BOM
+- testing it more throughly with Dockerd
+
 
 
 ## talk about
