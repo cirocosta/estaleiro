@@ -589,12 +589,25 @@ Nest that multiple times, and one can have any Dockerfile built.
 ```
 
 
-The good thing about Dockerfiles though is that you don't need to know any of
-the runtime stuff - just like with a traditional compiler you don't need to
-care about the bare details of crafting machine-readable code (you focus on the
-higher-level language), Dockerfiles give you the same.
+But, as one can imagine, that's not a great experience, just like it wouldn't be
+a great experience to code in assembly when trying to write a web application -
+with a higher-level language, one can benefit from focusing on what really
+matters: the business logic.
 
-  // TODO - improve on this one
+
+```
+
+
+        that's just too low level!
+
+            (and annoying to write)
+
+
+
+```
+
+To do so do, what you end up with is needing something that resembles a
+compiler.
 
 
 
