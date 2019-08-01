@@ -116,7 +116,7 @@ That is,
 1. **to get that to customers**, *it needs to be on PivNet,*
 > so that we can attest what has been distributed to who
 
-2. **to have it on PivNet**, *it needs an OSL file*
+2. **to have it on PivNet**, *it needs an [OSL](https://docs.google.com/document/d/1DsXUumrjRXkY4ILxEwxJaBV-rMIYlb4Esc-JDZOYLBA/) file*
 > so that we can disitribute the copyright and prove that we don't have any
 > licenses that would hurt our customers
 
