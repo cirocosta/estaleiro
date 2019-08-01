@@ -797,7 +797,7 @@ about before when we were creating the primitive image builder:
 
 
 Aside from that, just like a compiler backend, it takes care of all of the
-optimizations that would be hard for us to implement in our very primiter
+optimizations that would be hard for us to implement in our very primitive
 builder - caching and running steps in parallel.
 
 
@@ -824,7 +824,10 @@ builder - caching and running steps in parallel.
 ## a minimally viable frontend for our container images
 
 With that idea of what most of our container images are, I went on defining a
-syntax that could represent those concepts.
+syntax that could represent those concepts, in a way that could satisfy some of
+the requirements that are placed on products trying to ship bits to customers,
+while, at the same time, leaving space for developers to have a good developer
+experience.
 
 
 ```
