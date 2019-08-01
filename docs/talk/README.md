@@ -1503,17 +1503,6 @@ with the information provided about the source of them:
 base_image:
   name: docker.io/library/ubuntu
   digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
-  files:
-    - name: "/usr/local/concourse/bin/concourse"
-      digest: "sha256:89f687d4744cd779303ddc7ef56f77c303f19cfe9ee92badbbbd7567bc1ca47a"
-      source:
-        - url: https://github.com/concourse/concourse
-          type: git
-          ref: v1.19.4
-      from_tarball:
-        name: "linux-rc"
-        digest: "sha256:79303ddcef56f77c303f19cfe9ee92badbbbd7567bc1ca47789f687d4744cd7a"
-
   packages:
     - name: fdisk
       version: 2.31.1-0.4ubuntu3.3
@@ -1524,6 +1513,18 @@ base_image:
       source_package: pam
       architecture: all
     # ...
+
+changeset:
+  files:
+    - name: "/usr/local/concourse/bin/concourse"
+      digest: "sha256:89f687d4744cd779303ddc7ef56f77c303f19cfe9ee92badbbbd7567bc1ca47a"
+      source:
+        - url: https://github.com/concourse/concourse
+          type: git
+          ref: v1.19.4
+      from_tarball:
+        name: "linux-rc"
+        digest: "sha256:79303ddcef56f77c303f19cfe9ee92badbbbd7567bc1ca47789f687d4744cd7a"
 
 ```
 
