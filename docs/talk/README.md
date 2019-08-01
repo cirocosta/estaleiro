@@ -1019,6 +1019,30 @@ the form of labels:
 
 ```
 
+For instance, by running just this step, we'd end up with the following bill of
+materials:
+
+
+```yaml
+base_image:
+  name: docker.io/library/ubuntu
+  digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
+  packages:
+    - name: fdisk
+      version: 2.31.1-0.4ubuntu3.3
+      source_package: util-linux
+      architecture: amd64
+    - name: libpam-runtime
+      version: 1.1.8-3.6ubuntu2.18.04.1
+      source_package: pam
+      architecture: all
+    - name: libncurses5
+      version: 6.1-1ubuntu1.18.04
+      source_package: ncurses
+      architecture: amd64
+    # ...
+```
+
 
 Building on those premises, let's move on with package installation.
 
@@ -1343,6 +1367,75 @@ At this point them, we have three things:
                     ..... initial bill of materials --------+
                     ..... changeset ------------------------*
 
+```
+
+As a final result, we can see how our bill of material expanded to include the
+changeset:
+
+
+```yaml
+base_image:
+  name: docker.io/library/ubuntu
+  digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
+  packages:
+    - name: fdisk
+      version: 2.31.1-0.4ubuntu3.3
+      source_package: util-linux
+      architecture: amd64
+    - name: libpam-runtime
+      version: 1.1.8-3.6ubuntu2.18.04.1
+      source_package: pam
+      architecture: all
+    - name: libncurses5
+      version: 6.1-1ubuntu1.18.04
+      source_package: ncurses
+      architecture: amd64
+    # ...
+changeset:
+  packages:
+    - name: vim-runtime
+      version: 2:8.0.1453-1ubuntu1.1
+      source_package: vim
+      location:
+          uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim-runtime_8.0.1453-1ubuntu1.1_all.deb
+          name: vim-runtime_2%3a8.0.1453-1ubuntu1.1_all.deb
+          size: "5435124"
+          digest: MD5Sum:0ec3148ec2668dfbb8d357dc8f6240e6
+      source:
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453-1ubuntu1.1.dsc
+          name: vim_8.0.1453-1ubuntu1.1.dsc
+          size: "2934"
+          digest: SHA256:c85b2abcddbd7abc07fb06bc3a1b3fb6b80c2316e787abe05bb4d6909dc831f2
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453.orig.tar.gz
+          name: vim_8.0.1453.orig.tar.gz
+          size: "13434095"
+          digest: SHA256:ddf3f1baf0aa8f2a988bd6ef3ee305a6cd99f365de9024faa2827a1344be8679
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453-1ubuntu1.1.debian.tar.xz
+          name: vim_8.0.1453-1ubuntu1.1.debian.tar.xz
+          size: "190292"
+          digest: SHA256:97553c5f79470dba084e5de2e33805c1222e5233c1d5fb31866fd5bf90d611ec
+    - name: vim
+      version: 2:8.0.1453-1ubuntu1.1
+      source_package: ""
+      location:
+          uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453-1ubuntu1.1_amd64.deb
+          name: vim_2%3a8.0.1453-1ubuntu1.1_amd64.deb
+          size: "1151556"
+          digest: MD5Sum:a1fc106a6538bb091ef9787c07c69de0
+      source:
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453-1ubuntu1.1.dsc
+          name: vim_8.0.1453-1ubuntu1.1.dsc
+          size: "2934"
+          digest: SHA256:c85b2abcddbd7abc07fb06bc3a1b3fb6b80c2316e787abe05bb4d6909dc831f2
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453.orig.tar.gz
+          name: vim_8.0.1453.orig.tar.gz
+          size: "13434095"
+          digest: SHA256:ddf3f1baf0aa8f2a988bd6ef3ee305a6cd99f365de9024faa2827a1344be8679
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/v/vim/vim_8.0.1453-1ubuntu1.1.debian.tar.xz
+          name: vim_8.0.1453-1ubuntu1.1.debian.tar.xz
+          size: "190292"
+          digest: SHA256:97553c5f79470dba084e5de2e33805c1222e5233c1d5fb31866fd5bf90d611ec
+      # ...
 ```
 
 
