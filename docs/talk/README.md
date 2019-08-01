@@ -734,9 +734,8 @@ to creating those container images
 ```
 
 That backend infrastructure leverages those exact same three concepts that we talked
-before when we were creating the primitive image builder - using containers that
-run on top of snapshots to mutate their state and advance in the creation of a
-final container image -, that is:
+about before when we were creating the primitive image builder:
+
 
 1. creating a container from a given image
 
