@@ -181,10 +181,10 @@ need to scan to ship Concourse.
 
 ## the Concourse container image
 
-Although Concourse has more then 10 container images that we publish on
-DockerHub (as of today) that are consumed by OSS folks, we can look at the case of
-`concourse/concourse` - the image that provides the Concourse binaries with all
-bateries included:
+Although Concourse has more then 10 container [images that we publish on
+DockerHub](https://hub.docker.com/u/concourse) (as of today) that are consumed
+by OSS folks, we can look at the case of [`concourse/concourse`](https://hub.docker.com/u/concourse) - 
+the image that provides the Concourse binaries with all bateries included:
 
 
 ```dockerfile
