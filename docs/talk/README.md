@@ -245,19 +245,39 @@ challanges start arising.
 
 ### 1. tracking what was added
 
-Although the above Dockerfile seems very straightforward, it presents some
-difficulties when it comes to preciselly telling what's there:
+Having the ability to put anything you'd want into the final container image is
+just so easy - most of the time that's just a command away, and it can
+potentially leave no traces (for good or bad):
+
+
+```dockerfile
+# retrieve a file from who knows where
+#
+RUN curl -SOL https://something.sketchy.hax
+
+
+# add a file that has who knows what
+#
+ADD ./anything /anywhere
+
+
+# run a script that does whatever
+#
+RUN a-script-that-downloads-shady-stuff.sh
+```
+
+Which, when it comes to shipping to customers, leads to questions like:
 
 - what was the SHA of that tarball that brought contents?
 - how can I tie that tarball to source code?
 - what are the versions of those packages?
 - can I get the source of those packages?
 - what debian repository brought those packages?
+- do I trust the repositories that brought packages to this image?
 
-It turns out that due to the extreme versatility of a Dockerfile, it's very
-tough for a company to get that information precisely.
 
 ```
+
 
      concourse/concourse
     .-------------------.
