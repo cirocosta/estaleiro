@@ -182,7 +182,7 @@ need to scan to ship Concourse.
 ## the Concourse container image
 
 Although Concourse has more then 10 container images that we publish on
-DockerHub as of today that are consumed by OSS folks, we can look at the case of
+DockerHub (as of today) that are consumed by OSS folks, we can look at the case of
 `concourse/concourse` - the image that provides the Concourse binaries with all
 bateries included:
 
@@ -194,6 +194,9 @@ bateries included:
 FROM ubuntu:bionic AS ubuntu
 
 
+
+# creating a step that just unpacks a tarball that has Concourse's "batteries"
+#
 FROM ubuntu AS assets
 
         # retrieve the concourse tarball that contains all of the concourse
@@ -203,19 +206,15 @@ FROM ubuntu AS assets
         RUN tar xzf /tmp/*tgz -C /usr/local
 
 
+
+# the final step that will define the layers that get in the final image to be
+# shipped to people
+#
 FROM ubuntu
-
-        # some environment variables (there are more)
-        ENV CONCOURSE_SESSION_SIGNING_KEY     /concourse-keys/session_signing_key
-        ENV CONCOURSE_TSA_AUTHORIZED_KEYS     /concourse-keys/authorized_worker_keys
-
-
-
-        # volume for non-aufs/etc. mount for baggageclaim's driver
-        VOLUME /worker-state
 
 
         # packages needed at runtime
+        #
         RUN apt update && apt install -y \
             btrfs-tools \
             ca-certificates \
@@ -228,6 +227,11 @@ FROM ubuntu
         #
         COPY --from=assets /usr/local/concourse /usr/local/concourse
 
+
+        # some environment variables (there are more) and other runtime
+        # configurations
+        #
+        ENV CONCOURSE_SESSION_SIGNING_KEY     /concourse-keys/session_signing_key
         STOPSIGNAL SIGUSR2
         ENTRYPOINT ["dumb-init", "/usr/local/concourse/bin/concourse"]
 ```
