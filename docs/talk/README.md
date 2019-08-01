@@ -617,6 +617,9 @@ If we compare Dockerfiles to regular compiled programming languages, and for a
 moment, assume that the process of going from a Dockerfile to a container image
 is a compilation process, we could start drawing some quite neat analogies.
 
+As I have written quite a bunch of C back then when I was at the University,
+let's take a look at an example hypothetical C compiler.
+
 
 
 ```
@@ -633,11 +636,11 @@ is a compilation process, we could start drawing some quite neat analogies.
 ```
 
 
-As there's a clear distinction between the types of jobs that the compiler do in
-different phases, and that innovation can happen differently in each front, some
-compiler infrastructures like LLVM separate that quite clearly in two fronts,
-with a common "lower level language" in the middle (the intermediary
-representation - IR):
+As there's a clear distinction between the types of jobs that the compiler does
+in different phases, and that innovation can happen differently in each front,
+some compiler infrastructures like [LLVM](https://llvm.org/) separate that quite
+clearly in two fronts, with a common "lower level language" in the middle (the
+intermediary representation - IR):
 
 - the `frontend`, dealing with syntax and semantics
 - the `backend`, dealing with the process of optimizing the code and creating
