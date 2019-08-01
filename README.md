@@ -21,6 +21,7 @@ have more control (through transparency) over what you ship.
 <br />
 <br />
 
+**HIGHLY EXPERIMENTAL - DO NOT USE THIS**
 
 **Table of Contents**
 
@@ -39,17 +40,16 @@ have more control (through transparency) over what you ship.
 
 ### problem set
 
-> consistently enforcing a guideline for baking container images is hard
 
-`Dockerfile`s are great - they allow us to do anything!
 
-With that power, problems arise when an entire organization starts adopting it:
+Keeping track of what has been added to a container image that one is about to
+ship if hard.
 
-- no control over base images
-- some drop user privileges, others don't
-- artifacts can end up in them coming from who knows where
-  - with which versions?
-  - having the source code from where?
+With the versatility of Dockerfiles, it's quite easy to shoot itself in the foot
+when it comes to either installing dependencies that one couldn't even consume,
+or that wouldn't be wise.
+
+While it's great to talk about best practices, it's hard to enforce them.
 
 
 
@@ -89,66 +89,100 @@ FROM base AS build
 ```hcl
 # syntax = cirocosta/estaleiro-frontend
 
-step "build" {
-  dockerfile = "./Dockerfile"
-  target     = "build"
-}
-
+# the final image to produce
+#
 image "cirocosta/estaleiro" {
-
   base_image {
     name = "ubuntu"
     ref  = "bionic"
   }
+  
+  apt {
+    package "ca-certificates" {}
+  }
 
   file "/usr/local/bin/estaleiro" {
     from_step "build" {
-      path = "/usr/local/bin/estaleiro"
+      path = "/bin/estaleiro"
+    }
+  }
+}
+
+
+# performs the build of `estaleiro`.
+#
+step "build" {
+  dockerfile = "./Dockerfile"
+  target     = "build"
+
+  source_file "/bin/estaleiro" {
+    vcs "git" {
+      ref        = "${estaleiro-commit}"
+      repository = "https://github.com/cirocosta/estaleiro"
     }
   }
 }
 ```
 
+Having those pieces in, `estaleiro` creates the intermediary representation to
+be used by `buildkitd` to build the final container image that starts from
+`ubuntu:bionic`, has the `ca-certificates` package installed, and the file that
+the Dockerfile built - all while keeping track of their versions and sources
+along the way in the form of a bill of materials:
 
-### tests
-At the moment, there are no integration tests.
 
-Unit tests can be run with the standard `go test`:
+```yaml
+base_image:
+  name: docker.io/library/ubuntu
+  digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
+  packages:
+    - name: fdisk
+      version: 2.31.1-0.4ubuntu3.3
+      source_package: util-linux
+      architecture: amd64
+    - name: libpam-runtime
+      version: 1.1.8-3.6ubuntu2.18.04.1
+      source_package: pam
+      architecture: all
+    # ...
 
-```console
-$ go test -v ./...
-?   	github.com/cirocosta/estaleiro	[no test files]
-?   	github.com/cirocosta/estaleiro/command	[no test files]
-=== RUN   TestConfig
-Running Suite: Config Suite
-...
+changeset:
+  files:
+    - name: "/usr/local/bin/seataleiro"
+      digest: "sha256:89f687d4744cd779303ddc7ef56f77c303f19cfe9ee92badbbbd7567bc1ca47a"
+      source:
+        - url: https://github.com/cirocosta/estaleiro
+          type: git
+          ref: 6a4d0b73673a1863a62b7ac6cbde4ae7597c56d7
+      from_step:
+        name: "build"
+        dockerfile_digest: "sha256:9303ddc7ef56f77c303f19cfe9ee92badbbbd7567bc189f687d4744cd77ca47a"
+  packages:
+    - name: ca-certificates
+      version: "20180409"
+      source_package: ""
+      architecture: all
+      location:
+          uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409_all.deb
+          name: ca-certificates_20180409_all.deb
+          size: "150932"
+          md5sum: eae40792673dcb994af86284d0a01f36
+      source:
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409.dsc
+          name: ca-certificates_20180409.dsc
+          size: "1420"
+          md5sum: cd1f6540d0dab28f897e0e0cb2191130cdbf897f8ce3f52c8e483b2ed1555d30
+        - uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409.tar.xz
+          name: ca-certificates_20180409.tar.xz
+          size: "246908"
+          md5sum: 7af6f5bfc619fd29cbf0258c1d95107c38ce840ad6274e343e1e0d971fc72b51
+    # and all of its dependencies too ...
 ```
 
 
-### developing it locally
+### when will I be able to use this?
 
-1. start `buildkitd` inside a container (that can be reached from the host).
-
-```console
-$ make run-buildkitd
-```
-
-
-2. with `buildkit` running, set the environment variable `BUILDKIT_HOST` that
-   allows `estaleiro` to target `buildkitd`.
-
-```console
-$ export BUILDKIT_HOST=tcp://0.0.0.0:1234
-```
-
-Now, you can run `estaleiro` using the standard `buildctl` CLI to interact with
-`buildkitd`.
-
-For instance, to build an image that ships `estaleiro`:
-
-```console
-./estaleiro build -f ./estaleiro.hcl | buildctl build --local context=.
-```
+when it gets ready ¯\_(ツ)_/¯
 
 
 ### license
