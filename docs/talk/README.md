@@ -90,8 +90,8 @@ image" and want to get that to customer hands, there's clearly some steps to go
 through. 
 
 Thinking of that problematic as code in the form of a
-[Makefile](https://www.gnu.org/software/make/), where you'd define a set of
-targets that you want to accomplish, and the dependencies that need to be
+[Makefile](https://www.gnu.org/software/make/), where you define a set of
+targets that you want to get to, and the dependencies that need to be
 satisfied to achieve it, we could present the problem as such:
 
 
@@ -127,10 +127,37 @@ That is,
 
 
 Thus, with a single goal in mind - shipping Concourse container images to
-customers running Kubernetes -, we can see that if at the very bottom of it -
-creating a container image that is scannable -, there's friction, the whole
-process can get delayed, impacting all of the rest of the process of getting the
-great features that the team developed to the hands of our customers.
+customers -, we can see that if at the very bottom of it - creating a container
+image that is scannable -, there's friction, the whole process can get delayed,
+impacting all of the rest of the process of getting the great features that the
+team developed to the hands of our customers.
+
+
+```
+
+
+    customer artifact     (waits on)
+      
+        release on pivnet     (waits on)
+
+            artifact with osl file  (waits on)
+
+            .----------------------------------------.
+            |                                        |
+            |   container image that is scannable    |
+            |                                        |
+            *------------ bottleneck? ---------------*
+                            |
+                            *---> impacts all the rest :(
+                                            |
+                                            |
+                                            .
+                                     all the cool features that
+                                     the team develops don't get
+                                     to the hands of customers
+                                      
+
+```
 
 
 To make things more concrete, let's look at one of the container images that we
