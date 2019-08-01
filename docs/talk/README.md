@@ -1319,6 +1319,33 @@ file retrieval from the filesystem.
 
 ```
 
+At this point them, we have three things:
+
+- a base image that was mutated with packages added
+- a bill of materials of the base image (image reference and packages installed
+  by default)
+- a "changeset bill of materials" that contains a listing of all of the packages
+  that were further installed by us
+
+
+```
+
+
+
+                                  .-------------------.
+      .---------.                 |                   |
+      |  source | =============>  |   container image | + runtime config
+      *---------*   &             |                   |      label
+                    .             *-------------------*        ^
+                    .                                          |
+                    .                                       .--*
+                    .                                       |
+                    ..... initial bill of materials --------+
+                    ..... changeset ------------------------*
+
+```
+
+
 
 ## talk about
 
