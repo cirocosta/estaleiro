@@ -680,21 +680,25 @@ intermediary representation, that can benefit from the same backend.
 
 ```
 
-An, that's what's hapenning right now for container images.
+And, that's what's hapenning *right now* for container images.
 
 
 
 ### buildkit
 
-In 2017, some folks at Docker started working on ways of decoupling Docker's
-build mechanism so that it could be iterated on in a faster way.
+In 2017, some folks at [Docker](https://www.docker.com/) started working on ways
+of decoupling the docker engine's build mechanism so that it could be iterated
+on in a faster way.
 
 
 ```
-                            .-------> dockerd
-  docker engine --> moby  --+-------> docker cli
-                            *-------> buildkit
-                            ... other components
+
+
+                              .-------> dockerd
+    docker engine --> moby  --+-------> docker cli
+                              *-------> buildkit
+                              ... other components
+
 
 ```
 
