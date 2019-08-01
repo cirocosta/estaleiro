@@ -8,6 +8,10 @@ a brain dump to foster discussions around the idea of building container images
 leveraging some cool new tech that is out there in a way that might solve some
 of our problems.
 
+If you have any questions / comments / suggestions / feedback, feel free to
+reach out to me on the Pivotal Slack channel (`@cscosta`), or even Twitter
+(`@cirowrc`).
+
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -35,9 +39,11 @@ of our problems.
 
 Hey,
 
-We at the Concourse for PCF team have been maintaining for quite a while a Helm
-chart for running Concourse on top of Kubernetes, and, wanting to ship that to
-customers, showed that there's quite a good deal of uncertainty involved.
+We at the [Concourse for PCF](https://pivotal.io/concourse) team have been
+maintaining for quite a while [a Helm chart for running Concourse on top of
+Kubernetes](https://hub.helm.sh/charts/stable/concourse), and, wanting to ship
+that to customers, showed that there's quite a good deal of uncertainty
+involved.
 
 ```
 
