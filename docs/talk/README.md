@@ -703,9 +703,9 @@ on in a faster way.
 ```
 
 
-Buildkit comes with the same mindset as LLVM - provide a common infrastructure
-for building container image, separating the concerns of developing frontends
-from the backend infrastructure.
+[Buildkit](https://github.com/moby/buildkit) comes with the same mindset as LLVM - 
+provide a common infrastructure for building container image, separating the
+concerns of developing frontends from the backend infrastructure.
 
 
 PS.: and now we're at a turning point where we can focus on the innovation where
