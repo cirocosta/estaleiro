@@ -821,13 +821,14 @@ builder - caching and running steps in parallel.
 ```
 
 
-## a minimally viable frontend for our container images
+## a minimally viable frontend for our container images - `estaleiro`
 
 With that idea of what most of our container images are, I went on defining a
 syntax that could represent those concepts, in a way that could satisfy some of
 the requirements that are placed on products trying to ship bits to customers,
 while, at the same time, leaving space for developers to have a good developer
 experience.
+
 
 
 ```
@@ -1092,28 +1093,34 @@ RUN apt update
 RUN apt install -y vim
 ```
 
-Breaking that down to a two-step process:
+That is, during the first step, `apt` looks at the file `/etc/apt/sources.list`
+(and others under `/etc/apt/sources.list.d`).
 
 
-1. follow what's included in `/etc/apt/sources.list` 
-
-During this step, `apt` looks at the file `/etc/apt`
-
-Ththat ships with the Ubuntu base image, retrieving the index of packages that
-each of them holds, which can then be used later.
+Looking at the default file that ships with the Ubuntu base image, we can see
+what are all of those repositories that `apt` would retriieve lists of packages
+from.
 
 
 ```
+
+
 deb http://archive.ubuntu.com/ubuntu/  bionic           main restricted
 deb http://archive.ubuntu.com/ubuntu/  bionic-updates   main restricted
+
 deb http://archive.ubuntu.com/ubuntu/  bionic           universe
 deb http://archive.ubuntu.com/ubuntu/  bionic-updates   universe
+
 deb http://archive.ubuntu.com/ubuntu/  bionic           multiverse
 deb http://archive.ubuntu.com/ubuntu/  bionic-updates   multiverse
+
 deb http://archive.ubuntu.com/ubuntu/  bionic-backports main restricted universe multiverse
+
 deb http://security.ubuntu.com/ubuntu/ bionic-security  main restricted
 deb http://security.ubuntu.com/ubuntu/ bionic-security  universe
 deb http://security.ubuntu.com/ubuntu/ bionic-security  multiverse
+
+
 ```
 
 Interestingly though, this set of repositories is, by default, broader than it
@@ -1317,7 +1324,7 @@ file retrieval from the filesystem.
 
 - you can try it out right now with a recent-enough version of Docker
 - developer productivity when checking if you got all right
-
+- summary
 
 
 ## references
