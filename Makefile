@@ -35,7 +35,7 @@ graph:
 	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl debug dump-llb --dot \
 		| dot -Tsvg > graph.svg
-	open -a "Firefox" ./graph.svg
+	open -a "Google Chrome" ./graph.svg
 
 
 buildctl-gateway-integration:
