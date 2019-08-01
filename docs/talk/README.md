@@ -1493,10 +1493,45 @@ tarball "./linux-rc.tgz" {
 }
 ```
 
+
+
+As a result of having files consumes, the bill of materials gets then updated
+with the information provided about the source of them:
+
+
+```yaml
+base_image:
+  name: docker.io/library/ubuntu
+  digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
+  files:
+    - name: "/usr/local/concourse/bin/concourse"
+      digest: "sha256:89f687d4744cd779303ddc7ef56f77c303f19cfe9ee92badbbbd7567bc1ca47a"
+      source:
+        - url: https://github.com/concourse/concourse
+          type: git
+          ref: v1.19.4
+      from_tarball:
+        name: "linux-rc"
+        digest: "sha256:79303ddcef56f77c303f19cfe9ee92badbbbd7567bc1ca47789f687d4744cd7a"
+
+  packages:
+    - name: fdisk
+      version: 2.31.1-0.4ubuntu3.3
+      source_package: util-linux
+      architecture: amd64
+    - name: libpam-runtime
+      version: 1.1.8-3.6ubuntu2.18.04.1
+      source_package: pam
+      architecture: all
+    # ...
+
+```
+
+
 While it might seem like a bad idea trusting the user to do the right thing and
 put the right reference there, I think this strikes a good balance as the idea
 is that such file would be in possession of the team, either as part of a set of
-CI configurations, or the main source code.
+continuous integration configurations, or the main source code.
 
 In case of `ci`, one could even use variables that would auto-fill those fields
 too:
