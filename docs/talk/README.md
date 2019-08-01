@@ -519,7 +519,7 @@ RUN apt update && apt install -y vim
                     |    .
                     |    ├── etc
                     |    │   └── test.conf
-                    |    ├── file.txt  <<<< new file! 
+                    |    ├── file.txt
                     |    └── var
                     |
                     |
