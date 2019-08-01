@@ -1486,7 +1486,7 @@ image "cirocosta/sample" {
 tarball "./linux-rc.tgz" {
   source_file "concourse/bin/gdn" {
     vcs "git" {
-      ref        = "master"
+      ref        = "v1.19.4"
       repository = "https://github.com/cloudfoundry/guardian"
     }
   }
