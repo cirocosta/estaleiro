@@ -337,8 +337,29 @@ in ways that developers wouldn't shoot themselves in their foots.
 In order to go after some of those problems, we could start reminding ourselves
 of the basic principles that allows a `docker build` to work with Dockerfiles.
 
+
 A nice way of doing so is pretending that Dockerfiles don't even exist, and
 trying to achieve what they can achieve without it.
+
+
+```
+
+
+
+
+                        .-------------------.
+      .---------.       |                   |
+      |  source | ====> |   container image |
+      *---------*   .   |                   |
+                    .   *-------------------*
+                    .
+                    .
+                    ..... without a Dockerfile!
+
+
+
+```
+
 
 
 
