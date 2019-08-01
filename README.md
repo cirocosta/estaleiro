@@ -31,7 +31,7 @@ have more control (through transparency) over what you ship.
 
 - [problem set](#problem-set)
 - [estaleiro](#estaleiro)
-- [developing](#developing)
+- [when will I be able to use this?](#when-will-i-be-able-to-use-this)
 - [license](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
