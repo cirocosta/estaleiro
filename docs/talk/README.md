@@ -1443,7 +1443,7 @@ changeset:
 As files are not strictly tied to source code like debian packages can be, for
 these, we end up relying on the work of developers to properly curate that.
 
-Using the syntax, it'd look like the following:
+Using the syntax, it looks like the following:
 
 
 ```hcl
@@ -1492,6 +1492,31 @@ tarball "./linux-rc.tgz" {
   }
 }
 ```
+
+While it might seem like a bad idea trusting the user to do the right thing and
+put the right reference there, I think this strikes a good balance as the idea
+is that such file would be in possession of the team, either as part of a set of
+CI configurations, or the main source code.
+
+In case of `ci`, one could even use variables that would auto-fill those fields
+too:
+
+
+```hcl
+tarball "./linux-rc.tgz" {
+  source_file "concourse/bin/gdn" {
+    vcs "git" {
+      ref        = "${gdn-ref}"
+      repository = "https://github.com/cloudfoundry/guardian"
+    }
+  }
+}
+```
+
+Due to the fact that we're leveraging the 
+[Hashicorp confguration language (HCL)](https://github.com/hashicorp/hcl2), it
+becomes very easy to extend the syntax.
+
 
 
 ### leveraging builds from dockerfiles
