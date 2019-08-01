@@ -1123,8 +1123,8 @@ deb http://security.ubuntu.com/ubuntu/ bionic-security  multiverse
 
 ```
 
-Interestingly though, this set of repositories is, by default, broader than it
-should from the interpretation of what `main`, `restricted`, `universe`, and
+Interestingly though, this set of repositories is, by default, broader than what
+it should from the interpretation of what `main`, `restricted`, `universe`, and
 `multiverse` means:
 
 
