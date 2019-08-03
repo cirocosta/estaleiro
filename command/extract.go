@@ -16,10 +16,10 @@ import (
 )
 
 type extractCommand struct {
-	Tarball     string   `long:"tarball"     required:"true" description:"filepath to tarball to extract"`
-	Files       []string `long:"file"        required:"true" description:"file from the tarball that we want to consume"`
 	Destination string   `long:"destination" required:"true" description:"where to unarchive files to"`
-	Bom         string   `long:"bom"         required:"true" description:"where to write bill of materials to"`
+	Files       []string `long:"file"        required:"true" description:"file from the tarball that we want to consume"`
+	Output      string   `long:"output"      required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
+	Tarball     string   `long:"tarball"     required:"true" description:"filepath to tarball to extract"`
 }
 
 type UnarchivedTarball struct {
@@ -161,12 +161,22 @@ func (c *extractCommand) Execute(args []string) (err error) {
 		return
 	}
 
+	writer, err := writer(c.Output)
+	if err != nil {
+		return
+	}
+
 	b, err := yaml.Marshal(extracted)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(string(b))
+	_, err = fmt.Fprintf(writer, "%+v", string(b))
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed writing bill of materials to %s", c.Output)
+		return
+	}
 
 	return
 }
