@@ -1,0 +1,32 @@
+MISSING THINGS TO ADD
+
+
+	- identifier that identifies the container image
+
+		(could take this from the `image "blabla" {}` label)
+
+
+		```yaml
+		name: "cirocosta/estaleiro"
+		```
+
+
+	- `os-release` parsing in the beginning
+	
+
+
+		```yaml
+		base:
+		  os: ubuntu
+		  version: 18.04
+		  imaege: name@digest
+		```
+
+	- vcs: change from `ref` to `version?`
+
+		type: git
+		    version: {commit: 60d5fb7a7ad7c3b357a9d783b740f765d2a0d4d5}
+		    metadata:
+		      refs: ["1.1.7"]
+		      url: https://github.com/istio/istio
+
