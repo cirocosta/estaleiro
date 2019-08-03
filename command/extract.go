@@ -1,67 +1,172 @@
 package command
 
-// TODO
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
 
-// import (
-// "os"
-// "path"
+	"github.com/cirocosta/estaleiro/dpkg"
+	"github.com/mholt/archiver"
+	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
+)
 
-// "github.com/cirocosta/estaleiro/dpkg"
-// "github.com/mholt/archiver"
-// "github.com/pkg/errors"
-// )
+type extractCommand struct {
+	Tarball     string   `long:"tarball"     required:"true" description:"filepath to tarball to extract"`
+	Files       []string `long:"file"        required:"true" description:"file from the tarball that we want to consume"`
+	Destination string   `long:"destination" required:"true" description:"where to unarchive files to"`
+	Bom         string   `long:"bom"         required:"true" description:"where to write bill of materials to"`
+}
 
-// type extractCommand struct {
-// Tarball     string   `long:"tarball"     required:"true" description:"filepath to tarball to extract"`
-// Files       []string `long:"file"        required:"true" description:"file from the tarball that we want to consume"`
-// Destination string   `long:"destination" required:"true" description:"where to unarchive files to"`
-// }
+type UnarchivedTarball struct {
+	// Path to the original tarball
+	//
+	Path string `yaml:"path"`
 
-// func mapFromSlice(items []string) (res map[string]interface{}) {
-// 	res = make(map[string]interface{}, len(items))
+	// Digest of the original tarball
+	//
+	Digest string `yaml:"digest"`
 
-// 	for _, item := range items {
-// 		res[item] = nil
-// 	}
+	// UnarchivedLocation corresponds to where the contents of the tarball
+	// where unarchived to.
+	//
+	UnarchivedLocation string `yaml:"unarchived_location"`
+}
 
-// 	return
-// }
+type ExtractedFile struct {
+	Name              string            `yaml:"name"`
+	Path              string            `yaml:"path"`
+	Digest            string            `yaml:"digest"`
+	UnarchivedTarball UnarchivedTarball `yaml:"from_tarball"`
+}
 
-// func (c *extractCommand) Execute(args []string) (err error) {
-//files := mapFromSlice(c.Files)
+func extract(ctx context.Context, tarball, dest string) (desc UnarchivedTarball, err error) {
+	var eg *errgroup.Group
+	eg, ctx = errgroup.WithContext(ctx)
 
-//err = archiver.Unarchive(c.Tarball, c.Destination)
-//if err != nil {
-//	err = errors.Wrapf(err,
-//		"failed unarchiving %s into %s", c.Tarball, c.Destination)
-//	return
-//}
+	eg.Go(func() error {
+		digest, err := dpkg.ComputeSHA256(tarball)
+		if err != nil {
+			return errors.Wrapf(err,
+				"failed computing digest for tarball %s", tarball)
+		}
 
-//// TODO this could be performed concurrently
-//for _, file := range c.Files {
-//	filepath := path.Join(c.Destination, file)
+		desc = UnarchivedTarball{
+			Path:               tarball,
+			Digest:             "sha256:" + digest,
+			UnarchivedLocation: dest,
+		}
 
-//	digest, err := dpkg.ComputeSHA256(filepath)
-//	if err != nil {
-//		return
-//	}
+		return nil
+	})
 
-//}
+	err = archiver.Unarchive(tarball, dest)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed unarchiving %s into %s", tarball, dest)
+		return
+	}
 
-//// unarchive everything somewhere
-//// walk through the unarchived dir
-//// compute the SHA's of the files that we're interested in
+	err = eg.Wait()
+	return
 
-//archiver.Walk(c.Tarball, func(f archiver.File) (err error) {
-//	_, found := files[f.Name()]
-//	if !found {
-//		return
-//	}
-//})
+}
 
-//// walk inside a given tarball
-//// extract the files that match our list of files
-////
+func gatherExtractedFiles(
+	ctx context.Context, files []string, dest string, tarball UnarchivedTarball,
+) (
+	extracted []ExtractedFile, err error,
+) {
+	extracted = make([]ExtractedFile, len(files))
+	eg, ctx := errgroup.WithContext(ctx)
 
-//return
-// }
+	for idx, file := range files {
+		idx, file := idx, file
+
+		eg.Go(func() error {
+			src := path.Join(tarball.UnarchivedLocation, file)
+			dst := path.Join(dest, file)
+
+			digest, err := dpkg.ComputeSHA256(src)
+			if err != nil {
+				return errors.Wrapf(err,
+					"failed computing digest for file %s", src)
+			}
+
+			err = os.MkdirAll(filepath.Dir(file), 0755)
+			if err != nil {
+				return errors.Wrapf(err,
+					"failed creating directory structure (%s) for unpacked files",
+					filepath.Dir(file))
+
+			}
+
+			err = os.Rename(src, dst)
+			if err != nil {
+				return errors.Wrapf(err,
+					"failed moving file from %s to %s", src, dst)
+			}
+
+			extracted[idx] = ExtractedFile{
+				Name:              file,
+				Digest:            "sha256:" + digest,
+				Path:              dst,
+				UnarchivedTarball: tarball,
+			}
+
+			return nil
+		})
+
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return
+	}
+
+	return
+
+}
+
+// TODO - compute tarball's digest too (can be done concurrently)
+// TODO - make digest computation concurrent
+//
+func (c *extractCommand) Execute(args []string) (err error) {
+	ctx := context.TODO()
+
+	dir, err := ioutil.TempDir("", "estailero-tar")
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed creating directory for tar extraction")
+		return
+	}
+
+	defer os.RemoveAll(dir)
+
+	tarballDesc, err := extract(ctx, c.Tarball, dir)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed extracting tarball %s to %s", c.Tarball, dir)
+		return
+	}
+
+	extracted, err := gatherExtractedFiles(ctx, c.Files, c.Destination, tarballDesc)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed gathering files from extracted tarball %s", c.Tarball)
+		return
+	}
+
+	b, err := yaml.Marshal(extracted)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(b))
+
+	return
+}

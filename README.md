@@ -183,7 +183,15 @@ changeset:
 
 ### when will I be able to use this?
 
-when it gets ready ¯\_(ツ)_/¯
+when it gets ready `¯\_(ツ)_/¯`
+
+
+### references
+
+
+- [buildpacks - RFC for additional metadata](https://github.com/buildpack/rfcs/pull/9)
+- [doc - Container Image metadata standard for OSL process](https://docs.google.com/document/d/1o5zVpEva8EBbMmdREUYkJpcCrCuNqA-lbpFI9ri7n88)
+- [doc - App Image Metadata, a Taxonomy](https://docs.google.com/document/d/1ITAxZKZmF802PHmXmsEN_FqK1VMGol8N_TLHECUXDNU)
 
 
 ### license

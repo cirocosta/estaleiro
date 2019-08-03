@@ -13,8 +13,14 @@ ubuntu:
 	DOCKER_BUILDKIT=1 \
 		docker build \
 			--tag cirocosta/estaleiro-with-ubuntu \
-			--target ubuntu-with-estaleiro \
+			--target release \
 			.
+	docker run \
+		--interactive \
+		--tty \
+		--entrypoint /bin/bash \
+		--volume $(shell pwd)/linux-rc.tgz:/linux-rc.tgz \
+		cirocosta/estaleiro-with-ubuntu
 
 
 # TODO include estaleiro-commit through `--var`
