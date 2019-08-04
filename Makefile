@@ -40,7 +40,6 @@ ubuntu:
 		--interactive \
 		--tty \
 		--entrypoint /bin/bash \
-		--volume $(shell pwd)/linux-rc.tgz:/linux-rc.tgz \
 		cirocosta/estaleiro-with-ubuntu
 
 
