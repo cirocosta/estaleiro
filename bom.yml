@@ -1,9 +1,9 @@
 product_name: ""
-version: ""
-generated_at: 0001-01-01T00:00:00Z
+version: v0.0.1
+generated_at: 2019-08-04T12:20:37.84084-04:00
 base_image:
-    name: ""
-    digest: ""
+    name: docker.io/library/ubuntu
+    digest: sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
     os: ""
     version: ""
     codename: ""

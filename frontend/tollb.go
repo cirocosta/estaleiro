@@ -89,7 +89,7 @@ func unarchive(
 // installs a list of packages into `base`, providing a bill of materials at
 // `bomState`.
 //
-func installPackages(base llb.State, apts []config.Apt, bom llb.State) (llb.State, llb.State) {
+func installPackages(base llb.State, bom llb.State, apts []config.Apt) (llb.State, llb.State) {
 	allPackages := []string{}
 
 	for _, apt := range apts {
@@ -137,6 +137,67 @@ func generatePackagesBom(base llb.State, bomState llb.State) llb.State {
 	).AddMount("/bom", bomState)
 }
 
+func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBom llb.State) {
+	newFs, newBom = fs, bom
+	extractionsMap := map[string][]string{}
+
+	for _, file := range cfg.Image.Files {
+		if file.FromTarball == nil {
+			continue
+		}
+
+		filesToExtract, _ := extractionsMap[file.FromTarball.TarballName]
+		extractionsMap[file.FromTarball.TarballName] = append(filesToExtract, file.FromTarball.Path)
+	}
+
+	tarballStateMap := make(map[string]llb.State, len(extractionsMap))
+	for tarball, files := range extractionsMap {
+		var (
+			src  = llb.Local("context")
+			dest = llb.Scratch()
+		)
+
+		tarballStateMap[tarball], newBom = unarchive(
+			newBom, src, tarball, dest, "/dest", files,
+		)
+	}
+
+	for _, file := range cfg.Image.Files {
+		if file.FromTarball == nil {
+			continue
+		}
+
+		tarballSourceState, found := tarballStateMap[file.FromTarball.TarballName]
+		if !found {
+			panic(errors.Errorf("not found"))
+		}
+
+		newFs = copyFilesFromTarball(newFs, file, tarballSourceState)
+	}
+
+	return
+}
+
+// TODO emit new bom
+//
+func runAndCopyFromSteps(fs llb.State, cfg *config.Config) (newFs llb.State, err error) {
+	newFs = fs
+
+	for _, file := range cfg.Image.Files {
+		if file.FromStep == nil {
+			continue
+		}
+
+		newFs, err = copyFilesFromSteps(newFs, cfg, file)
+		if err != nil {
+			// TODO better error
+			return
+		}
+	}
+
+	return
+}
+
 func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispec.Image, materials bom.Bom, err error) {
 	// TODO consider tag provided
 	//
@@ -160,64 +221,17 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 
 	state = llb.Image(canonicalName.String())
 
-	state, bomState = installPackages(state, cfg.Image.Apt, bomState)
 	bomState = generatePackagesBom(state, bomState)
 	bomState = generateOsReleaseBom(state, bomState)
+	state, bomState = installPackages(state, bomState, cfg.Image.Apt)
+	state, bomState = tarballFiles(state, bomState, cfg)
 
-	//
-	//
-	//
-
-	// tarballName -> []file
-	extractionsMap := map[string][]string{}
-	for _, file := range cfg.Image.Files {
-		if file.FromTarball == nil {
-			continue
-		}
-
-		filesToExtract, _ := extractionsMap[file.FromTarball.TarballName]
-		extractionsMap[file.FromTarball.TarballName] = append(filesToExtract, file.FromTarball.Path)
+	state, err = runAndCopyFromSteps(state, cfg)
+	if err != nil {
+		// TODO improve
+		return
 	}
 
-	//
-	//
-
-	// create states for the tarballs where they have their contents
-	// already extracted so that we can consume the files later in steps
-	// that copy the exact files needed.
-	//
-	tarballStateMap := map[string]llb.State{}
-	for tarball, files := range extractionsMap {
-		var (
-			src  = llb.Local("context")
-			dest = llb.Scratch()
-		)
-
-		tarballStateMap[tarball], bomState = unarchive(
-			bomState, src, tarball, dest, "/dest", files,
-		)
-	}
-
-	for _, file := range cfg.Image.Files {
-		switch {
-		case file.FromStep != nil:
-			state, materials, err = copyFilesFromSteps(state, cfg, materials, file)
-		case file.FromTarball != nil:
-			tarballSourceState, found := tarballStateMap[file.FromTarball.TarballName]
-			if !found {
-				err = errors.Errorf("not found")
-				return
-			}
-
-			state, materials, err = copyFilesFromTarball(state, cfg, materials, file, tarballSourceState)
-		}
-
-		if err != nil {
-			return
-		}
-	}
-
-	// retrieve the `bom` just in the final layer
 	state = copy(bomState, "*.yml", state, "/bom")
 
 	img = prepareImage(cfg.Image)
@@ -229,18 +243,14 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 // unpacked (`tarballSource`) into the final state (`finalState`)
 //
 func copyFilesFromTarball(
-	finalState llb.State, cfg *config.Config, materials bom.Bom, file config.File, tarballSource llb.State,
-) (
-	newState llb.State, newBom bom.Bom, err error,
-) {
-	newState = copy(
+	finalState llb.State, file config.File, tarballSource llb.State,
+) llb.State {
+	return copy(
 		tarballSource,
 		file.FromTarball.Path,
 		finalState,
 		file.Destination,
 	)
-
-	return
 }
 
 // prepareImage populates the final definition of the OCI Image spec object
@@ -272,9 +282,9 @@ func prepareImage(image config.Image) ocispec.Image {
 }
 
 func copyFilesFromSteps(
-	state llb.State, cfg *config.Config, materials bom.Bom, file config.File,
+	state llb.State, cfg *config.Config, file config.File,
 ) (
-	newState llb.State, newBom bom.Bom, err error,
+	newState llb.State, err error,
 ) {
 	configStep := getStepFromConfig(cfg, file.FromStep.StepName)
 	if configStep == nil {
@@ -303,8 +313,6 @@ func copyFilesFromSteps(
 			Version: sourceFile.VCS.Ref,
 			Uri:     sourceFile.VCS.Repository,
 		}
-
-		materials.ChangeSet.Files = append(materials.ChangeSet.Files, bomFile)
 	}
 
 	if !fileFoundInStep {
@@ -323,7 +331,6 @@ func copyFilesFromSteps(
 	}
 
 	newState = copy(step, file.FromStep.Path, state, file.Destination)
-	newBom = materials
 	return
 }
 
