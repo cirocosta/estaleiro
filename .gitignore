@@ -2,3 +2,4 @@ estaleiro
 graph.svg
 dpkg-status
 *.tgz
+bin/

@@ -19,6 +19,18 @@ image "cirocosta/estaleiro" {
     }
   }
 
+  file "/usr/test-file" {
+    from_tarball "archive.tgz" {
+      path = "b"
+    }
+  }
+
+  file "/usr/dummy-file" {
+    from_tarball "archive.tgz" {
+      path = "c"
+    }
+  }
+
   entrypoint = ["/usr/local/bin/estaleiro", "frontend"]
 }
 
@@ -30,6 +42,25 @@ step "build" {
   target     = "build"
 
   source_file "/bin/estaleiro" {
+    vcs "git" {
+      ref        = "${estaleiro-commit}"
+      repository = "https://github.com/cirocosta/estaleiro"
+    }
+  }
+}
+
+
+# a dummy tarball just to test the functionality
+#
+tarball "archive.tgz" {
+  source_file "b" {
+    vcs "git" {
+      ref        = "${estaleiro-commit}"
+      repository = "https://github.com/cirocosta/estaleiro"
+    }
+  }
+
+  source_file "c" {
     vcs "git" {
       ref        = "${estaleiro-commit}"
       repository = "https://github.com/cirocosta/estaleiro"

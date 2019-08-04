@@ -6,6 +6,7 @@ var Estaleiro struct {
 	Frontend frontendCommand `command:"frontend" description:"serves as a custom Docker-compatible"`
 
 	Collect collectCommand `command:"collect" hidden:"true" description:"retrieves dpkg packages information"`
-	Apt     aptCommand     `command:"apt" hidden:"true"`
+	Apt     aptCommand     `command:"apt"     hidden:"true"`
 	Extract extractCommand `command:"extract" hidden:"true"`
+	Base    baseCommand    `command:"base"    hidden:"true"`
 }

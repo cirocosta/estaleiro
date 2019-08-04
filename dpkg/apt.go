@@ -419,7 +419,7 @@ deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
 	}
 	defer f.Close()
 
-	codename, err := detectCodename()
+	info, err := GatherOsRelease()
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to detect codename to be used for initial sources.list")
@@ -427,7 +427,7 @@ deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
 	}
 
 	_, err = fmt.Fprintf(f, sourcesListFmt,
-		codename, codename, codename, codename, codename, codename,
+		info.Codename, info.Codename, info.Codename, info.Codename, info.Codename, info.Codename,
 	)
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -438,32 +438,45 @@ deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
 	return
 }
 
-func detectCodename() (codename string, err error) {
+type OsRelease struct {
+	OS       string `yaml:"os"`
+	Version  string `yaml:"version"`
+	Codename string `yaml:"codename"`
+}
+
+func GatherOsRelease() (info OsRelease, err error) {
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to open `/etc/os-release` file to determine distro codename")
+			"failed to open `/etc/os-release`")
 		return
 	}
 	defer f.Close()
 
-	codename = scanCodename(f)
+	info = scanCodename(f)
 
 	return
 }
 
-func scanCodename(reader io.Reader) (codename string) {
+func scanCodename(reader io.Reader) (info OsRelease) {
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		fields := strings.Split(line, "=")
 
-		if !strings.HasPrefix(line, "VERSION_CODENAME=") {
-			continue
+		k, v := fields[0], fields[1]
+		v = strings.Trim(v, `"`)
+
+		switch k {
+		case "ID":
+			info.OS = v
+		case "VERSION_ID":
+			info.Version = v
+		case "VERSION_CODENAME":
+			info.Codename = v
 		}
 
-		fields := strings.Split(line, "=")
-		codename = fields[1]
 		return
 	}
 

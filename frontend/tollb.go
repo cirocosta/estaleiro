@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"time"
 
 	"github.com/cirocosta/estaleiro/bom"
@@ -23,10 +24,26 @@ import (
 )
 
 const (
-	imageName                  = "cirocosta/estaleiro@sha256:f27dd2a0011116a05346f966c79699a0bb10ff197240af3d90efd11543dfa43a"
+	imageName                  = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
 	initialPackagesBomFilepath = "/initial-packages-bom.yml"
 	finalPackagesBomFilepath   = "/final-packages-bom.yml"
 )
+
+func estaleiroSourceMount() llb.RunOption {
+	// TODO base this in `debug` or not
+
+	// return llb.AddMount(
+	// 	"/usr/local/bin/estaleiro",
+	// 	llb.Image(imageName),
+	// 	llb.SourcePath("/usr/local/bin/estaleiro"),
+	// )
+
+	return llb.AddMount(
+		"/usr/local/bin/estaleiro",
+		llb.Local("bin"),
+		llb.SourcePath("estaleiro"),
+	)
+}
 
 func generatePackagesBom(base llb.State, destFilename string) llb.State {
 	return base.Run(
@@ -35,11 +52,9 @@ func generatePackagesBom(base llb.State, destFilename string) llb.State {
 			"collect",
 			"--input=/var/lib/dpkg/status",
 			"--output=" + destFilename,
-		}), llb.AddMount(
-			"/usr/local/bin/estaleiro",
-			llb.Image(imageName),
-			llb.SourcePath("/usr/local/bin/estaleiro"),
-		)).Root()
+		}),
+		estaleiroSourceMount(),
+	).Root()
 }
 
 // TODO receive a context so that image resolution is not unbound
@@ -57,6 +72,7 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 
 	materials.Version = "v0.0.1"
 	materials.GeneratedAt = time.Now()
+
 	materials.BaseImage = bom.BaseImage{
 		Name:   canonicalName.Name(),
 		Digest: canonicalName.Digest().String(),
@@ -66,18 +82,36 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	state = generatePackagesBom(state, initialPackagesBomFilepath)
 	state = installPackages(state, cfg.Image.Apt)
 
+	//
+	//
+	//
+
+	// tarballName -> []file
+	extractionsMap := map[string][]string{}
+	for _, file := range cfg.Image.Files {
+		if file.FromTarball == nil {
+			continue
+		}
+
+		filesToExtract, _ := extractionsMap[file.FromTarball.TarballName]
+		extractionsMap[file.FromTarball.TarballName] = append(filesToExtract, file.FromTarball.Path)
+	}
+
+	//
+	//
+
 	// create states for the tarballs where they have their contents
-	// already extracted so that we can consume the files later
+	// already extracted so that we can consume the files later in steps
+	// that copy the exact files needed.
 	//
 	tarballStateMap := map[string]llb.State{}
-	for _, tarball := range cfg.Tarballs {
-		src := llb.Local("context")
-		dest := llb.Scratch()
+	for tarball, files := range extractionsMap {
+		var (
+			src  = llb.Local("context")
+			dest = llb.Scratch()
+		)
 
-		// what if we did the `untar`ing? :thinking:
-
-		// how to access the file there?
-		tarballStateMap[tarball.Name] = copy(src, tarball.Name, dest, "/dest")
+		tarballStateMap[tarball] = unarchive(src, tarball, dest, "/dest", files)
 	}
 
 	for _, file := range cfg.Image.Files {
@@ -87,7 +121,6 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 		case file.FromTarball != nil:
 			tarballSourceState, found := tarballStateMap[file.FromTarball.TarballName]
 			if !found {
-				// TODO improve this
 				err = errors.Errorf("not found")
 				return
 			}
@@ -105,6 +138,29 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	return
 }
 
+func unarchive(src llb.State, srcPath string, dest llb.State, destPath string, files []string) llb.State {
+	var (
+		// image = llb.Image(imageName)
+		image = llb.Scratch()
+		args  = []string{
+			"/usr/local/bin/estaleiro",
+			"extract",
+			`--tarball=` + path.Join("/src", srcPath),
+			`--destination=/dest`,
+			`--output=/bom.yml`,
+		}
+	)
+
+	for _, file := range files {
+		args = append(args, "--file="+file)
+	}
+
+	cp := image.Run(llb.Args(args), estaleiroSourceMount())
+	cp.AddMount("/src", src, llb.Readonly)
+
+	return cp.AddMount("/dest", dest)
+}
+
 // Copies a file (`file`) from a given state that already has the tarball
 // unpacked (`tarballSource`) into the final state (`finalState`)
 //
@@ -115,7 +171,7 @@ func copyFilesFromTarball(
 ) {
 	newState = copy(
 		tarballSource,
-		"/dest/"+file.FromTarball.Path,
+		file.FromTarball.Path,
 		finalState,
 		file.Destination,
 	)

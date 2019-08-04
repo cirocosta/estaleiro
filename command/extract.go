@@ -138,7 +138,7 @@ func gatherExtractedFiles(
 func (c *extractCommand) Execute(args []string) (err error) {
 	ctx := context.TODO()
 
-	dir, err := ioutil.TempDir("", "estailero-tar")
+	dir, err := ioutil.TempDir(c.Destination, "estailero-tar")
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed creating directory for tar extraction")

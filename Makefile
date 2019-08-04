@@ -5,6 +5,27 @@ install:
 	go install -tags "dfrunmount" -v .
 
 
+
+image: install linux-binary
+	estaleiro llb \
+                  --filename ./estaleiro.hcl \
+                  --var estaleiro-commit:$(git rev-parse HEAD) \
+		  | buildctl build \
+		  	--local context=. \
+		  	--local bin=bin \
+			--output type=image,name=docker.io/cirocosta/estaleiro,push=true
+
+
+linux-binary:
+	mkdir -p bin
+	GOOS=linux GOARCH=amd64 \
+		go build \
+			-o ./bin/estaleiro \
+			-tags "dfrunmount" \
+			-ldflags "-X main.version=$(shell cat ./VERSION) -extldflags \"-static\"" \
+			.
+
+
 test:
 	go test -v ./...
 
@@ -57,15 +78,6 @@ docker-integration:
 		--build-arg estaleiro-commit=$(GIT_COMMIT) \
 		--file ./estaleiro.hcl \
 		.
-
-
-image:
-	estaleiro llb \
-                  --filename ./estaleiro.hcl \
-                  --var estaleiro-commit:$(git rev-parse HEAD) \
-		  | buildctl build \
-		  	--local context=. \
-			--output type=image,name=docker.io/cirocosta/estaleiro,push=true
 
 
 image-frontend:
