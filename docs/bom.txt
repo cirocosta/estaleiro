@@ -1,35 +1,94 @@
 BOM GENERATION
 
 
-	PACKAGES
+	1. os-release
 
-		- [ ] list all of the packages that are there in the base image
-		      right in the beginning
-
-			(i.e., gather all from `base image`)
-
-			> read file `/var/lib/dpkg/status`
-
-		
-
-		- [ ] for each package installed
-			
-			- gather their corresponding `apt-cache policy` result
+		```yaml
+		kind: OsRelease/v1
+		data:
+		  os: ubuntu
+		  version: "18.04"
+		  codename: bionic
+		```
 
 
-				policies := llb.Scratch()
-				state.AddMount(policies, "/policies")
+	2. initial packages
 
-				for _, pkg := range packages {
-					apt-cache policy pkg >> /policies/policies
-				}
+		```yaml
+		kind: Packages/v1
+		data:
+                  initial: true
+		  packages:
+		    - name: libc-bin
+		      source_package: glibc
+		      version: "1.132.3"
+		      architecture: amd64
+		```
 
 
-		- [ ] (internal) image to generate `packages.yml` BOM ?
-			reads `/policies` and then prepares `packages.yml`?
+	3. final-packages
 
-			|
-			*--> 	if we had a way of performing the builds ourselves
-				without the use of `buildctl`, mayba that would
-				make things simpler, leveraging `ref` :thinking:
+		```yaml
+		kind: Packages/v1
+		data:
+		  packages:
+		    - name: ...
+		      location: {}
+		      source: {}
+		```
+
+
+	4. unarchives
+
+		```yaml
+		kind: Files/v1
+		data:
+		  - name: b
+		    path: /dest/b
+		    digest: "sha256:dadsda"
+		    from_tarball:
+		      path: /src/archive.tgz
+		      digest: "sha256:1asdsad"
+		    source:
+		      - url: https://github.com/cirocosta/estaleiro
+			type: git
+			ref: master
+		```
+
+		```yaml
+		kind: FileSources/v1
+		data:
+		  "/b":
+		    - url: https://github.com/cirocosta/estaleiro
+		      type: git
+		      ref: master
+		```
+
+
+	5. steps
+
+		```yaml
+		kind: Files/v1
+		data:
+		  - name: b
+		    path: /dest/b
+		    digest: "sha256:dadsda"
+		    from_step:
+		      name: "blabla"
+		      dockerfile_digest: "sha256:1asdsad"
+		    source:
+		      - url: https://github.com/cirocosta/estaleiro
+			type: git
+			ref: master
+		```
+
+
+		```yaml
+		kind: FileSources/v1
+		data:
+		  "/usr/local/bin/estaleiro":
+		    - url: https://github.com/cirocosta/estaleiro
+		      type: git
+		      ref: master
+		```
 

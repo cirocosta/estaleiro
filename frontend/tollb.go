@@ -27,6 +27,47 @@ const (
 	imageName = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
 )
 
+func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.Image, materials bom.Bom, err error) {
+	// TODO consider tag provided
+	//
+	canonicalName, err := resolveImage(ctx, cfg.Image.BaseImage.Name)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to resolve digest for %s when preparing llb",
+			cfg.Image.BaseImage.Name)
+		return
+	}
+
+	bomState := llb.Scratch()
+
+	materials.Version = "v0.0.1"
+	materials.GeneratedAt = time.Now()
+
+	materials.BaseImage = bom.BaseImage{
+		Name:   canonicalName.Name(),
+		Digest: canonicalName.Digest().String(),
+	}
+
+	fs = llb.Image(canonicalName.String())
+
+	bomState = generatePackagesBom(fs, bomState)
+	bomState = generateOsReleaseBom(fs, bomState)
+	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
+	fs, bomState = tarballFiles(fs, bomState, cfg)
+
+	fs, err = runAndCopyFromSteps(fs, cfg)
+	if err != nil {
+		// TODO improve
+		return
+	}
+
+	fs = copy(bomState, "*.yml", fs, "/bom")
+
+	img = prepareImage(cfg.Image)
+
+	return
+}
+
 func estaleiroSourceMount() llb.RunOption {
 	// TODO base this in `debug` or not
 
@@ -194,47 +235,6 @@ func runAndCopyFromSteps(fs llb.State, cfg *config.Config) (newFs llb.State, err
 			return
 		}
 	}
-
-	return
-}
-
-func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispec.Image, materials bom.Bom, err error) {
-	// TODO consider tag provided
-	//
-	canonicalName, err := resolveImage(ctx, cfg.Image.BaseImage.Name)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to resolve digest for %s when preparing llb",
-			cfg.Image.BaseImage.Name)
-		return
-	}
-
-	bomState := llb.Scratch()
-
-	materials.Version = "v0.0.1"
-	materials.GeneratedAt = time.Now()
-
-	materials.BaseImage = bom.BaseImage{
-		Name:   canonicalName.Name(),
-		Digest: canonicalName.Digest().String(),
-	}
-
-	state = llb.Image(canonicalName.String())
-
-	bomState = generatePackagesBom(state, bomState)
-	bomState = generateOsReleaseBom(state, bomState)
-	state, bomState = installPackages(state, bomState, cfg.Image.Apt)
-	state, bomState = tarballFiles(state, bomState, cfg)
-
-	state, err = runAndCopyFromSteps(state, cfg)
-	if err != nil {
-		// TODO improve
-		return
-	}
-
-	state = copy(bomState, "*.yml", state, "/bom")
-
-	img = prepareImage(cfg.Image)
 
 	return
 }
