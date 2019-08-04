@@ -58,7 +58,7 @@ llb:
 		| jq '.'
 
 
-graph:
+graph: install
 	estaleiro llb -f ./estaleiro.hcl --bom ./bom.yml --var estaleiro-commit:$(GIT_COMMIT) \
 		| buildctl debug dump-llb --dot \
 		| dot -Tsvg > graph.svg

@@ -69,8 +69,9 @@ type BaseImage struct {
 	Name   string `yaml:"name"`
 	Digest string `yaml:"digest"`
 
-	OS      string `yaml:"os"`
-	Version string `yaml:"version"`
+	OS       string `yaml:"os"`
+	Version  string `yaml:"version"`
+	Codename string `yaml:"codename"`
 
 	// Packages lists all of the packages that were present there in the
 	// base image, before any user packages were added.

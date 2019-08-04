@@ -24,9 +24,7 @@ import (
 )
 
 const (
-	imageName                  = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
-	initialPackagesBomFilepath = "/initial-packages-bom.yml"
-	finalPackagesBomFilepath   = "/final-packages-bom.yml"
+	imageName = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
 )
 
 func estaleiroSourceMount() llb.RunOption {
@@ -45,20 +43,71 @@ func estaleiroSourceMount() llb.RunOption {
 	)
 }
 
-func generatePackagesBom(base llb.State, destFilename string) llb.State {
+// gathers information from `os-release` so that in the final bill of materials
+// we're able to tell the OS information about the base image.
+//
+func generateOsReleaseBom(base llb.State, bomState llb.State) llb.State {
+	return base.Run(
+		llb.Args([]string{
+			"/usr/local/bin/estaleiro",
+			"base",
+			"--output=/bom/base.yml",
+		}),
+		estaleiroSourceMount(),
+	).AddMount("/bom", bomState)
+}
+
+// installs a list of packages into `base`, providing a bill of materials at
+// `bomState`.
+//
+func installPackages(base llb.State, apts []config.Apt, bom llb.State) (llb.State, llb.State) {
+	allPackages := []string{}
+
+	for _, apt := range apts {
+		if len(apt.Packages) == 0 {
+			continue
+		}
+
+		pkgs := make([]string, len(apt.Packages))
+		for idx, pkg := range apt.Packages {
+			pkgs[idx] = pkg.String()
+		}
+
+		allPackages = append(allPackages, pkgs...)
+
+	}
+
+	if len(allPackages) == 0 {
+		return base, bom
+	}
+
+	run := base.Run(
+		llb.Args(append([]string{
+			"/usr/local/bin/estaleiro",
+			"apt",
+			"--output=/bom/final-packages.yml",
+		}, allPackages...)),
+		estaleiroSourceMount(),
+	)
+
+	return run.Root(), run.AddMount("/bom", bom)
+}
+
+// gathers the package listing from a given state, saving the bill of materials
+// in the filesystem at `destFilename`.
+//
+func generatePackagesBom(base llb.State, bomState llb.State) llb.State {
 	return base.Run(
 		llb.Args([]string{
 			"/usr/local/bin/estaleiro",
 			"collect",
 			"--input=/var/lib/dpkg/status",
-			"--output=" + destFilename,
+			`--output=/bom/initial-packages.yml`,
 		}),
 		estaleiroSourceMount(),
-	).Root()
+	).AddMount("/bom", bomState)
 }
 
-// TODO receive a context so that image resolution is not unbound
-//
 func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispec.Image, materials bom.Bom, err error) {
 	// TODO consider tag provided
 	//
@@ -70,6 +119,8 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 		return
 	}
 
+	bomState := llb.Scratch()
+
 	materials.Version = "v0.0.1"
 	materials.GeneratedAt = time.Now()
 
@@ -79,8 +130,10 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	}
 
 	state = llb.Image(canonicalName.String())
-	state = generatePackagesBom(state, initialPackagesBomFilepath)
-	state = installPackages(state, cfg.Image.Apt)
+
+	state, bomState = installPackages(state, cfg.Image.Apt, bomState)
+	bomState = generatePackagesBom(state, bomState)
+	bomState = generateOsReleaseBom(state, bomState)
 
 	//
 	//
@@ -132,6 +185,11 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 			return
 		}
 	}
+
+	// retrieve the `bom` just in the final layer
+	state = copy(bomState, "base.yml", state, "base.yml")
+	state = copy(bomState, "initial-packages.yml", state, "initial-packages.yml")
+	state = copy(bomState, "final-packages.yml", state, "final-packages.yml")
 
 	img = prepareImage(cfg.Image)
 
@@ -320,56 +378,6 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 
 	state = *stepState
 	return
-}
-
-// TODO - keep track of these extra utilities that we're installing
-//        - could, perhaps, just be providing a `bom` that gets mutated?
-//
-func installPackages(base llb.State, apts []config.Apt) llb.State {
-	// TODO - have all of this done through the binary
-	for _, apt := range apts {
-		// TODO - bring repositories back
-		//      - these could be added through `estaleiro apt`
-		//
-		// for _, repo := range apt.Repositories {
-		// 	base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo.Uri)).Root()
-		// 	if repo.Source != "" {
-		// 		base = base.Run(
-		// 			shf("echo \"%s\" >> /etc/apt/sources.list", repo.Source),
-		// 		).Root()
-		// 	}
-		// }
-
-		// TODO - bring keys back
-		//
-		// for _, key := range apt.Keys {
-		// 	base = aptAddKey(base, key.Uri)
-		// }
-
-		if len(apt.Packages) == 0 {
-			return base
-		}
-
-		pkgs := make([]string, len(apt.Packages))
-		for idx, pkg := range apt.Packages {
-			pkgs[idx] = pkg.String()
-		}
-
-		base = base.Run(
-			llb.Args(append([]string{
-				"/usr/local/bin/estaleiro",
-				"apt",
-				"--output=" + finalPackagesBomFilepath,
-			}, pkgs...)),
-			llb.AddMount(
-				"/usr/local/bin/estaleiro",
-				llb.Image(imageName),
-				llb.SourcePath("/usr/local/bin/estaleiro"),
-			),
-		).Root()
-	}
-
-	return base
 }
 
 func aptAddKey(dst llb.State, url string) llb.State {

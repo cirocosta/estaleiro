@@ -476,8 +476,6 @@ func scanCodename(reader io.Reader) (info OsRelease) {
 		case "VERSION_CODENAME":
 			info.Codename = v
 		}
-
-		return
 	}
 
 	return
