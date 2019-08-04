@@ -57,6 +57,35 @@ func generateOsReleaseBom(base llb.State, bomState llb.State) llb.State {
 	).AddMount("/bom", bomState)
 }
 
+// unarchives a given set of files from a source tarball at `srcPath` from a
+// `src` state to a `destPath` of a `dest` state.
+//
+func unarchive(
+	bom, src llb.State, srcPath string, dest llb.State, destPath string, files []string,
+) (
+	llb.State, llb.State,
+) {
+	var (
+		image = llb.Scratch()
+		args  = []string{
+			"/usr/local/bin/estaleiro",
+			"extract",
+			`--tarball=` + path.Join("/src", srcPath),
+			`--destination=/dest`,
+			`--output=/bom/unarchive.yml`,
+		}
+	)
+
+	for _, file := range files {
+		args = append(args, "--file="+file)
+	}
+
+	cp := image.Run(llb.Args(args), estaleiroSourceMount())
+	cp.AddMount("/src", src, llb.Readonly)
+
+	return cp.AddMount("/dest", dest), cp.AddMount("/bom", bom)
+}
+
 // installs a list of packages into `base`, providing a bill of materials at
 // `bomState`.
 //
@@ -164,7 +193,9 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 			dest = llb.Scratch()
 		)
 
-		tarballStateMap[tarball] = unarchive(src, tarball, dest, "/dest", files)
+		tarballStateMap[tarball], bomState = unarchive(
+			bomState, src, tarball, dest, "/dest", files,
+		)
 	}
 
 	for _, file := range cfg.Image.Files {
@@ -187,36 +218,11 @@ func ToLLB(ctx context.Context, cfg *config.Config) (state llb.State, img ocispe
 	}
 
 	// retrieve the `bom` just in the final layer
-	state = copy(bomState, "base.yml", state, "base.yml")
-	state = copy(bomState, "initial-packages.yml", state, "initial-packages.yml")
-	state = copy(bomState, "final-packages.yml", state, "final-packages.yml")
+	state = copy(bomState, "*.yml", state, "/bom")
 
 	img = prepareImage(cfg.Image)
 
 	return
-}
-
-func unarchive(src llb.State, srcPath string, dest llb.State, destPath string, files []string) llb.State {
-	var (
-		// image = llb.Image(imageName)
-		image = llb.Scratch()
-		args  = []string{
-			"/usr/local/bin/estaleiro",
-			"extract",
-			`--tarball=` + path.Join("/src", srcPath),
-			`--destination=/dest`,
-			`--output=/bom.yml`,
-		}
-	)
-
-	for _, file := range files {
-		args = append(args, "--file="+file)
-	}
-
-	cp := image.Run(llb.Args(args), estaleiroSourceMount())
-	cp.AddMount("/src", src, llb.Readonly)
-
-	return cp.AddMount("/dest", dest)
 }
 
 // Copies a file (`file`) from a given state that already has the tarball
@@ -335,6 +341,7 @@ func getStepFromConfig(cfg *config.Config, name string) *config.Step {
 //
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
 	return dest.File(llb.Copy(src, srcPath, destPath, &llb.CopyInfo{
+		AllowWildcard:  true,
 		AttemptUnpack:  true,
 		CreateDestPath: true,
 	}))
