@@ -1,6 +1,0 @@
-kind: filesources/v1
-data:
-    /usr/local/bin/estaleiro:
-        type: git
-        ref: ""
-        repository: https://github.com/cirocosta/estaleiro

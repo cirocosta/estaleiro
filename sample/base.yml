@@ -1,5 +1,0 @@
-kind: osrelease/v1
-data:
-    os: ubuntu
-    version: "18.04"
-    codename: bionic

@@ -1,4 +1,0 @@
-kind: meta/v1
-data:
-    product_name: cirocosta/estaleiro
-    image: docker.io/library/ubuntu:latest@sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
