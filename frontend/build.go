@@ -106,16 +106,16 @@ func invokeBuild(
 
 	// read a file from this part
 
-	initialBom, err := ref.ReadFile(ctx, gateway.ReadRequest{
-		Filename: "/initial-bom.yml",
+	materials, err := ref.ReadFile(ctx, gateway.ReadRequest{
+		Filename: "/bom/merged.yml",
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "failed to read initial bom")
+		err = errors.Wrapf(err, "failed to read merged bom")
 		return
 	}
 
 	img.Config.Labels = map[string]string{
-		"estaleiro.bom": base64.StdEncoding.EncodeToString(initialBom),
+		"estaleiro.bom": base64.StdEncoding.EncodeToString(materials),
 	}
 
 	config, err := json.Marshal(img)
