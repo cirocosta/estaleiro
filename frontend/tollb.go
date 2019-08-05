@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/cirocosta/estaleiro/bom"
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/docker/distribution/reference"
 	"github.com/moby/buildkit/client/llb"
@@ -24,11 +23,11 @@ import (
 )
 
 const (
-	imageName  = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
+	imageName  = "cirocosta/estaleiro@sha256:e0edbc2867e23dcbec17be5e320f91044d845647c2d3e0507c7af07fec54955e"
 	bomVersion = "v0.0.1"
 )
 
-func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.Image, materials bom.Bom, err error) {
+func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.Image, err error) {
 	// TODO consider tag provided
 	//
 	canonicalName, err := resolveImage(ctx, cfg.Image.BaseImage.Name)
@@ -56,14 +55,24 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 		return
 	}
 
-	fs = copy(bomState, "*.yml", fs, "/bom")
+	bomState = mergeBom(bomState)
+
+	fs = copy(bomState, "merged.yml", fs, "/bom")
 	img = prepareImage(cfg.Image)
 
-	materials.BaseImage = bom.BaseImage{
-		CanonicalName: canonicalName.String(),
-	}
-
 	return
+}
+
+func mergeBom(bomState llb.State) llb.State {
+	return bomState.Run(
+		llb.Args([]string{
+			"/usr/local/bin/estaleiro",
+			"merge",
+			"--directory=.",
+			"--output=/merged.yml",
+		}),
+		estaleiroSourceMount(),
+	).Root()
 }
 
 func generateMetaBom(bomState llb.State, meta bomfs.Meta) llb.State {

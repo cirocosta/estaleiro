@@ -3,10 +3,8 @@ package command
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/cirocosta/estaleiro/bom"
 	"github.com/cirocosta/estaleiro/config"
 	"github.com/cirocosta/estaleiro/frontend"
 	"github.com/fatih/color"
@@ -16,12 +14,11 @@ import (
 )
 
 type llbCommand struct {
-	BomDestination string            `long:"bom" short:"b" description:"where to save the bill of materials to"`
-	Filename       string            `long:"filename" short:"f" required:"true" description:"file containing image definition"`
-	Variables      map[string]string `long:"var" short:"v" description:"variables to interpolate"`
+	Filename  string            `long:"filename" short:"f" required:"true" description:"file containing image definition"`
+	Variables map[string]string `long:"var" short:"v" description:"variables to interpolate"`
 }
 
-func HCLToLLB(filename string, variables map[string]string) (definition *llb.Definition, bom bom.Bom, err error) {
+func HCLToLLB(filename string, variables map[string]string) (definition *llb.Definition, err error) {
 	cfg, err := config.ParseFile(filename, variables)
 	if err != nil {
 		diagsErr, ok := errors.Cause(err).(hcl.Diagnostics)
@@ -34,7 +31,7 @@ func HCLToLLB(filename string, variables map[string]string) (definition *llb.Def
 	}
 
 	var state llb.State
-	state, _, bom, err = frontend.ToLLB(context.TODO(), cfg)
+	state, _, err = frontend.ToLLB(context.TODO(), cfg)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to convert to llb")
 		return
@@ -54,19 +51,9 @@ func init() {
 }
 
 func (c *llbCommand) Execute(args []string) (err error) {
-	def, bom, err := HCLToLLB(c.Filename, c.Variables)
+	def, err := HCLToLLB(c.Filename, c.Variables)
 	if err != nil {
 		return
-	}
-
-	if c.BomDestination != "" {
-		err = ioutil.WriteFile(c.BomDestination, bom.ToYAML(), 0644)
-		if err != nil {
-			err = errors.Wrapf(err,
-				"failed to write bill of materials to file %s",
-				c.BomDestination)
-			return
-		}
 	}
 
 	llb.WriteTo(def, os.Stdout)

@@ -1,0 +1,11 @@
+product_name: ""
+protocol: ""
+base_image:
+    canonical_name: docker.io/library/ubuntu:latest@sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
+    os: ""
+    version: ""
+    codename: ""
+    packages: []
+changeset:
+    files: []
+    packages: []
