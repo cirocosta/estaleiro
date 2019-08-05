@@ -476,6 +476,11 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 	return
 }
 
+// TODO - fix this to work on `docker build`s too (this relies on the fact that
+// we can read from the fs), which is not really true - in a `docker build` (or
+// any use of the gateway frontend), all you have is contexts (that you can
+// leverage within the LLB only).
+//
 func readFile(filename string) (content []byte, err error) {
 	var file *os.File
 

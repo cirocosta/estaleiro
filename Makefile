@@ -72,18 +72,20 @@ buildctl-gateway-integration:
 
 
 docker-integration:
-	DOCKER_BUILDKIT=true docker build \
-		--tag a \
-		--build-arg estaleiro-commit=$(GIT_COMMIT) \
-		--file ./estaleiro.hcl \
-		.
+	DOCKER_BUILDKIT=1 \
+		docker build \
+			--tag a \
+			--build-arg estaleiro-commit=$(GIT_COMMIT) \
+			--file ./estaleiro.hcl \
+			.
 
 
 image-frontend:
-	docker build \
-		--target frontend \
-		--tag cirocosta/estaleiro-frontend:rc \
-		.
+	DOCKER_BUILDKIT=1 \
+		docker build \
+			--target frontend \
+			--tag cirocosta/estaleiro-frontend:rc \
+			.
 
 
 run-buildkitd:

@@ -23,17 +23,16 @@ var (
 )
 
 const (
-	localNameContext      = "context"
-	localNameDockerfile   = "dockerfile"
-	keyTarget             = "target"
-	keyFilename           = "filename"
-	keyCacheFrom          = "cache-from"
-	defaultDockerfileName = "estaleiro.hcl"
-	dockerignoreFilename  = ".dockerignore"
-	buildArgPrefix        = "build-arg:"
-	labelPrefix           = "label:"
-	keyNoCache            = "no-cache"
-	keyImageResolveMode   = "image-resolve-mode"
+	localNameDockerfile  = "dockerfile"
+	keyTarget            = "target"
+	keyFilename          = "filename"
+	keyCacheFrom         = "cache-from"
+	defaultConfigName    = "estaleiro.hcl"
+	dockerignoreFilename = ".dockerignore"
+	buildArgPrefix       = "build-arg:"
+	labelPrefix          = "label:"
+	keyNoCache           = "no-cache"
+	keyImageResolveMode  = "image-resolve-mode"
 )
 
 func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err error) {
@@ -139,19 +138,14 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 
 	filename := opts[keyFilename]
 	if filename == "" {
-		filename = defaultDockerfileName
-	}
-
-	name := "load Estaleiro file"
-	if filename != defaultDockerfileName {
-		name += " from " + filename
+		filename = defaultConfigName
 	}
 
 	src := llb.Local(localNameDockerfile,
 		llb.IncludePatterns([]string{filename}),
 		llb.SessionID(c.BuildOpts().SessionID),
-		llb.SharedKeyHint(defaultDockerfileName),
-		dockerfile2llb.WithInternalName(name),
+		llb.SharedKeyHint(defaultConfigName),
+		dockerfile2llb.WithInternalName("load Estaleiro file "+filename),
 	)
 
 	def, err := src.Marshal()
@@ -160,7 +154,7 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 		return
 	}
 
-	var dtDockerfile []byte
+	var hclBytes []byte
 	res, err := c.Solve(ctx, gateway.SolveRequest{
 		Definition: def.ToPB(),
 	})
@@ -176,7 +170,7 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 		return
 	}
 
-	dtDockerfile, err = ref.ReadFile(ctx, gateway.ReadRequest{
+	hclBytes, err = ref.ReadFile(ctx, gateway.ReadRequest{
 		Filename: filename,
 	})
 	if err != nil {
@@ -186,7 +180,7 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 
 	vars := filter(opts, buildArgPrefix)
 
-	cfg, err = config.Parse(dtDockerfile, filename, vars)
+	cfg, err = config.Parse(hclBytes, filename, vars)
 	if err != nil {
 		err = errors.Wrapf(err, "failed parsing config")
 		return

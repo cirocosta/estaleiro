@@ -40,5 +40,10 @@ FROM ubuntu AS release
 
 FROM release AS frontend
 
+	RUN set -x && \
+		apt update && \
+		apt install -y ca-certificates && \
+		rm -rf /var/lib/apt/lists
+
 	ENTRYPOINT [ "/usr/local/bin/estaleiro", "frontend" ]
 
