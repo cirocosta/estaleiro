@@ -1,5 +1,18 @@
 package dpkg
 
+type AptDebLocation struct {
+	URI    string `yaml:"uri"`
+	Name   string `yaml:"name"`
+	Size   string `yaml:"size"`
+	MD5sum string `yaml:"md5sum"`
+}
+
+type Package struct {
+	DebControl `yaml:",inline"`
+	Location   AptDebLocation   `yaml:"location,omitempty"`
+	Source     []AptDebLocation `yaml:"source,omitempty"`
+}
+
 // DebControl is a debian package whose installation can be tracked by
 // `/var/lib/dpkg/status`.
 //

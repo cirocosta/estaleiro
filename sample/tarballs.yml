@@ -1,0 +1,16 @@
+kind: filesources/v1
+data:
+    /usr/dummy-file:
+        type: git
+        ref: ""
+        repository: https://github.com/cirocosta/estaleiro
+        origin:
+            tarball: archive.tgz
+            path: c
+    /usr/test-file:
+        type: git
+        ref: ""
+        repository: https://github.com/cirocosta/estaleiro
+        origin:
+            tarball: archive.tgz
+            path: b

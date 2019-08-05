@@ -1,0 +1,74 @@
+kind: packages/v1
+data:
+    initial: false
+    packages:
+      - name: libssl1.1
+        version: 1.1.1-1ubuntu2.1~18.04.4
+        source_package: openssl
+        architecture: amd64
+        location:
+            uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+            name: libssl1.1_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+            size: "1299616"
+            md5sum: 41f3ea2b9f5b419550f165975b941f81
+        source:
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+            size: "2776"
+            md5sum: 88218150efac41c72aaf0025cd4d481800e0871e5ea045d25c5b10b09f7b0a88
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz
+            name: openssl_1.1.1.orig.tar.gz
+            size: "8337920"
+            md5sum: 2836875a0f89c03d0fdf483941512613a50cfb421d6fd94b9f41d7279d586a3d
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz.asc
+            name: openssl_1.1.1.orig.tar.gz.asc
+            size: "488"
+            md5sum: f3296150114069ea73a72eafbfdcbb295b770e7cbf3266f9590f3d0932498b3e
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+            size: "95260"
+            md5sum: a373c2612817f3ae929d01ddb9175a6f9ab0ac28a08afe93c88df27fadcc7500
+      - name: openssl
+        version: 1.1.1-1ubuntu2.1~18.04.4
+        source_package: ""
+        architecture: amd64
+        location:
+            uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+            size: "613376"
+            md5sum: 9426af66effeac2a271994915a8fae14
+        source:
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+            size: "2776"
+            md5sum: 88218150efac41c72aaf0025cd4d481800e0871e5ea045d25c5b10b09f7b0a88
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz
+            name: openssl_1.1.1.orig.tar.gz
+            size: "8337920"
+            md5sum: 2836875a0f89c03d0fdf483941512613a50cfb421d6fd94b9f41d7279d586a3d
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz.asc
+            name: openssl_1.1.1.orig.tar.gz.asc
+            size: "488"
+            md5sum: f3296150114069ea73a72eafbfdcbb295b770e7cbf3266f9590f3d0932498b3e
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+            size: "95260"
+            md5sum: a373c2612817f3ae929d01ddb9175a6f9ab0ac28a08afe93c88df27fadcc7500
+      - name: ca-certificates
+        version: "20180409"
+        source_package: ""
+        architecture: all
+        location:
+            uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409_all.deb
+            name: ca-certificates_20180409_all.deb
+            size: "150932"
+            md5sum: eae40792673dcb994af86284d0a01f36
+        source:
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409.dsc
+            name: ca-certificates_20180409.dsc
+            size: "1420"
+            md5sum: cd1f6540d0dab28f897e0e0cb2191130cdbf897f8ce3f52c8e483b2ed1555d30
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409.tar.xz
+            name: ca-certificates_20180409.tar.xz
+            size: "246908"
+            md5sum: 7af6f5bfc619fd29cbf0258c1d95107c38ce840ad6274e343e1e0d971fc72b51

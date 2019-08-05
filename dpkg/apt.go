@@ -20,19 +20,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type AptDebLocation struct {
-	URI    string `yaml:"uri"`
-	Name   string `yaml:"name"`
-	Size   string `yaml:"size"`
-	MD5sum string `yaml:"md5sum"`
-}
-
-type Package struct {
-	DebControl `yaml:",inline"`
-	Location   AptDebLocation   `yaml:"location,omitempty"`
-	Source     []AptDebLocation `yaml:"source,omitempty"`
-}
-
 var (
 	logger = lager.NewLogger("estaleiro")
 )

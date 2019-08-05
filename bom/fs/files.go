@@ -22,6 +22,10 @@ type ExtractedFile struct {
 	UnarchivedTarball UnarchivedTarball `yaml:"from_tarball"`
 }
 
+const (
+	FilesV1Kind = "files/v1"
+)
+
 type FilesV1 struct {
 	Kind string          `yaml:"kind"`
 	Data []ExtractedFile `yaml:"data"`
@@ -29,7 +33,7 @@ type FilesV1 struct {
 
 func NewFilesV1(extractedFiles []ExtractedFile) FilesV1 {
 	return FilesV1{
-		Kind: "files/v1",
+		Kind: FilesV1Kind,
 		Data: extractedFiles,
 	}
 }

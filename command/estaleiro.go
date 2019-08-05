@@ -5,8 +5,9 @@ var Estaleiro struct {
 	Build    buildCommand    `command:"build" description:"performs a build against buildkitd"`
 	Frontend frontendCommand `command:"frontend" description:"serves as a custom Docker-compatible"`
 
-	Collect collectCommand `command:"collect" hidden:"true" description:"retrieves dpkg packages information"`
 	Apt     aptCommand     `command:"apt"     hidden:"true"`
-	Extract extractCommand `command:"extract" hidden:"true"`
 	Base    baseCommand    `command:"base"    hidden:"true"`
+	Collect collectCommand `command:"collect" hidden:"true"`
+	Extract extractCommand `command:"extract" hidden:"true"`
+	Merge   mergeCommand   `command:"merge"   hidden:"true"`
 }

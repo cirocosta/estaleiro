@@ -25,7 +25,7 @@ import (
 
 const (
 	imageName  = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
-	bomVersion = ""
+	bomVersion = "v0.0.1"
 )
 
 func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.Image, materials bom.Bom, err error) {
@@ -247,7 +247,7 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 
 	// gather VCS info in a per-file manner, and then save into the `bom` state in a file.
 	//
-	vcsMapping := make(map[string]config.VCS, len(files))
+	fileSourceMapping := make(map[string]bomfs.FileSource, len(files))
 	for _, file := range files {
 		// for that specific file in a given tarball, gather the source code info
 		fileVCS := getFileVCSInfo(cfg, file.FromTarball.TarballName, file.FromTarball.Path)
@@ -255,10 +255,16 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 			panic(errors.Errorf("file not declared in any tarball block"))
 		}
 
-		vcsMapping[file.Destination] = *fileVCS
+		fileSourceMapping[file.Destination] = bomfs.FileSource{
+			Origin: bomfs.FileOrigin{
+				Tarball: file.FromTarball.TarballName,
+				Path:    file.FromTarball.Path,
+			},
+			VCS: *fileVCS,
+		}
 	}
 
-	res, err := yaml.Marshal(bomfs.NewFileSourcesV1(vcsMapping))
+	res, err := yaml.Marshal(bomfs.NewFileSourcesV1(fileSourceMapping))
 	if err != nil {
 		panic(err)
 	}
@@ -294,18 +300,24 @@ func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config) (newFs, newBom l
 		files = append(files, file)
 	}
 
-	var vcsMapping = make(map[string]config.VCS, len(files))
+	fileSourceMapping := make(map[string]bomfs.FileSource, len(files))
 	for _, file := range files {
 		fileVCS := getFileVCSInfo(cfg, file.FromStep.StepName, file.FromStep.Path)
 		if fileVCS == nil {
 			panic(errors.Errorf("file not declared in any step block"))
 		}
 
-		vcsMapping[file.Destination] = *fileVCS
+		fileSourceMapping[file.Destination] = bomfs.FileSource{
+			Origin: bomfs.FileOrigin{
+				Step: file.FromStep.StepName,
+				Path: file.FromStep.Path,
+			},
+			VCS: *fileVCS,
+		}
 
 	}
 
-	res, err := yaml.Marshal(bomfs.NewFileSourcesV1(vcsMapping))
+	res, err := yaml.Marshal(bomfs.NewFileSourcesV1(fileSourceMapping))
 	if err != nil {
 		panic(err)
 	}
