@@ -34,6 +34,7 @@ func (c *mergeCommand) Execute(args []string) (err error) {
 		osPackagesv1    = bomfs.PackagesV1{}
 		addedPackagesv1 = bomfs.PackagesV1{}
 		osReleasev1     = bomfs.OsReleaseV1{}
+		metav1          = bomfs.MetaV1{}
 	)
 
 	for _, file := range files {
@@ -47,19 +48,23 @@ func (c *mergeCommand) Execute(args []string) (err error) {
 			filesv1 = append(filesv1, *v)
 		case *bomfs.FileSourcesV1:
 			filesourcesv1 = append(filesourcesv1, *v)
+		case *bomfs.OsReleaseV1:
+			osReleasev1 = *v
+		case *bomfs.MetaV1:
+			metav1 = *v
 		case *bomfs.PackagesV1:
 			if v.Data.Initial {
 				osPackagesv1 = *v
 			} else {
 				addedPackagesv1 = *v
 			}
-		case *bomfs.OsReleaseV1:
-			osReleasev1 = *v
 		}
 	}
 
 	materials := bom.Bom{}
 
+	materials.ProductName = metav1.Data.ProductName
+	materials.BaseImage.CanonicalName = metav1.Data.Image
 	materials.BaseImage.OS = osReleasev1.Data.OS
 	materials.BaseImage.Version = osReleasev1.Data.Version
 	materials.BaseImage.Codename = osReleasev1.Data.Codename
@@ -210,6 +215,8 @@ func readTypedBomFile(file string) (res interface{}, err error) {
 		res = &bomfs.OsReleaseV1{}
 	case bomfs.PackagesV1Kind:
 		res = &bomfs.PackagesV1{}
+	case bomfs.MetaV1Kind:
+		res = &bomfs.MetaV1{}
 	default:
 		err = errors.Wrapf(err,
 			"unexpected kind %s", wrapper.Kind)

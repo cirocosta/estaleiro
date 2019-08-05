@@ -42,6 +42,10 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 	bomState := llb.Scratch()
 	fs = llb.Image(canonicalName.String())
 
+	bomState = generateMetaBom(bomState, bomfs.Meta{
+		Image:       canonicalName.String(),
+		ProductName: cfg.Image.Name,
+	})
 	bomState = generatePackagesBom(fs, bomState)
 	bomState = generateOsReleaseBom(fs, bomState)
 	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
@@ -60,6 +64,15 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 	}
 
 	return
+}
+
+func generateMetaBom(bomState llb.State, meta bomfs.Meta) llb.State {
+	res, err := yaml.Marshal(bomfs.NewMetaV1(meta))
+	if err != nil {
+		panic(err)
+	}
+
+	return bomState.File(llb.Mkfile("/meta.yml", 0755, res))
 }
 
 func estaleiroSourceMount() llb.RunOption {
