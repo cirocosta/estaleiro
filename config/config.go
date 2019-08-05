@@ -1,3 +1,6 @@
+// Package config defines the user-facing configuration and how its meant to be
+// interpreted (syntatically and semantically).
+//
 package config
 
 // Config represents the high-level aggregation of all that's there to be built

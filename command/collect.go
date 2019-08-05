@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	bomfs "github.com/cirocosta/estaleiro/bom/fs"
 	"github.com/cirocosta/estaleiro/dpkg"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -43,7 +44,7 @@ func (c *collectCommand) Execute(args []string) (err error) {
 		pkgs[idx] = dpkg.Package{DebControl: p}
 	}
 
-	res, err := yaml.Marshal(NewPackagesV1(true, pkgs))
+	res, err := yaml.Marshal(bomfs.NewPackagesV1(true, pkgs))
 	if err != nil {
 		panic(err)
 	}

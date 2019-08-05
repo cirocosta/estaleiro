@@ -7,30 +7,12 @@ import (
 	"github.com/cirocosta/estaleiro/dpkg"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+
+	bomfs "github.com/cirocosta/estaleiro/bom/fs"
 )
 
 type aptCommand struct {
 	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
-}
-
-type PackagesV1 struct {
-	Kind string         `yaml:"kind"`
-	Data PackagesV1Data `yaml:"data"`
-}
-
-type PackagesV1Data struct {
-	Initial  bool           `yaml:"initial"`
-	Packages []dpkg.Package `yaml:"packages"`
-}
-
-func NewPackagesV1(initial bool, pkgs []dpkg.Package) PackagesV1 {
-	return PackagesV1{
-		Kind: "packages/v1",
-		Data: PackagesV1Data{
-			Initial:  initial,
-			Packages: pkgs,
-		},
-	}
 }
 
 func (c *aptCommand) Execute(args []string) (err error) {
@@ -46,7 +28,7 @@ func (c *aptCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	res, err := yaml.Marshal(NewPackagesV1(false, pkgs))
+	res, err := yaml.Marshal(bomfs.NewPackagesV1(false, pkgs))
 	if err != nil {
 		panic(err)
 	}

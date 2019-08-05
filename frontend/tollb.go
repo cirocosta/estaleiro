@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"time"
 
 	"github.com/cirocosta/estaleiro/bom"
 	"github.com/cirocosta/estaleiro/config"
@@ -16,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 
+	bomfs "github.com/cirocosta/estaleiro/bom/fs"
 	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
 	gw "github.com/moby/buildkit/frontend/gateway/client"
 	digest "github.com/opencontainers/go-digest"
@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	imageName = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
+	imageName  = "cirocosta/estaleiro@sha256:a2dc7d2c4bde47afa6f3ed312f7f791253f5db9bda2154d0288152829b9546ab"
+	bomVersion = ""
 )
 
 func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.Image, materials bom.Bom, err error) {
@@ -39,15 +40,6 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 	}
 
 	bomState := llb.Scratch()
-
-	materials.Version = "v0.0.1"
-	materials.GeneratedAt = time.Now()
-
-	materials.BaseImage = bom.BaseImage{
-		Name:   canonicalName.Name(),
-		Digest: canonicalName.Digest().String(),
-	}
-
 	fs = llb.Image(canonicalName.String())
 
 	bomState = generatePackagesBom(fs, bomState)
@@ -62,6 +54,10 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 
 	fs = copy(bomState, "*.yml", fs, "/bom")
 	img = prepareImage(cfg.Image)
+
+	materials.BaseImage = bom.BaseImage{
+		CanonicalName: canonicalName.String(),
+	}
 
 	return
 }
@@ -212,21 +208,6 @@ func getFileVCSInfo(cfg *config.Config, name, file string) *config.VCS {
 	return nil
 }
 
-type FileSourcesV1 struct {
-	Kind string `yaml:"kind"`
-
-	// maps file location (in the final image) to VCS info.
-	//
-	Data map[string]config.VCS `yaml:"data"`
-}
-
-func NewFileSourcesV1(vcsMapping map[string]config.VCS) FileSourcesV1 {
-	return FileSourcesV1{
-		Kind: "filesources/v1",
-		Data: vcsMapping,
-	}
-}
-
 func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBom llb.State) {
 	newFs, newBom = fs, bom
 
@@ -277,7 +258,7 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 		vcsMapping[file.Destination] = *fileVCS
 	}
 
-	res, err := yaml.Marshal(NewFileSourcesV1(vcsMapping))
+	res, err := yaml.Marshal(bomfs.NewFileSourcesV1(vcsMapping))
 	if err != nil {
 		panic(err)
 	}
@@ -324,7 +305,7 @@ func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config) (newFs, newBom l
 
 	}
 
-	res, err := yaml.Marshal(NewFileSourcesV1(vcsMapping))
+	res, err := yaml.Marshal(bomfs.NewFileSourcesV1(vcsMapping))
 	if err != nil {
 		panic(err)
 	}

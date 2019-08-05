@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/lager"
+	"github.com/cirocosta/estaleiro/osrelease"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -419,7 +420,7 @@ deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
 	}
 	defer f.Close()
 
-	info, err := GatherOsRelease()
+	info, err := osrelease.GatherOsRelease()
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to detect codename to be used for initial sources.list")
@@ -433,49 +434,6 @@ deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
 		err = errors.Wrapf(err,
 			"failed writing initial sources.list to `/etc/apt/sources.list`")
 		return
-	}
-
-	return
-}
-
-type OsRelease struct {
-	OS       string `yaml:"os"`
-	Version  string `yaml:"version"`
-	Codename string `yaml:"codename"`
-}
-
-func GatherOsRelease() (info OsRelease, err error) {
-	f, err := os.Open("/etc/os-release")
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to open `/etc/os-release`")
-		return
-	}
-	defer f.Close()
-
-	info = scanCodename(f)
-
-	return
-}
-
-func scanCodename(reader io.Reader) (info OsRelease) {
-	scanner := bufio.NewScanner(reader)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		fields := strings.Split(line, "=")
-
-		k, v := fields[0], fields[1]
-		v = strings.Trim(v, `"`)
-
-		switch k {
-		case "ID":
-			info.OS = v
-		case "VERSION_ID":
-			info.Version = v
-		case "VERSION_CODENAME":
-			info.Codename = v
-		}
 	}
 
 	return
