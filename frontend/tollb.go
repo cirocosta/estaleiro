@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -56,7 +55,7 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
 	fs, bomState = tarballFiles(fs, bomState, cfg)
 
-	fs, err = runAndCopyFromSteps(fs, cfg)
+	fs, bomState, err = runAndCopyFromSteps(fs, bomState, cfg)
 	if err != nil {
 		return
 	}
@@ -179,9 +178,24 @@ func generatePackagesBom(base llb.State, bomState llb.State) llb.State {
 
 // given a tarball name and a file location within that tarball, finds out the `VCS`.
 //
-func getTarballFileVCSInfo(cfg *config.Config, tarball, file string) *config.VCS {
+func getFileVCSInfo(cfg *config.Config, name, file string) *config.VCS {
 	for _, t := range cfg.Tarballs {
-		if t.Name != tarball {
+		if t.Name != name {
+			continue
+		}
+
+		for _, f := range t.SourceFiles {
+			if f.Location != file {
+				continue
+			}
+
+			vcs := f.VCS
+			return &vcs
+		}
+	}
+
+	for _, t := range cfg.Steps {
+		if t.Name != name {
 			continue
 		}
 
@@ -252,16 +266,15 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 
 	// gather VCS info in a per-file manner, and then save into the `bom` state in a file.
 	//
-	vcsMapping := map[string]config.VCS{}
+	vcsMapping := make(map[string]config.VCS, len(files))
 	for _, file := range files {
 		// for that specific file in a given tarball, gather the source code info
-		fileVCS := getTarballFileVCSInfo(cfg, file.FromTarball.TarballName, file.FromTarball.Path)
+		fileVCS := getFileVCSInfo(cfg, file.FromTarball.TarballName, file.FromTarball.Path)
 		if fileVCS == nil {
-			panic(errors.Errorf("file not declared in tarball"))
+			panic(errors.Errorf("file not declared in any tarball block"))
 		}
 
 		vcsMapping[file.Destination] = *fileVCS
-
 	}
 
 	res, err := yaml.Marshal(NewFileSourcesV1(vcsMapping))
@@ -271,7 +284,7 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 
 	// save the sources info in the `bom` state
 	//
-	newBom = newBom.File(llb.Mkfile("/sources.yml", 0755, res))
+	newBom = newBom.File(llb.Mkfile("/tarballs.yml", 0755, res))
 
 	// copy the files to the fs state
 	//
@@ -287,23 +300,76 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 	return
 }
 
-// TODO emit new bom
-//
-func runAndCopyFromSteps(fs llb.State, cfg *config.Config) (newFs llb.State, err error) {
-	newFs = fs
+func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config) (newFs, newBom llb.State, err error) {
+	newFs, newBom = fs, bom
 
+	// gather the config.Files that matter
+	files := []config.File{}
 	for _, file := range cfg.Image.Files {
 		if file.FromStep == nil {
 			continue
 		}
 
-		newFs, err = copyFilesFromSteps(newFs, cfg, file)
+		files = append(files, file)
+	}
+
+	var vcsMapping = make(map[string]config.VCS, len(files))
+	for _, file := range files {
+		fileVCS := getFileVCSInfo(cfg, file.FromStep.StepName, file.FromStep.Path)
+		if fileVCS == nil {
+			panic(errors.Errorf("file not declared in any step block"))
+		}
+
+		vcsMapping[file.Destination] = *fileVCS
+
+	}
+
+	res, err := yaml.Marshal(NewFileSourcesV1(vcsMapping))
+	if err != nil {
+		panic(err)
+	}
+
+	// save the sources info in the `bom` state
+	//
+	newBom = newBom.File(llb.Mkfile("/steps.yml", 0755, res))
+
+	for _, file := range files {
+		newFs, newBom, err = copyFileFromStep(newFs, newBom, cfg, file)
 		if err != nil {
 			// TODO better error
 			return
 		}
 	}
 
+	return
+}
+
+func copyFileFromStep(
+	fs, bom llb.State, cfg *config.Config, file config.File,
+) (
+	newFs, newBom llb.State, err error,
+) {
+	newFs, newBom = fs, bom
+
+	// get the config's step definition that the file refers to.
+	//
+	configStep := getStepFromConfig(cfg, file.FromStep.StepName)
+	if configStep == nil {
+		err = errors.Errorf("referenced step %s not declared",
+			file.FromStep.StepName)
+		return
+	}
+
+	var step llb.State
+
+	step, err = addImageBuildStep(configStep)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to add step to image building process")
+		return
+	}
+
+	newFs = copy(step, file.FromStep.Path, newFs, file.Destination)
 	return
 }
 
@@ -333,59 +399,6 @@ func prepareImage(image config.Image) ocispec.Image {
 			Cmd:        image.Cmd,
 		},
 	}
-}
-
-func copyFilesFromSteps(
-	state llb.State, cfg *config.Config, file config.File,
-) (
-	newState llb.State, err error,
-) {
-	configStep := getStepFromConfig(cfg, file.FromStep.StepName)
-	if configStep == nil {
-		err = errors.Errorf("referenced step %s not declared",
-			file.FromStep.StepName)
-		return
-	}
-
-	// the file has a `path`, thus, make sure that the `path` matches a
-	// `source_file` in the `step` definition
-
-	var (
-		fileFoundInStep = false
-		bomFile         = bom.File{Path: file.Destination}
-	)
-
-	for _, sourceFile := range configStep.SourceFiles {
-		if file.FromStep.Path != sourceFile.Location {
-			continue
-		}
-
-		fileFoundInStep = true
-
-		bomFile.Source = bom.Source{
-			Type:    sourceFile.VCS.Type,
-			Version: sourceFile.VCS.Ref,
-			Uri:     sourceFile.VCS.Repository,
-		}
-	}
-
-	if !fileFoundInStep {
-		err = errors.Errorf("file %s not declared in step %s",
-			file.FromStep.Path, configStep.Name)
-		return
-	}
-
-	var step llb.State
-
-	step, err = addImageBuildStep(configStep)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to add step to image building process")
-		return
-	}
-
-	newState = copy(step, file.FromStep.Path, state, file.Destination)
-	return
 }
 
 func getStepFromConfig(cfg *config.Config, name string) *config.Step {
@@ -446,24 +459,6 @@ func addImageBuildStep(step *config.Step) (state llb.State, err error) {
 
 	state = *stepState
 	return
-}
-
-func aptAddKey(dst llb.State, url string) llb.State {
-	downloadSt := llb.HTTP(url, llb.Filename("key.gpg"))
-
-	dst = copy(downloadSt, "key.gpg", dst, "/key.gpg")
-
-	return dst.
-		Run(sh("apt-key add /key.gpg && rm /key.gpg")).
-		Root()
-}
-
-func sh(cmd string) llb.RunOption {
-	return llb.Args([]string{"/bin/sh", "-c", cmd})
-}
-
-func shf(cmd string, v ...interface{}) llb.RunOption {
-	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
 func readFile(filename string) (content []byte, err error) {
