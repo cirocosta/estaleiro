@@ -44,6 +44,18 @@ type ExtractedFile struct {
 	UnarchivedTarball UnarchivedTarball `yaml:"from_tarball"`
 }
 
+type FilesV1 struct {
+	Kind string          `yaml:"kind"`
+	Data []ExtractedFile `yaml:"data"`
+}
+
+func NewFilesV1(extractedFiles []ExtractedFile) FilesV1 {
+	return FilesV1{
+		Kind: "files/v1",
+		Data: extractedFiles,
+	}
+}
+
 func extract(ctx context.Context, tarball, dest string) (desc UnarchivedTarball, err error) {
 	var eg *errgroup.Group
 	eg, ctx = errgroup.WithContext(ctx)
@@ -166,12 +178,12 @@ func (c *extractCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	b, err := yaml.Marshal(extracted)
+	b, err := yaml.Marshal(NewFilesV1(extracted))
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = fmt.Fprintf(writer, "%+v", string(b))
+	_, err = fmt.Fprintf(writer, "%s", string(b))
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed writing bill of materials to %s", c.Output)

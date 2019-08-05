@@ -15,6 +15,7 @@ import (
 	"github.com/moby/buildkit/client/llb/imagemetaresolver"
 	"github.com/moby/buildkit/solver/pb"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 
 	dockerfile "github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
 	gw "github.com/moby/buildkit/frontend/gateway/client"
@@ -57,12 +58,10 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 
 	fs, err = runAndCopyFromSteps(fs, cfg)
 	if err != nil {
-		// TODO improve
 		return
 	}
 
 	fs = copy(bomState, "*.yml", fs, "/bom")
-
 	img = prepareImage(cfg.Image)
 
 	return
@@ -178,19 +177,67 @@ func generatePackagesBom(base llb.State, bomState llb.State) llb.State {
 	).AddMount("/bom", bomState)
 }
 
+// given a tarball name and a file location within that tarball, finds out the `VCS`.
+//
+func getTarballFileVCSInfo(cfg *config.Config, tarball, file string) *config.VCS {
+	for _, t := range cfg.Tarballs {
+		if t.Name != tarball {
+			continue
+		}
+
+		for _, f := range t.SourceFiles {
+			if f.Location != file {
+				continue
+			}
+
+			vcs := f.VCS
+			return &vcs
+		}
+	}
+
+	return nil
+}
+
+type FileSourcesV1 struct {
+	Kind string `yaml:"kind"`
+
+	// maps file location (in the final image) to VCS info.
+	//
+	Data map[string]config.VCS `yaml:"data"`
+}
+
+func NewFileSourcesV1(vcsMapping map[string]config.VCS) FileSourcesV1 {
+	return FileSourcesV1{
+		Kind: "filesources/v1",
+		Data: vcsMapping,
+	}
+}
+
 func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBom llb.State) {
 	newFs, newBom = fs, bom
-	extractionsMap := map[string][]string{}
 
+	// gather a list of the files that we're dealing with - those coming
+	// from tarballs.
+	//
+	files := []config.File{}
 	for _, file := range cfg.Image.Files {
 		if file.FromTarball == nil {
 			continue
 		}
 
+		files = append(files, file)
+	}
+
+	// maps `tarballName` to a list of files inside it that should be unpacked.
+	//
+	extractionsMap := map[string][]string{}
+	for _, file := range files {
 		filesToExtract, _ := extractionsMap[file.FromTarball.TarballName]
 		extractionsMap[file.FromTarball.TarballName] = append(filesToExtract, file.FromTarball.Path)
 	}
 
+	// create the states where the files of each tarball will be extracted to
+	//
 	tarballStateMap := make(map[string]llb.State, len(extractionsMap))
 	for tarball, files := range extractionsMap {
 		var (
@@ -203,17 +250,38 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 		)
 	}
 
-	for _, file := range cfg.Image.Files {
-		if file.FromTarball == nil {
-			continue
+	// gather VCS info in a per-file manner, and then save into the `bom` state in a file.
+	//
+	vcsMapping := map[string]config.VCS{}
+	for _, file := range files {
+		// for that specific file in a given tarball, gather the source code info
+		fileVCS := getTarballFileVCSInfo(cfg, file.FromTarball.TarballName, file.FromTarball.Path)
+		if fileVCS == nil {
+			panic(errors.Errorf("file not declared in tarball"))
 		}
 
+		vcsMapping[file.Destination] = *fileVCS
+
+	}
+
+	res, err := yaml.Marshal(NewFileSourcesV1(vcsMapping))
+	if err != nil {
+		panic(err)
+	}
+
+	// save the sources info in the `bom` state
+	//
+	newBom = newBom.File(llb.Mkfile("/sources.yml", 0755, res))
+
+	// copy the files to the fs state
+	//
+	for _, file := range files {
 		tarballSourceState, found := tarballStateMap[file.FromTarball.TarballName]
 		if !found {
 			panic(errors.Errorf("not found"))
 		}
 
-		newFs = copyFilesFromTarball(newFs, file, tarballSourceState)
+		newFs = copy(tarballSourceState, file.FromTarball.Path, newFs, file.Destination)
 	}
 
 	return
@@ -237,20 +305,6 @@ func runAndCopyFromSteps(fs llb.State, cfg *config.Config) (newFs llb.State, err
 	}
 
 	return
-}
-
-// Copies a file (`file`) from a given state that already has the tarball
-// unpacked (`tarballSource`) into the final state (`finalState`)
-//
-func copyFilesFromTarball(
-	finalState llb.State, file config.File, tarballSource llb.State,
-) llb.State {
-	return copy(
-		tarballSource,
-		file.FromTarball.Path,
-		finalState,
-		file.Destination,
-	)
 }
 
 // prepareImage populates the final definition of the OCI Image spec object

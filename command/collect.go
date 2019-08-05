@@ -15,19 +15,6 @@ type collectCommand struct {
 	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
 }
 
-type Packages []dpkg.DebControl
-
-func (p Packages) ToYAML() (res []byte) {
-	var err error
-
-	res, err = yaml.Marshal(&p)
-	if err != nil {
-		panic(err)
-	}
-
-	return
-}
-
 func (c *collectCommand) Execute(args []string) (err error) {
 	var packages []dpkg.DebControl
 
@@ -51,7 +38,17 @@ func (c *collectCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	_, err = fmt.Fprintf(writer, "%+v\n", string(Packages(packages).ToYAML()))
+	pkgs := make([]dpkg.Package, len(packages))
+	for idx, p := range packages {
+		pkgs[idx] = dpkg.Package{DebControl: p}
+	}
+
+	res, err := yaml.Marshal(NewPackagesV1(true, pkgs))
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = fmt.Fprintf(writer, "%s", string(res))
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed writing packages list to %s", err)
