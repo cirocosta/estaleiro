@@ -12,7 +12,6 @@ import (
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
-	"github.com/moby/buildkit/frontend/dockerfile/dockerfile2llb"
 	gateway "github.com/moby/buildkit/frontend/gateway/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
@@ -23,7 +22,7 @@ var (
 )
 
 const (
-	localNameDockerfile  = "dockerfile"
+	localName            = "dockerfile"
 	keyTarget            = "target"
 	keyFilename          = "filename"
 	keyCacheFrom         = "cache-from"
@@ -56,16 +55,25 @@ func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err
 // and assemblies the LLB to build it.
 //
 func prepareLLBFromClient(
-	ctx context.Context, client gateway.Client,
+	ctx context.Context, c gateway.Client,
 ) (
 	state llb.State, img ocispec.Image, err error,
 ) {
-	cfg, err := readConfigFromClient(ctx, client)
+	cfg, err := readConfigFromClient(ctx, c)
 	if err != nil {
+		err = errors.Wrapf(err,
+			"failed reading config from client")
 		return
 	}
 
-	state, img, err = ToLLB(ctx, cfg)
+	dockerfileMapping, err := gatherDockerfiles(ctx, c, cfg)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to read dockerfiles from context")
+		return
+	}
+
+	state, img, err = ToLLB(ctx, cfg, dockerfileMapping)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to generate llb from file")
@@ -133,19 +141,32 @@ func invokeBuild(
 	return
 }
 
-func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Config, err error) {
-	opts := c.BuildOpts().Opts
+func gatherDockerfiles(ctx context.Context, c gateway.Client, cfg *config.Config) (mapping map[string][]byte, err error) {
+	mapping = make(map[string][]byte)
 
-	filename := opts[keyFilename]
-	if filename == "" {
-		filename = defaultConfigName
+	for _, step := range cfg.Steps {
+		_, found := mapping[step.Dockerfile]
+		if found {
+			continue
+		}
+
+		mapping[step.Dockerfile], err = readDockerfile(ctx, c, step.Dockerfile)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to read dockerfile from local context")
+			return
+		}
 	}
 
-	src := llb.Local(localNameDockerfile,
-		llb.IncludePatterns([]string{filename}),
+	return
+}
+
+func readDockerfile(ctx context.Context, c gateway.Client, name string) (content []byte, err error) {
+	src := llb.Local(localName,
+		llb.IncludePatterns([]string{name}),
 		llb.SessionID(c.BuildOpts().SessionID),
-		llb.SharedKeyHint(defaultConfigName),
-		dockerfile2llb.WithInternalName("load Estaleiro file "+filename),
+		llb.SharedKeyHint("dockerfile"),
+		llb.WithCustomName("[estaleiro] load dockerfile "+name),
 	)
 
 	def, err := src.Marshal()
@@ -154,7 +175,6 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 		return
 	}
 
-	var hclBytes []byte
 	res, err := c.Solve(ctx, gateway.SolveRequest{
 		Definition: def.ToPB(),
 	})
@@ -170,11 +190,59 @@ func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Co
 		return
 	}
 
+	content, err = ref.ReadFile(ctx, gateway.ReadRequest{
+		Filename: name,
+	})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to read dockerfile")
+		return
+	}
+
+	return
+}
+
+func readConfigFromClient(ctx context.Context, c gateway.Client) (cfg *config.Config, err error) {
+	opts := c.BuildOpts().Opts
+
+	filename := opts[keyFilename]
+	if filename == "" {
+		filename = defaultConfigName
+	}
+
+	src := llb.Local(localName,
+		llb.IncludePatterns([]string{filename}),
+		llb.SessionID(c.BuildOpts().SessionID),
+		llb.SharedKeyHint(defaultConfigName),
+		llb.WithCustomName("[estaleiro] load estaleiro file "+filename),
+	)
+
+	def, err := src.Marshal()
+	if err != nil {
+		err = errors.Wrapf(err, "failed to marshal local source")
+		return
+	}
+
+	res, err := c.Solve(ctx, gateway.SolveRequest{
+		Definition: def.ToPB(),
+	})
+	if err != nil {
+		err = errors.Wrapf(err, "failed to resolve request for local source")
+		return
+	}
+
+	ref, err := res.SingleRef()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to retrieve single ref from resolution")
+		return
+	}
+
+	var hclBytes []byte
 	hclBytes, err = ref.ReadFile(ctx, gateway.ReadRequest{
 		Filename: filename,
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "failed to read dockerfile")
+		err = errors.Wrapf(err, "failed to read config")
 		return
 	}
 

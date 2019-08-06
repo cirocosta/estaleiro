@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/cirocosta/estaleiro/config"
@@ -30,8 +31,23 @@ func HCLToLLB(filename string, variables map[string]string) (definition *llb.Def
 		return
 	}
 
+	mapping := make(map[string][]byte)
+	for _, step := range cfg.Steps {
+		_, found := mapping[step.Dockerfile]
+		if found {
+			continue
+		}
+
+		mapping[step.Dockerfile], err = readFile(step.Dockerfile)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to read dockerfile from local directory")
+			return
+		}
+	}
+
 	var state llb.State
-	state, _, err = frontend.ToLLB(context.TODO(), cfg)
+	state, _, err = frontend.ToLLB(context.TODO(), cfg, mapping)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to convert to llb")
 		return
@@ -40,6 +56,26 @@ func HCLToLLB(filename string, variables map[string]string) (definition *llb.Def
 	definition, err = state.Marshal(llb.LinuxAmd64)
 	if err != nil {
 		err = errors.Wrap(err, "marshaling llb state")
+		return
+	}
+
+	return
+}
+
+func readFile(filename string) (content []byte, err error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to open file %s", filename)
+		return
+	}
+
+	defer f.Close()
+
+	content, err = ioutil.ReadAll(f)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed reading contents of file %s", filename)
 		return
 	}
 

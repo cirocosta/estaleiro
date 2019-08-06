@@ -2,7 +2,7 @@ GIT_COMMIT = $(shell git rev-parse HEAD)
 
 
 install:
-	go install -tags "dfrunmount" -v .
+	go install -tags "dfrunmount local" -v .
 
 
 

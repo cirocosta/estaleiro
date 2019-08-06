@@ -22,12 +22,12 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-const (
-	imageName  = "cirocosta/estaleiro@sha256:e0edbc2867e23dcbec17be5e320f91044d845647c2d3e0507c7af07fec54955e"
-	bomVersion = "v0.0.1"
-)
+func ToLLB(
+	ctx context.Context, cfg *config.Config, dockerfileMapping map[string][]byte,
+) (
+	fs llb.State, img ocispec.Image, err error,
+) {
 
-func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.Image, err error) {
 	// TODO consider tag provided
 	//
 	canonicalName, err := resolveImage(ctx, cfg.Image.BaseImage.Name)
@@ -50,7 +50,7 @@ func ToLLB(ctx context.Context, cfg *config.Config) (fs llb.State, img ocispec.I
 	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
 	fs, bomState = tarballFiles(fs, bomState, cfg)
 
-	fs, bomState, err = runAndCopyFromSteps(fs, bomState, cfg)
+	fs, bomState, err = runAndCopyFromSteps(fs, bomState, cfg, dockerfileMapping)
 	if err != nil {
 		return
 	}
@@ -82,22 +82,6 @@ func generateMetaBom(bomState llb.State, meta bomfs.Meta) llb.State {
 	}
 
 	return bomState.File(llb.Mkfile("/meta.yml", 0755, res))
-}
-
-func estaleiroSourceMount() llb.RunOption {
-	// TODO base this in `debug` or not
-
-	// return llb.AddMount(
-	// 	"/usr/local/bin/estaleiro",
-	// 	llb.Image(imageName),
-	// 	llb.SourcePath("/usr/local/bin/estaleiro"),
-	// )
-
-	return llb.AddMount(
-		"/usr/local/bin/estaleiro",
-		llb.Local("bin"),
-		llb.SourcePath("estaleiro"),
-	)
 }
 
 // gathers information from `os-release` so that in the final bill of materials
@@ -309,7 +293,7 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 	return
 }
 
-func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config) (newFs, newBom llb.State, err error) {
+func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config, dockerfileMapping map[string][]byte) (newFs, newBom llb.State, err error) {
 	newFs, newBom = fs, bom
 
 	// gather the config.Files that matter
@@ -349,7 +333,7 @@ func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config) (newFs, newBom l
 	newBom = newBom.File(llb.Mkfile("/steps.yml", 0755, res))
 
 	for _, file := range files {
-		newFs, newBom, err = copyFileFromStep(newFs, newBom, cfg, file)
+		newFs, newBom, err = copyFileFromStep(newFs, newBom, cfg, file, dockerfileMapping)
 		if err != nil {
 			// TODO better error
 			return
@@ -360,7 +344,7 @@ func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config) (newFs, newBom l
 }
 
 func copyFileFromStep(
-	fs, bom llb.State, cfg *config.Config, file config.File,
+	fs, bom llb.State, cfg *config.Config, file config.File, dockerfileMapping map[string][]byte,
 ) (
 	newFs, newBom llb.State, err error,
 ) {
@@ -377,7 +361,7 @@ func copyFileFromStep(
 
 	var step llb.State
 
-	step, err = addImageBuildStep(configStep)
+	step, err = addImageBuildStep(configStep, dockerfileMapping[configStep.Dockerfile])
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to add step to image building process")
@@ -437,18 +421,8 @@ func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.St
 
 }
 
-func addImageBuildStep(step *config.Step) (state llb.State, err error) {
-	var (
-		stepState         *llb.State
-		dockerfileContent []byte
-	)
-
-	dockerfileContent, err = readFile(step.Dockerfile)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed reading dockerfile %s", step.Dockerfile)
-		return
-	}
+func addImageBuildStep(step *config.Step, dockerfileContent []byte) (state llb.State, err error) {
+	var stepState *llb.State
 
 	caps := pb.Caps.CapSet(pb.Caps.All())
 

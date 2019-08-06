@@ -1,11 +1,442 @@
-product_name: ""
+product_name: cirocosta/estaleiro
 protocol: ""
 base_image:
     canonical_name: docker.io/library/ubuntu:latest@sha256:c303f19cfe9ee92badbbbd7567bc1ca47789f79303ddcef56f77687d4744cd7a
-    os: ""
-    version: ""
-    codename: ""
-    packages: []
+    os: ubuntu
+    version: "18.04"
+    codename: bionic
+    packages:
+      - name: fdisk
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
+      - name: libpam-runtime
+        version: 1.1.8-3.6ubuntu2.18.04.1
+        source_package: pam
+        architecture: all
+      - name: libncurses5
+        version: 6.1-1ubuntu1.18.04
+        source_package: ncurses
+        architecture: amd64
+      - name: libcom-err2
+        version: 1.44.1-1ubuntu1.1
+        source_package: e2fsprogs
+        architecture: amd64
+      - name: libapt-pkg5.0
+        version: 1.6.11
+        source_package: apt
+        architecture: amd64
+      - name: libaudit1
+        version: 1:2.8.2-1ubuntu1
+        source_package: audit
+        architecture: amd64
+      - name: libtinfo5
+        version: 6.1-1ubuntu1.18.04
+        source_package: ncurses
+        architecture: amd64
+      - name: perl-base
+        version: 5.26.1-6ubuntu0.3
+        source_package: perl
+        architecture: amd64
+      - name: libudev1
+        version: 237-3ubuntu10.24
+        source_package: systemd
+        architecture: amd64
+      - name: libunistring2
+        version: 0.9.9-0ubuntu2
+        source_package: libunistring
+        architecture: amd64
+      - name: libnettle6
+        version: 3.4-1
+        source_package: nettle
+        architecture: amd64
+      - name: libattr1
+        version: 1:2.4.47-2build1
+        source_package: attr
+        architecture: amd64
+      - name: libss2
+        version: 1.44.1-1ubuntu1.1
+        source_package: e2fsprogs
+        architecture: amd64
+      - name: liblzma5
+        version: 5.2.2-1.3
+        source_package: xz-utils
+        architecture: amd64
+      - name: libidn2-0
+        version: 2.0.4-1.1build2
+        source_package: libidn2
+        architecture: amd64
+      - name: libpam-modules-bin
+        version: 1.1.8-3.6ubuntu2.18.04.1
+        source_package: pam
+        architecture: amd64
+      - name: grep
+        version: 3.1-2
+        source_package: ""
+        architecture: amd64
+      - name: base-passwd
+        version: 3.5.44
+        source_package: ""
+        architecture: amd64
+      - name: liblz4-1
+        version: 0.0~r131-2ubuntu3
+        source_package: lz4
+        architecture: amd64
+      - name: debianutils
+        version: 4.8.4
+        source_package: ""
+        architecture: amd64
+      - name: libgcrypt20
+        version: 1.8.1-4ubuntu1.1
+        source_package: ""
+        architecture: amd64
+      - name: libncursesw5
+        version: 6.1-1ubuntu1.18.04
+        source_package: ncurses
+        architecture: amd64
+      - name: bash
+        version: 4.4.18-2ubuntu1.2
+        source_package: ""
+        architecture: amd64
+      - name: libuuid1
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
+      - name: libdb5.3
+        version: 5.3.28-13.1ubuntu1.1
+        source_package: db5.3
+        architecture: amd64
+      - name: debconf
+        version: 1.5.66ubuntu1
+        source_package: ""
+        architecture: all
+      - name: zlib1g
+        version: 1:1.2.11.dfsg-0ubuntu2
+        source_package: zlib
+        architecture: amd64
+      - name: hostname
+        version: "3.20"
+        source_package: ""
+        architecture: amd64
+      - name: mawk
+        version: 1.3.3-17ubuntu3
+        source_package: ""
+        architecture: amd64
+      - name: gzip
+        version: 1.6-5ubuntu1
+        source_package: ""
+        architecture: amd64
+      - name: gpgv
+        version: 2.2.4-1ubuntu1.2
+        source_package: gnupg2
+        architecture: amd64
+      - name: bsdutils
+        version: 1:2.31.1-0.4ubuntu3.3
+        source_package: util-linux (2.31.1-0.4ubuntu3.3)
+        architecture: amd64
+      - name: dash
+        version: 0.5.8-2.10
+        source_package: ""
+        architecture: amd64
+      - name: mount
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
+      - name: libgnutls30
+        version: 3.5.18-1ubuntu1.1
+        source_package: gnutls28
+        architecture: amd64
+      - name: libsystemd0
+        version: 237-3ubuntu10.24
+        source_package: systemd
+        architecture: amd64
+      - name: libzstd1
+        version: 1.3.3+dfsg-2ubuntu1
+        source_package: libzstd
+        architecture: amd64
+      - name: libc6
+        version: 2.27-3ubuntu1
+        source_package: glibc
+        architecture: amd64
+      - name: libfdisk1
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
+      - name: libpcre3
+        version: 2:8.39-9
+        source_package: pcre3
+        architecture: amd64
+      - name: coreutils
+        version: 8.28-1ubuntu1
+        source_package: ""
+        architecture: amd64
+      - name: e2fsprogs
+        version: 1.44.1-1ubuntu1.1
+        source_package: ""
+        architecture: amd64
+      - name: tar
+        version: 1.29b-2ubuntu0.1
+        source_package: ""
+        architecture: amd64
+      - name: libprocps6
+        version: 2:3.3.12-3ubuntu1.1
+        source_package: procps
+        architecture: amd64
+      - name: libbz2-1.0
+        version: 1.0.6-8.1ubuntu0.2
+        source_package: bzip2
+        architecture: amd64
+      - name: libblkid1
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
+      - name: libtasn1-6
+        version: 4.13-2
+        source_package: ""
+        architecture: amd64
+      - name: bzip2
+        version: 1.0.6-8.1ubuntu0.2
+        source_package: ""
+        architecture: amd64
+      - name: libhogweed4
+        version: 3.4-1
+        source_package: nettle
+        architecture: amd64
+      - name: lsb-base
+        version: 9.20170808ubuntu1
+        source_package: lsb
+        architecture: all
+      - name: procps
+        version: 2:3.3.12-3ubuntu1.1
+        source_package: ""
+        architecture: amd64
+      - name: libgpg-error0
+        version: 1.27-6
+        source_package: libgpg-error
+        architecture: amd64
+      - name: base-files
+        version: 10.1ubuntu2.5
+        source_package: ""
+        architecture: amd64
+      - name: libgmp10
+        version: 2:6.1.2+dfsg-2
+        source_package: gmp
+        architecture: amd64
+      - name: sensible-utils
+        version: 0.0.12
+        source_package: ""
+        architecture: all
+      - name: passwd
+        version: 1:4.5-1ubuntu2
+        source_package: shadow
+        architecture: amd64
+      - name: init-system-helpers
+        version: "1.51"
+        source_package: ""
+        architecture: all
+      - name: ncurses-base
+        version: 6.1-1ubuntu1.18.04
+        source_package: ncurses
+        architecture: all
+      - name: libc-bin
+        version: 2.27-3ubuntu1
+        source_package: glibc
+        architecture: amd64
+      - name: libsemanage1
+        version: 2.7-2build2
+        source_package: libsemanage
+        architecture: amd64
+      - name: libseccomp2
+        version: 2.4.1-0ubuntu0.18.04.2
+        source_package: libseccomp
+        architecture: amd64
+      - name: sysvinit-utils
+        version: 2.88dsf-59.10ubuntu1
+        source_package: sysvinit
+        architecture: amd64
+      - name: libsemanage-common
+        version: 2.7-2build2
+        source_package: libsemanage
+        architecture: all
+      - name: libp11-kit0
+        version: 0.23.9-2
+        source_package: p11-kit
+        architecture: amd64
+      - name: libdebconfclient0
+        version: 0.213ubuntu1
+        source_package: cdebconf
+        architecture: amd64
+      - name: libselinux1
+        version: 2.7-2build2
+        source_package: libselinux
+        architecture: amd64
+      - name: dpkg
+        version: 1.19.0.5ubuntu2.1
+        source_package: ""
+        architecture: amd64
+      - name: gcc-8-base
+        version: 8.3.0-6ubuntu1~18.04.1
+        source_package: gcc-8
+        architecture: amd64
+      - name: apt
+        version: 1.6.11
+        source_package: ""
+        architecture: amd64
+      - name: diffutils
+        version: 1:3.6-1
+        source_package: ""
+        architecture: amd64
+      - name: libpam-modules
+        version: 1.1.8-3.6ubuntu2.18.04.1
+        source_package: pam
+        architecture: amd64
+      - name: libstdc++6
+        version: 8.3.0-6ubuntu1~18.04.1
+        source_package: gcc-8
+        architecture: amd64
+      - name: libffi6
+        version: 3.2.1-8
+        source_package: libffi
+        architecture: amd64
+      - name: libaudit-common
+        version: 1:2.8.2-1ubuntu1
+        source_package: audit
+        architecture: all
+      - name: findutils
+        version: 4.6.0+git+20170828-2
+        source_package: ""
+        architecture: amd64
+      - name: libpam0g
+        version: 1.1.8-3.6ubuntu2.18.04.1
+        source_package: pam
+        architecture: amd64
+      - name: libcap-ng0
+        version: 0.7.7-3.1
+        source_package: libcap-ng
+        architecture: amd64
+      - name: libmount1
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
+      - name: login
+        version: 1:4.5-1ubuntu2
+        source_package: shadow
+        architecture: amd64
+      - name: adduser
+        version: 3.116ubuntu1
+        source_package: ""
+        architecture: all
+      - name: libext2fs2
+        version: 1.44.1-1ubuntu1.1
+        source_package: e2fsprogs
+        architecture: amd64
+      - name: libacl1
+        version: 2.2.52-3build1
+        source_package: acl
+        architecture: amd64
+      - name: ncurses-bin
+        version: 6.1-1ubuntu1.18.04
+        source_package: ncurses
+        architecture: amd64
+      - name: libsepol1
+        version: 2.7-1
+        source_package: libsepol
+        architecture: amd64
+      - name: ubuntu-keyring
+        version: 2018.09.18.1~18.04.0
+        source_package: ""
+        architecture: all
+      - name: libgcc1
+        version: 1:8.3.0-6ubuntu1~18.04.1
+        source_package: gcc-8 (8.3.0-6ubuntu1~18.04.1)
+        architecture: amd64
+      - name: util-linux
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: ""
+        architecture: amd64
+      - name: sed
+        version: 4.4-2
+        source_package: ""
+        architecture: amd64
+      - name: libsmartcols1
+        version: 2.31.1-0.4ubuntu3.3
+        source_package: util-linux
+        architecture: amd64
 changeset:
-    files: []
-    packages: []
+    files:
+      - path: /usr/local/bin/estaleiro
+        digest: ""
+        source:
+            git:
+                repository_uri: https://github.com/cirocosta/estaleiro
+                ref: 49b6936ef130793fff677038891e517718c2baf8
+      - path: /usr/dummy-file
+        digest: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        source:
+            git:
+                repository_uri: https://github.com/cirocosta/estaleiro
+                ref: 49b6936ef130793fff677038891e517718c2baf8
+      - path: /usr/test-file
+        digest: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        source:
+            git:
+                repository_uri: https://github.com/cirocosta/estaleiro
+                ref: 49b6936ef130793fff677038891e517718c2baf8
+    packages:
+      - name: libssl1.1
+        version: 1.1.1-1ubuntu2.1~18.04.4
+        source_package: openssl
+        architecture: amd64
+        location:
+            uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+            digest: md5:41f3ea2b9f5b419550f165975b941f81
+            name: libssl1.1_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+        sources:
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+            digest: md5:88218150efac41c72aaf0025cd4d481800e0871e5ea045d25c5b10b09f7b0a88
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz
+            digest: md5:2836875a0f89c03d0fdf483941512613a50cfb421d6fd94b9f41d7279d586a3d
+            name: openssl_1.1.1.orig.tar.gz
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz.asc
+            digest: md5:f3296150114069ea73a72eafbfdcbb295b770e7cbf3266f9590f3d0932498b3e
+            name: openssl_1.1.1.orig.tar.gz.asc
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+            digest: md5:a373c2612817f3ae929d01ddb9175a6f9ab0ac28a08afe93c88df27fadcc7500
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+      - name: openssl
+        version: 1.1.1-1ubuntu2.1~18.04.4
+        source_package: ""
+        architecture: amd64
+        location:
+            uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+            digest: md5:9426af66effeac2a271994915a8fae14
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4_amd64.deb
+        sources:
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+            digest: md5:88218150efac41c72aaf0025cd4d481800e0871e5ea045d25c5b10b09f7b0a88
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.dsc
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz
+            digest: md5:2836875a0f89c03d0fdf483941512613a50cfb421d6fd94b9f41d7279d586a3d
+            name: openssl_1.1.1.orig.tar.gz
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1.orig.tar.gz.asc
+            digest: md5:f3296150114069ea73a72eafbfdcbb295b770e7cbf3266f9590f3d0932498b3e
+            name: openssl_1.1.1.orig.tar.gz.asc
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+            digest: md5:a373c2612817f3ae929d01ddb9175a6f9ab0ac28a08afe93c88df27fadcc7500
+            name: openssl_1.1.1-1ubuntu2.1~18.04.4.debian.tar.xz
+      - name: ca-certificates
+        version: "20180409"
+        source_package: ""
+        architecture: all
+        location:
+            uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409_all.deb
+            digest: md5:eae40792673dcb994af86284d0a01f36
+            name: ca-certificates_20180409_all.deb
+        sources:
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409.dsc
+            digest: md5:cd1f6540d0dab28f897e0e0cb2191130cdbf897f8ce3f52c8e483b2ed1555d30
+            name: ca-certificates_20180409.dsc
+          - uri: http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_20180409.tar.xz
+            digest: md5:7af6f5bfc619fd29cbf0258c1d95107c38ce840ad6274e343e1e0d971fc72b51
+            name: ca-certificates_20180409.tar.xz
