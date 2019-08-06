@@ -181,9 +181,47 @@ changeset:
 ```
 
 
-### when will I be able to use this?
+### how to use
 
-when it gets ready `¯\_(ツ)_/¯`
+**THIS IS STILL HIGHLY EXPERIMENTAL**
+
+All that you need is:
+
+- Docker 18.09+
+
+Having an `estaleiro` file (like the `estaleiro.hcl` that you find in this
+repo), direct `docker build` to it via a regular `--file` (`-f`), having
+`DOCKER_BUILDKIT=1` set as the environent variable:
+
+```console
+# create an `estaleiro.hcl` file.
+# 
+# note.: the first line (with syntax ...) is important - it's
+#        what tells the docker engine to fetch our implementation
+#        of `estaleiro`, responsible for creating the build
+#        definition.
+#
+$ echo "# syntax=cirocosta/estaleiro
+image "cirocosta/sample" {
+  base_image {
+    name = "ubuntu"
+    ref  = "bionic"
+  }
+}
+" > ./estaleiro.hcl
+
+
+# instruct `docker` to build our image
+#
+$ docker build -t test -f ./estaleiro.hcl
+[+] Building 9.4s (4/4) FINISHED
+
+
+# retrieve the bill of materials from the filesystem
+#
+$ docker create --name tmp
+$ docker cp tmp:/bom/merged.yml ./bom.yml
+```
 
 
 ### references

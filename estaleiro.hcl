@@ -1,4 +1,4 @@
-# syntax = cirocosta/estaleiro-frontend:rc
+# syntax = cirocosta/estaleiro
 
 
 # the final image to produce
