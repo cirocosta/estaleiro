@@ -4,12 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/cirocosta/estaleiro/config"
-	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	gateway "github.com/moby/buildkit/frontend/gateway/client"
@@ -22,16 +19,10 @@ var (
 )
 
 const (
-	localName            = "dockerfile"
-	keyTarget            = "target"
-	keyFilename          = "filename"
-	keyCacheFrom         = "cache-from"
-	defaultConfigName    = "estaleiro.hcl"
-	dockerignoreFilename = ".dockerignore"
-	buildArgPrefix       = "build-arg:"
-	labelPrefix          = "label:"
-	keyNoCache           = "no-cache"
-	keyImageResolveMode  = "image-resolve-mode"
+	localName         = "dockerfile"
+	keyFilename       = "filename"
+	defaultConfigName = "estaleiro.hcl"
+	buildArgPrefix    = "build-arg:"
 )
 
 func Build(ctx context.Context, client gateway.Client) (res *gateway.Result, err error) {
@@ -111,8 +102,6 @@ func invokeBuild(
 		return
 	}
 
-	// read a file from this part
-
 	materials, err := ref.ReadFile(ctx, gateway.ReadRequest{
 		Filename: "/bom/merged.yml",
 	})
@@ -131,11 +120,7 @@ func invokeBuild(
 		return
 	}
 
-	ioutil.WriteFile("/tmp/config", config, 0644)
-
-	k := platforms.Format(platforms.DefaultSpec())
-
-	res.AddMeta(fmt.Sprintf("%s/%s", exptypes.ExporterImageConfigKey, k), config)
+	res.AddMeta(exptypes.ExporterImageConfigKey, config)
 	res.SetRef(ref)
 
 	return
