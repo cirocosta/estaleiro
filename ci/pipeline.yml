@@ -20,14 +20,6 @@ resources:
       username: ((docker-user))
       password: ((docker-password))
 
-  - name: container-image-frontend
-    type: registry-image
-    source:
-      repository: cirocosta/estaleiro-frontend
-      tag: rc
-      username: ((docker-user))
-      password: ((docker-password))
-
   - name: image-buildkit
     type: registry-image
     source:
@@ -38,61 +30,37 @@ jobs:
   - name: build
     public: true
     plan:
-      - {get: repository, trigger: true}
       - in_parallel:
-          fail_fast: true
           steps:
-            - task: build-regular
-              file: repository/ci/tasks/build-with-rootfs.yml
-              params: {TARGET: "release"}
-              privileged: true
-            - task: build-frontend
-              file: repository/ci/tasks/build.yml
-              output_mapping: { image: image-frontend }
-              params: {TARGET: "frontend"}
-              privileged: true
-            - task: test
-              file: repository/ci/tasks/build.yml
-              output_mapping: { image: discard }
-              params: {TARGET: "test"}
-              privileged: true
+            - {get: repository, trigger: true}
             - {get: image-buildkit, trigger: true}
-      - task: integration
+      - task: build
         image: image-buildkit
         privileged: true
         config:
           platform: linux
           inputs: 
-            - name: rootfs
             - name: repository
+              path: .
+          outputs:
+            - name: image
           run:
             path: /bin/sh
             args:
               - -cex
               - |
-                export PATH=$(realpath ./rootfs)/rootfs/usr/local/bin:$PATH
-
                 stty columns 80
                 sanitize-cgroups
 
-                cd ./repository
-                estaleiro llb \
-                  --filename ./estaleiro.hcl \
-                  --bom ./bom.yml \
-                  --var estaleiro-commit:$(git rev-parse HEAD) \
-                  | buildctl-daemonless.sh build --local context=.
-                cat ./bom.yml
-      - in_parallel:
-          fail_fast: true
-          steps:
-            - put: container-image
-              inputs: [image]
-              get_params: {format: oci}
-              params:
-                image: image/image.tar
-            - put: container-image-frontend
-              inputs: [image-frontend]
-              get_params: {format: oci}
-              params:
-                image: image-frontend/image.tar
-
+                buildctl-daemonless.sh build \
+                    --frontend gateway.v0 \
+                    --opt source=cirocosta/estaleiro \
+                    --opt build-arg:estaleiro-commit=$(git rev-parse HEAD) \
+                    --local dockerfile=. \
+                    --local context=. \
+                    --output type=oci,dest=image/image.tar
+      - put: container-image
+        inputs: [image]
+        get_params: {format: oci}
+        params:
+          image: image/image.tar

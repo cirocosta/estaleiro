@@ -69,7 +69,9 @@ buildctl-gateway-integration:
 	buildctl build \
 		--frontend gateway.v0 \
 		--opt source=cirocosta/estaleiro \
-		--local dockerfile=.
+		--opt build-arg:estaleiro-commit=$(GIT_COMMIT) \
+		--local dockerfile=. \
+		--local context=.
 
 
 docker-integration:
