@@ -9,7 +9,6 @@ require (
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/containerd/cgroups v0.0.0-20190717030353-c4b9ac5c7601 // indirect
 	github.com/containerd/console v0.0.0-20181022165439-0650fd9eeb50
-	github.com/containerd/containerd v1.3.0-0.20190507210959-7c1e88399ec0
 	github.com/containerd/fifo v0.0.0-20190226154929-a9fb20d87448 // indirect
 	github.com/containerd/ttrpc v0.0.0-20190613183316-1fb3814edf44 // indirect
 	github.com/containerd/typeurl v0.0.0-20190515163108-7312978f2987 // indirect
@@ -53,7 +52,6 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
 	google.golang.org/grpc v1.22.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20190709130402-674ba3eaed22
