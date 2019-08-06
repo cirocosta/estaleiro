@@ -5,15 +5,18 @@ install:
 	go install -tags "dfrunmount local" -v .
 
 
+test:
+	go test -v ./...
 
-image: install linux-binary
+
+llb-build: install linux-binary
 	estaleiro llb \
                   --filename ./estaleiro.hcl \
                   --var estaleiro-commit:$(git rev-parse HEAD) \
 		  | buildctl build \
 		  	--local context=. \
 		  	--local bin=bin \
-			--output type=image,name=docker.io/cirocosta/estaleiro,push=true
+			--output type=image,name=docker.io/cirocosta/estaleiro-test,push=true
 
 
 linux-binary:
@@ -24,10 +27,6 @@ linux-binary:
 			-tags "dfrunmount" \
 			-ldflags "-X main.version=$(shell cat ./VERSION) -extldflags \"-static\"" \
 			.
-
-
-test:
-	go test -v ./...
 
 
 ubuntu:
@@ -44,6 +43,8 @@ ubuntu:
 
 
 # TODO include estaleiro-commit through `--var`
+# TODO make it daemonless (`img`-like)
+#
 run:
 	estaleiro build \
 		--filename estaleiro.hcl \
@@ -67,7 +68,7 @@ graph: install
 buildctl-gateway-integration:
 	buildctl build \
 		--frontend gateway.v0 \
-		--opt source=cirocosta/estaleiro-frontend:rc \
+		--opt source=cirocosta/estaleiro \
 		--local dockerfile=.
 
 
@@ -80,11 +81,11 @@ docker-integration:
 			.
 
 
-image-frontend:
+image:
 	DOCKER_BUILDKIT=1 \
 		docker build \
 			--target frontend \
-			--tag cirocosta/estaleiro-frontend:rc \
+			--tag cirocosta/estaleiro \
 			.
 
 
