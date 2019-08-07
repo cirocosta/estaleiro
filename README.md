@@ -230,6 +230,7 @@ $ docker cp tmp:/bom/merged.yml ./bom.yml
 - [buildpacks - RFC for additional metadata](https://github.com/buildpack/rfcs/pull/9)
 - [doc - Container Image metadata standard for OSL process](https://docs.google.com/document/d/1o5zVpEva8EBbMmdREUYkJpcCrCuNqA-lbpFI9ri7n88)
 - [doc - App Image Metadata, a Taxonomy](https://docs.google.com/document/d/1ITAxZKZmF802PHmXmsEN_FqK1VMGol8N_TLHECUXDNU)
+- [doc - b0k8s question: Building container images]https://docs.google.com/document/d/1uJtlyeTfTK0kS2D5H_ausAU1M4XB2pW9Q_Sfuqmb8nc)
 
 
 ### license
