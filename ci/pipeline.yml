@@ -1,8 +1,86 @@
+
+jobs:
+  - name: estaleiro
+    public: true
+    plan:
+      - in_parallel:
+          steps:
+            - {get: repository, trigger: true}
+            - {get: container-image, trigger: true}
+            - {get: image-buildkit, trigger: true}
+      - task: build
+        image: image-buildkit
+        privileged: true
+        config:
+          platform: linux
+          inputs: 
+            - name: repository
+              path: .
+          run:
+            path: /bin/sh
+            args:
+              - -cex
+              - |
+                stty columns 80
+                sanitize-cgroups
+
+                buildctl-daemonless.sh build \
+                    --progress plain \
+                    --frontend gateway.v0 \
+                    --opt source=cirocosta/estaleiro \
+                    --opt build-arg:estaleiro-commit=$(git rev-parse HEAD) \
+                    --local dockerfile=. \
+                    --local context=.
+
+
+  - name: s3-resource
+    public: true
+    plan:
+      - in_parallel:
+          steps:
+            - {get: repository, trigger: true}
+            - {get: container-image, trigger: true}
+            - {get: image-buildkit, trigger: true}
+            - {get: s3-resource, trigger: true}
+      - task: build
+        image: image-buildkit
+        privileged: true
+        config:
+          platform: linux
+          inputs: 
+            - name: repository
+              path: .
+            - name: s3-resource
+              path: samples/concourse/s3-resource
+          run:
+            path: /bin/sh
+            dir: samples/concourse
+            args:
+              - -cex
+              - |
+                stty columns 80
+                sanitize-cgroups
+
+                pwd
+                ls
+
+                buildctl-daemonless.sh build \
+                    --progress plain \
+                    --frontend gateway.v0 \
+                    --opt source=cirocosta/estaleiro \
+                    --opt filename=s3-resource.hcl \
+                    --opt build-arg:ref=$(cd ./s3-resource && git rev-parse HEAD) \
+                    --local context=. \
+                    --local dockerfile=.
+
+
+
 resource_types:
 - name: semver
   type: registry-image
   source:
     repository: concourse/semver-resource
+
 
 
 resources:
@@ -16,9 +94,6 @@ resources:
     type: registry-image
     source:
       repository: cirocosta/estaleiro
-      tag: rc
-      username: ((docker-user))
-      password: ((docker-password))
 
   - name: image-buildkit
     type: registry-image
@@ -26,41 +101,8 @@ resources:
       repository: cirocosta/buildkit-task
 
 
-jobs:
-  - name: build
-    public: true
-    plan:
-      - in_parallel:
-          steps:
-            - {get: repository, trigger: true}
-            - {get: image-buildkit, trigger: true}
-      - task: build
-        image: image-buildkit
-        privileged: true
-        config:
-          platform: linux
-          inputs: 
-            - name: repository
-              path: .
-          outputs:
-            - name: image
-          run:
-            path: /bin/sh
-            args:
-              - -cex
-              - |
-                stty columns 80
-                sanitize-cgroups
+  - name: s3-resource
+    type: git
+    source:
+      uri: https://github.com/concourse/s3-resource
 
-                buildctl-daemonless.sh build \
-                    --frontend gateway.v0 \
-                    --opt source=cirocosta/estaleiro \
-                    --opt build-arg:estaleiro-commit=$(git rev-parse HEAD) \
-                    --local dockerfile=. \
-                    --local context=. \
-                    --output type=oci,dest=image/image.tar
-      - put: container-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar

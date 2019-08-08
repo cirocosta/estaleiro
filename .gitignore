@@ -3,3 +3,4 @@ graph.svg
 dpkg-status
 *.tgz
 bin/
+s3-resource
