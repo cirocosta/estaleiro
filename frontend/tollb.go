@@ -426,10 +426,20 @@ func addImageBuildStep(step *config.Step, dockerfileContent []byte) (state llb.S
 
 	caps := pb.Caps.CapSet(pb.Caps.All())
 
+	buildContext := llb.Local("context")
+	if step.Context != "" {
+		buildContext = copy(
+			llb.Local("context"),
+			path.Join(step.Context, "*"),
+			llb.Scratch(),
+			"/")
+	}
+
 	stepState, _, err = dockerfile.Dockerfile2LLB(
 		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{
-			Target:  step.Target,
-			LLBCaps: &caps,
+			Target:       step.Target,
+			BuildContext: &buildContext,
+			LLBCaps:      &caps,
 			MetaResolver: imagemetaresolver.New(
 				imagemetaresolver.WithDefaultPlatform(&linuxAMD64),
 			),

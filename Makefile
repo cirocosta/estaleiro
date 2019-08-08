@@ -1,5 +1,7 @@
 GIT_COMMIT = $(shell git rev-parse HEAD)
 
+all: install linux-binary
+
 
 install:
 	go install -tags "dfrunmount local" -v .
@@ -22,7 +24,7 @@ llb-build: install linux-binary
 linux-binary:
 	mkdir -p bin
 	GOOS=linux GOARCH=amd64 \
-		go build \
+		go build -v \
 			-o ./bin/estaleiro \
 			-tags "dfrunmount" \
 			-ldflags "-X main.version=$(shell cat ./VERSION) -extldflags \"-static\"" \
