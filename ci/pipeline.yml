@@ -51,10 +51,10 @@ jobs:
             - name: repository
               path: .
             - name: s3-resource
-              path: samples/concourse/s3-resource
+              path: samples/s3-resource
           run:
             path: /bin/sh
-            dir: samples/concourse
+            dir: samples
             args:
               - -cex
               - |
