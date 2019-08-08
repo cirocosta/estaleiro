@@ -61,9 +61,6 @@ jobs:
                 stty columns 80
                 sanitize-cgroups
 
-                pwd
-                ls
-
                 buildctl-daemonless.sh build \
                     --progress plain \
                     --frontend gateway.v0 \
