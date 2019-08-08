@@ -202,7 +202,12 @@ func getFileVCSInfo(cfg *config.Config, name, file string) *config.VCS {
 		}
 
 		for _, f := range t.SourceFiles {
-			if f.Location != file {
+			match, err := path.Match(f.Location, file)
+			if err != nil {
+				panic(errors.Wrapf(err, "invalid glob %s", f.Location))
+			}
+
+			if !match {
 				continue
 			}
 
