@@ -12,11 +12,12 @@ import (
 )
 
 type aptCommand struct {
-	Output string `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
+	Repositories []string `long:"repository" description:"aditional apt repositories to add"`
+	Output       string   `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
 }
 
 func (c *aptCommand) Execute(args []string) (err error) {
-	pkgs, err := dpkg.InstallPackages(context.TODO(), args)
+	pkgs, err := dpkg.InstallPackages(context.TODO(), c.Repositories, args)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed installing packages")

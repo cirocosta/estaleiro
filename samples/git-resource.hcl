@@ -3,23 +3,30 @@
 image "concourse/s3-resource" {
   base_image {
     name = "ubuntu"
+    ref  = "bionic"
   }
 
   apt {
+
+    repositories = [
+      "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
+      "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
+    ]
+
     package "ca-certificates" {}
     package "g++" {}
     package "git" {}
-    # package "git-crypt" {}
-    # package "git-lfs" {}
+    package "git-crypt" {}
+    package "git-lfs" {}
     package "gnupg" {}
     package "gzip" {}
-    # package "jq" {}
+    package "jq" {}
     package "libssl-dev" {}
     package "libstdc++6" {}
     package "make" {}
     package "openssh-client" {}
     package "openssl" {}
-    # package "proxytunnel" {}
+    package "proxytunnel" {}
   }
 
 

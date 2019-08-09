@@ -1,17 +1,30 @@
+REPOSITORIES
+
+
+	RIGHT NOW
+
+		- we have a "standard" set of debian repositories that is used to form our package
+		  listing, including only supported packages.
 
 
 
+	FUTURE
 
-```bash
-cat /etc/apt/sources.list | sed 's/# deb-src/deb-src/g' > /etc/apt/sources.list.new
-mv /etc/apt/sources.list.new /etc/apt/sources.list
-
-# so we can have `apt-get source` and `apt-cache showsrc`
-apt update && apt install -y dpkg-dev
-```
+		- allow the user to have more than just those.
 
 
+		```hcl
+		image "dahiu" {
+			apt {
 
+				repositories = [
+					"deb http://archive.ubuntu.com/ubuntu/ bionic universe"
+					"deb-src http://archive.ubuntu.com/ubuntu/ bionic universe"
+				]
 
+				package "jq" {}
 
+			}
+		}
+		```
 

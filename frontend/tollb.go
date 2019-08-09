@@ -134,7 +134,10 @@ func unarchive(
 // `bomState`.
 //
 func installPackages(base llb.State, bom llb.State, apts []config.Apt) (llb.State, llb.State) {
-	allPackages := []string{}
+	var (
+		allPackages     = []string{}
+		allRepositories = []string{}
+	)
 
 	for _, apt := range apts {
 		if len(apt.Packages) == 0 {
@@ -154,12 +157,25 @@ func installPackages(base llb.State, bom llb.State, apts []config.Apt) (llb.Stat
 		return base, bom
 	}
 
+	for _, apt := range apts {
+		if len(apt.Repositories) == 0 {
+			continue
+		}
+
+		repos := make([]string, len(apt.Repositories))
+		for idx, repository := range apt.Repositories {
+			repos[idx] = "--repository=" + repository
+		}
+
+		allRepositories = append(allRepositories, repos...)
+	}
+
 	run := base.Run(
-		llb.Args(append([]string{
+		llb.Args(append(append([]string{
 			"/usr/local/bin/estaleiro",
 			"apt",
 			"--output=/bom/final-packages.yml",
-		}, allPackages...)),
+		}, allRepositories...), allPackages...)),
 		estaleiroSourceMount(),
 	)
 

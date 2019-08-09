@@ -9,8 +9,15 @@ image "cirocosta/estaleiro" {
     ref  = "bionic"
   }
 
+
   apt {
+
+    repositories = [
+      "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
+      "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
+    ]
     package "ca-certificates" {}
+    package "jq" {}
   }
 
   file "/usr/local/bin/estaleiro" {

@@ -28,10 +28,17 @@ func init() {
 	logger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
 }
 
-func InstallPackages(ctx context.Context, packages []string) (pkgs []Package, err error) {
+func InstallPackages(ctx context.Context, repositories []string, packages []string) (pkgs []Package, err error) {
 	logger.Info("install-packages", lager.Data{"packages": packages})
 
-	err = writeInitialList()
+	supportedRepos, err := ubuntuSupportedRepositories()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed generating list of ubuntu supported repos")
+		return
+	}
+
+	err = writeInitialList(append(repositories, supportedRepos...))
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed setting up initial sources.list")
@@ -375,29 +382,48 @@ func aptUris(ctx context.Context, command string, packages []string) (uris []Apt
 	return
 }
 
-func writeInitialList() (err error) {
-	logger.Info("write-initial-list")
+// There are four official repositories that one
+// can retrieve directly from ubuntu:
+//
+//
+//                | FREE     | NON-FREE
+//    ------------+----------+-----------
+//      SUPPORTED | main     | restricted
+//    -----------------------------------
+//    UNSUPPORTED | universe | multiverse
+//
+func ubuntuSupportedRepositories() (res []string, err error) {
+	info, err := osrelease.GatherOsRelease()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to detect codename to be used for initial sources.list")
+		return
+	}
 
-	const sourcesListFmt = `
-# There are four official repositories that one
-# can retrieve directly from ubuntu:
-#
-#
-#                | FREE     | NON-FREE
-#    ------------+----------+-----------
-#      SUPPORTED | main     | restricted
-#    -----------------------------------
-#    UNSUPPORTED | universe | multiverse
-#
-deb http://archive.ubuntu.com/ubuntu/ %s main restricted
-deb-src http://archive.ubuntu.com/ubuntu/ %s main restricted
+	var repos = []string{
+		"deb http://archive.ubuntu.com/ubuntu/ %s main restricted",
+		"deb-src http://archive.ubuntu.com/ubuntu/ %s main restricted",
 
-deb http://archive.ubuntu.com/ubuntu/ %s-updates main restricted
-deb-src http://archive.ubuntu.com/ubuntu/ %s-updates main restricted
+		"deb http://archive.ubuntu.com/ubuntu/ %s-updates main restricted",
+		"deb-src http://archive.ubuntu.com/ubuntu/ %s-updates main restricted",
 
-deb http://archive.ubuntu.com/ubuntu/ %s-security main restricted
-deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
-`
+		"deb http://archive.ubuntu.com/ubuntu/ %s-security main restricted",
+		"deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted",
+	}
+
+	res = make([]string, len(repos))
+
+	for idx, repo := range repos {
+		res[idx] = fmt.Sprintf(repo, info.Codename)
+	}
+
+	return
+}
+
+func writeInitialList(repositories []string) (err error) {
+	logger.Info("write-initial-list", lager.Data{
+		"repositories": repositories,
+	})
 
 	f, err := os.OpenFile("/etc/apt/sources.list", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 	if err != nil {
@@ -407,16 +433,7 @@ deb-src http://archive.ubuntu.com/ubuntu/ %s-security main restricted
 	}
 	defer f.Close()
 
-	info, err := osrelease.GatherOsRelease()
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to detect codename to be used for initial sources.list")
-		return
-	}
-
-	_, err = fmt.Fprintf(f, sourcesListFmt,
-		info.Codename, info.Codename, info.Codename, info.Codename, info.Codename, info.Codename,
-	)
+	_, err = fmt.Fprintf(f, strings.Join(repositories, "\n"))
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed writing initial sources.list to `/etc/apt/sources.list`")

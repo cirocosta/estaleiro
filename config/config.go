@@ -78,13 +78,6 @@ type AptKey struct {
 	Uri string `hcl:"uri"`
 }
 
-type AptRepository struct {
-	Name string `hcl:"name,label"`
-
-	Uri    string `hcl:"uri"`
-	Source string `hcl:"source,optional"`
-}
-
 // Package is a debian package to retrieve from the currently installed set of
 // apt repos.
 //
@@ -161,7 +154,7 @@ type BaseImage struct {
 }
 
 type Apt struct {
-	Packages     []Package       `hcl:"package,block"`
-	Repositories []AptRepository `hcl:"repository,block"`
-	Keys         []AptKey        `hcl:"key,block"`
+	Packages     []Package `hcl:"package,block"`
+	Repositories []string  `hcl:"repositories,optional"`
+	Keys         []AptKey  `hcl:"key,block"`
 }
