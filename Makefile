@@ -73,7 +73,8 @@ buildctl-gateway-integration:
 		--opt source=cirocosta/estaleiro \
 		--opt build-arg:estaleiro-commit=$(GIT_COMMIT) \
 		--local dockerfile=. \
-		--local context=.
+		--local context=. \
+		--output type=oci,dest=image.tar
 
 
 docker-integration:

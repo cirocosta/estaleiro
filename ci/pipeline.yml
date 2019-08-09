@@ -1,12 +1,26 @@
-
 jobs:
+  - name: build-image
+    public: true
+    plan:
+      - {get: repository, trigger: true}
+      - task: build-image
+        privileged: true
+        params: {TARGET: "frontend"}
+        file: repository/ci/tasks/build.yml
+      - put: container-image
+        inputs: [image]
+        get_params: {format: oci}
+        params:
+          image: image/image.tar
+
+
   - name: estaleiro
     public: true
     plan:
       - in_parallel:
           steps:
             - {get: repository, trigger: true}
-            - {get: container-image, trigger: true}
+            - {get: container-image, trigger: true, passed: [build-image]}
             - {get: image-buildkit, trigger: true}
       - task: build
         image: image-buildkit
@@ -14,6 +28,7 @@ jobs:
         config:
           platform: linux
           inputs: 
+            - name: container-image
             - name: repository
               path: .
           run:
@@ -27,7 +42,7 @@ jobs:
                 buildctl-daemonless.sh build \
                     --progress plain \
                     --frontend gateway.v0 \
-                    --opt source=cirocosta/estaleiro \
+                    --opt source=cirocosta/estaleiro@$(cat ./container-image/digest) \
                     --opt build-arg:estaleiro-commit=$(git rev-parse HEAD) \
                     --local dockerfile=. \
                     --local context=.
@@ -39,7 +54,7 @@ jobs:
       - in_parallel:
           steps:
             - {get: repository, trigger: true}
-            - {get: container-image, trigger: true}
+            - {get: container-image, trigger: true, passed: [build-image]}
             - {get: image-buildkit, trigger: true}
             - {get: s3-resource, trigger: true}
       - task: build
@@ -48,6 +63,7 @@ jobs:
         config:
           platform: linux
           inputs: 
+            - name: container-image
             - name: repository
               path: .
             - name: s3-resource
@@ -64,7 +80,7 @@ jobs:
                 buildctl-daemonless.sh build \
                     --progress plain \
                     --frontend gateway.v0 \
-                    --opt source=cirocosta/estaleiro \
+                    --opt source=cirocosta/estaleiro@$(cat ../container-image/digest) \
                     --opt filename=s3-resource.hcl \
                     --opt build-arg:ref=$(cd ./s3-resource && git rev-parse HEAD) \
                     --local context=. \
@@ -91,6 +107,9 @@ resources:
     type: registry-image
     source:
       repository: cirocosta/estaleiro
+      tag: rc
+      username: ((docker-user))
+      password: ((docker-password))
 
   - name: image-buildkit
     type: registry-image
