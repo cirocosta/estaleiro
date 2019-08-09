@@ -40,7 +40,7 @@ step "build" {
   source_file "/assets/*" {
     vcs "git" {
       repository = "https://github.com/concourse/s3-resource"
-      ref        = "master"
+      ref        = "${ref}"
     }
   }
 }

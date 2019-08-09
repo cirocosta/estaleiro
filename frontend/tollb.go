@@ -48,7 +48,10 @@ func ToLLB(
 	bomState = generatePackagesBom(fs, bomState)
 	bomState = generateOsReleaseBom(fs, bomState)
 	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
-	fs, bomState = tarballFiles(fs, bomState, cfg)
+	fs, bomState, err = tarballFiles(fs, bomState, cfg)
+	if err != nil {
+		return
+	}
 
 	fs, bomState, err = runAndCopyFromSteps(fs, bomState, cfg, dockerfileMapping)
 	if err != nil {
@@ -219,7 +222,7 @@ func getFileVCSInfo(cfg *config.Config, name, file string) *config.VCS {
 	return nil
 }
 
-func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBom llb.State) {
+func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBom llb.State, err error) {
 	newFs, newBom = fs, bom
 
 	// gather a list of the files that we're dealing with - those coming
@@ -263,7 +266,9 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 		// for that specific file in a given tarball, gather the source code info
 		fileVCS := getFileVCSInfo(cfg, file.FromTarball.TarballName, file.FromTarball.Path)
 		if fileVCS == nil {
-			panic(errors.Errorf("file not declared in any tarball block"))
+			err = errors.Errorf("file with destination %s and source %s not declared in any tarball block",
+				file.Destination, file.FromTarball.TarballName)
+			return
 		}
 
 		fileSourceMapping[file.Destination] = bomfs.FileSource{
@@ -289,7 +294,9 @@ func tarballFiles(fs, bom llb.State, cfg *config.Config) (newFs llb.State, newBo
 	for _, file := range files {
 		tarballSourceState, found := tarballStateMap[file.FromTarball.TarballName]
 		if !found {
-			panic(errors.Errorf("not found"))
+			err = errors.Errorf("couldn't find tarball source state for tarball %s",
+				file.FromTarball.TarballName)
+			return
 		}
 
 		newFs = copy(tarballSourceState, file.FromTarball.Path, newFs, file.Destination)
@@ -315,7 +322,8 @@ func runAndCopyFromSteps(fs, bom llb.State, cfg *config.Config, dockerfileMappin
 	for _, file := range files {
 		fileVCS := getFileVCSInfo(cfg, file.FromStep.StepName, file.FromStep.Path)
 		if fileVCS == nil {
-			panic(errors.Errorf("file not declared in any step block"))
+			err = errors.Errorf("file with destination %s and source %s not declared in any step block",
+				file.Destination, file.FromStep.StepName)
 		}
 
 		fileSourceMapping[file.Destination] = bomfs.FileSource{
