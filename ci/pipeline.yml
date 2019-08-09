@@ -87,6 +87,46 @@ jobs:
                     --local dockerfile=.
 
 
+  - name: git-resource
+    public: true
+    plan:
+      - in_parallel:
+          steps:
+            - {get: repository, trigger: true}
+            - {get: container-image, trigger: true, passed: [build-image]}
+            - {get: image-buildkit, trigger: true}
+            - {get: git-resource, trigger: true}
+      - task: build
+        image: image-buildkit
+        privileged: true
+        config:
+          platform: linux
+          inputs: 
+            - name: container-image
+            - name: repository
+              path: .
+            - name: git-resource
+              path: samples/git-resource
+          run:
+            path: /bin/sh
+            dir: samples
+            args:
+              - -cex
+              - |
+                stty columns 80
+                sanitize-cgroups
+
+                tar czvf assets.tgz -C ./git-resource/assets .
+
+                buildctl-daemonless.sh build \
+                    --progress plain \
+                    --frontend gateway.v0 \
+                    --opt source=cirocosta/estaleiro@$(cat ../container-image/digest) \
+                    --opt filename=git-resource.hcl \
+                    --opt build-arg:ref=$(cd ./git-resource && git rev-parse HEAD) \
+                    --local context=. \
+                    --local dockerfile=.
+
 
 resource_types:
 - name: semver
@@ -122,3 +162,7 @@ resources:
     source:
       uri: https://github.com/concourse/s3-resource
 
+  - name: git-resource
+    type: git
+    source:
+      uri: https://github.com/concourse/git-resource

@@ -9,18 +9,19 @@ image "concourse/s3-resource" {
     package "ca-certificates" {}
     package "g++" {}
     package "git" {}
-    package "git-crypt" {}
-    package "git-lfs" {}
+    # package "git-crypt" {}
+    # package "git-lfs" {}
     package "gnupg" {}
     package "gzip" {}
-    package "jq" {}
+    # package "jq" {}
     package "libssl-dev" {}
     package "libstdc++6" {}
     package "make" {}
     package "openssh-client" {}
     package "openssl" {}
-    package "proxytunnel" {}
+    # package "proxytunnel" {}
   }
+
 
   # the files needed for implementing the resource
   # type interface.
@@ -45,8 +46,8 @@ image "concourse/s3-resource" {
   }
 
 
-  # helper files.
-  #
+  ## helper files.
+  ##
 
   file "/opt/resource/askpass.sh" {
     from_tarball "assets.tgz" {
@@ -56,7 +57,7 @@ image "concourse/s3-resource" {
 
   file "/opt/resource/common.sh" {
     from_tarball "assets.tgz" {
-      path = "commong.sh"
+      path = "common.sh"
     }
   }
 
@@ -67,6 +68,7 @@ image "concourse/s3-resource" {
     }
   }
 }
+
 
 tarball "assets.tgz" {
   source_file "*" {
