@@ -7,25 +7,31 @@ image "concourse/s3-resource" {
   }
 
   apt {
+    package "ca-certificates" {}
+    package "g++" {}
+    package "git" {}
+    package "gnupg" {}
+    package "gzip" {}
+    package "libssl-dev" {}
+    package "libstdc++6" {}
+    package "make" {}
+    package "openssh-client" {}
+    package "openssl" {}
+  }
+
+  # free but unsupported packages
+  #
+
+  apt {
 
     repositories = [
       "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
       "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
     ]
 
-    package "ca-certificates" {}
-    package "g++" {}
-    package "git" {}
     package "git-crypt" {}
     package "git-lfs" {}
-    package "gnupg" {}
-    package "gzip" {}
     package "jq" {}
-    package "libssl-dev" {}
-    package "libstdc++6" {}
-    package "make" {}
-    package "openssh-client" {}
-    package "openssl" {}
     package "proxytunnel" {}
   }
 
