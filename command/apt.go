@@ -12,6 +12,7 @@ import (
 )
 
 type aptCommand struct {
+	Keys         []string `long:"key" description:"additional keys to add to the keyring"`
 	Repositories []string `long:"repository" description:"aditional apt repositories to add"`
 	Output       string   `long:"output" required:"true" description:"where to write the bill of materials to ('-' for stdout)"`
 }

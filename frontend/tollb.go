@@ -66,6 +66,24 @@ func ToLLB(
 	return
 }
 
+func addKeys(fs, bomState llb.State, keys []string) (newFs, newBom llb.State) {
+	newFs, newBom = fs, bomState
+
+	keysState := fs.Run(
+		llb.Args(append([]string{
+			"/usr/local/bin/estaleiro",
+			"apt-keys",
+			"--output=/keys.yml",
+		}, keys...)),
+		estaleiroSourceMount(),
+	).Root()
+
+	newFs = copy(keysState, "/etc/apt/trusted.gpg", newFs, "/etc/apt/trusted.gpg")
+	newBom = copy(keysState, "/keys.yml", newBom, "/keys.yml")
+
+	return newFs, newBom
+}
+
 func mergeBom(bomState llb.State) llb.State {
 	return bomState.Run(
 		llb.Args([]string{

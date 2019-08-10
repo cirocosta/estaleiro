@@ -45,7 +45,7 @@ func InstallPackages(ctx context.Context, repositories []string, packages []stri
 		return
 	}
 
-	err = updateApt(ctx)
+	err = UpdateApt(ctx)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed initial apt update")
@@ -295,7 +295,7 @@ func forceLocalSourcesList(ctx context.Context, repositoryDir string) (err error
 		return
 	}
 
-	err = updateApt(ctx)
+	err = UpdateApt(ctx)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"couldn't update apt repositories")
@@ -309,7 +309,7 @@ func removeAptLists() error {
 	return os.RemoveAll("/var/lib/apt/lists")
 }
 
-func updateApt(ctx context.Context) (err error) {
+func UpdateApt(ctx context.Context) (err error) {
 	logger.Info("update-apt")
 
 	var cmd = exec.CommandContext(ctx, "apt", "update")
@@ -468,25 +468,19 @@ func downloadDebianPackages(ctx context.Context, dir string, locations []AptDebL
 	return
 }
 
-func downloadDebianPackage(ctx context.Context, dir string, location AptDebLocation) (err error) {
-	sess := logger.Session("download-debian-package", lager.Data{"name": location.Name})
-
-	sess.Info("start")
-	defer sess.Info("finish")
-
-	out, err := os.Create(path.Join(dir, location.Name))
+func Download(ctx context.Context, uri, dest string) (err error) {
+	out, err := os.Create(dest)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed creating destination for debian package %s", location.Name)
+			"failed destination file %s", dest)
 		return err
 	}
 	defer out.Close()
 
-	req, err := http.NewRequest("GET", location.URI, nil)
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed creating request to retrieve debian package '%s' at '%s'",
-			location.Name, location.URI)
+			"failed creating request retrieve file %s", uri)
 		return
 	}
 
@@ -496,7 +490,7 @@ func downloadDebianPackage(ctx context.Context, dir string, location AptDebLocat
 	res, err := client.Do(req)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to submit request to retrieve deb package at %s", location.URI)
+			"failed to submit request to retrieve file %s", uri)
 		return
 	}
 
@@ -505,8 +499,28 @@ func downloadDebianPackage(ctx context.Context, dir string, location AptDebLocat
 	_, err = io.Copy(out, res.Body)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to write body to file '%s' from request to '%s'",
-			location.Name, location.URI)
+			"failed to write body to file '%s' from '%s'",
+			dest, uri)
+		return
+	}
+
+	return
+}
+
+func downloadDebianPackage(ctx context.Context, dir string, location AptDebLocation) (err error) {
+	sess := logger.Session("download-debian-package", lager.Data{"name": location.Name})
+
+	sess.Info("start")
+	defer sess.Info("finish")
+
+	err = Download(
+		ctx,
+		path.Join(dir, location.Name),
+		location.URI,
+	)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed downloading debian package %s", location.Name)
 		return
 	}
 

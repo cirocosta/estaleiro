@@ -1,0 +1,21 @@
+APT-KEYS
+
+	apt-key is used to manage the list of keys used by apt to authenticate packages.
+	Packages which have been authenticated using these keys will be considered
+	trusted.
+
+	As just leveraging the standard Ubuntu repositories is not enough in
+	some cases (e.g., to install `docker-ce`), it ends up being necessary
+	trusting other servers that have not been trusted yet by the distro that
+	we leverage.
+
+
+	base_os:
+		- keys that were there by default
+
+	changeset:
+		- list of keys added
+
+
+	https://godoc.org/golang.org/x/crypto/openpgp#EntityList
+
