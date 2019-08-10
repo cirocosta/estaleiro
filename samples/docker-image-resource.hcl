@@ -28,7 +28,7 @@ image "concourse/docker-image-resource" {
     ]
 
     key "docker" {
-      url = "https://download.docker.com/linux/ubuntu/gpg"
+      uri = "https://download.docker.com/linux/ubuntu/gpg"
     }
   }
 }
