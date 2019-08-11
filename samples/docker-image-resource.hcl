@@ -10,25 +10,18 @@ image "concourse/docker-image-resource" {
     package "ca-certificates" {}
   }
 
-  # non-supported packages
-  #
   apt {
     repositories = [
       "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
       "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
-    ]
-
-    package "jq" {}
-  }
-
-  apt {
-    repositories = [
-      "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
-      "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
+      "deb http://download.docker.com/linux/ubuntu bionic stable",
     ]
 
     key "docker" {
       uri = "https://download.docker.com/linux/ubuntu/gpg"
     }
+
+    package "jq" {}
+    package "docker-ce" { }
   }
 }

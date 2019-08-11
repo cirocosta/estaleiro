@@ -25,17 +25,17 @@ func (c *aptCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	writer, err := writer(c.Output)
+	w, err := writer(c.Output)
 	if err != nil {
 		return
 	}
 
 	res, err := yaml.Marshal(bomfs.NewPackagesV1(false, pkgs))
 	if err != nil {
-		panic(err)
+		return
 	}
 
-	_, err = fmt.Fprintf(writer, "%s", string(res))
+	_, err = fmt.Fprintf(w, "%s", string(res))
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed writing bill of materials to %s", c.Output)

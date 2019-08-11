@@ -47,6 +47,7 @@ func ToLLB(
 	})
 	bomState = generatePackagesBom(fs, bomState)
 	bomState = generateOsReleaseBom(fs, bomState)
+	fs, bomState = addKeys(fs, bomState, cfg.Image.Apt)
 	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
 	fs, bomState, err = tarballFiles(fs, bomState, cfg)
 	if err != nil {
@@ -66,15 +67,30 @@ func ToLLB(
 	return
 }
 
-func addKeys(fs, bomState llb.State, keys []string) (newFs, newBom llb.State) {
+func addKeys(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.State) {
 	newFs, newBom = fs, bomState
+
+	allKeys := []string{}
+	for _, apt := range apts {
+		if len(apt.Keys) == 0 {
+			continue
+		}
+
+		keys := make([]string, len(apt.Keys))
+		for idx, key := range apt.Keys {
+			keys[idx] = key.Uri
+		}
+
+		allKeys = append(allKeys, keys...)
+
+	}
 
 	keysState := fs.Run(
 		llb.Args(append([]string{
 			"/usr/local/bin/estaleiro",
 			"apt-keys",
 			"--output=/keys.yml",
-		}, keys...)),
+		}, allKeys...)),
 		estaleiroSourceMount(),
 	).Root()
 

@@ -3,19 +3,74 @@ package command
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
 
+	"code.cloudfoundry.org/lager"
 	bomfs "github.com/cirocosta/estaleiro/bom/fs"
 	"github.com/cirocosta/estaleiro/dpkg"
 	"github.com/pkg/errors"
 	gpg "golang.org/x/crypto/openpgp"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 )
 
 type keyCommand struct {
 	Output string `long:"output"`
+}
+
+func (c *keyCommand) Execute(args []string) (err error) {
+	ctx := context.TODO()
+
+	logger.Info("update-apt")
+	err = dpkg.UpdateApt(ctx)
+	if err != nil {
+		return
+	}
+
+	logger.Info("install-deps")
+	err = installDependencies(ctx)
+	if err != nil {
+		return
+	}
+
+	logger.Info("download-keys", lager.Data{"keys": args})
+	dests, err := downloadKeys(ctx, args)
+	if err != nil {
+		return
+	}
+
+	logger.Info("add-keys", lager.Data{"dests": dests})
+	err = addKeys(ctx, dests)
+	if err != nil {
+		return
+	}
+
+	keys, err := readKeyRing()
+	if err != nil {
+		return
+	}
+
+	w, err := writer(c.Output)
+	if err != nil {
+		return
+	}
+
+	res, err := yaml.Marshal(bomfs.NewKeysV1(false, keys))
+	if err != nil {
+		return
+	}
+
+	_, err = fmt.Fprintf(w, "%s", string(res))
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed writing bill of materials to %s", c.Output)
+		return
+	}
+
+	return
 }
 
 func readKeyRing() (keys []bomfs.Key, err error) {
@@ -86,15 +141,15 @@ func downloadKeys(ctx context.Context, uris []string) (dests []string, err error
 }
 
 func installDependencies(ctx context.Context) (err error) {
-	args := []string{"install", "--no-install-recommends", "--no-install-suggests",
-		"opengpg",
+	args := []string{"install", "--yes", "--no-install-recommends", "--no-install-suggests",
+		"gnupg", "ca-certificates",
 	}
 
 	out, err := exec.CommandContext(ctx, "apt", args...).CombinedOutput()
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to apt dependencies %v - %s",
-			args[3:], string(out))
+			args[4:], string(out))
 		return
 	}
 
@@ -119,32 +174,6 @@ func addKeys(ctx context.Context, keys []string) (err error) {
 		if err != nil {
 			return
 		}
-	}
-
-	return
-}
-
-func (c *keyCommand) Execute(args []string) (err error) {
-	ctx := context.TODO()
-
-	dests, err := downloadKeys(ctx, args)
-	if err != nil {
-		return
-	}
-
-	err = dpkg.UpdateApt(ctx)
-	if err != nil {
-		return
-	}
-
-	err = installDependencies(ctx)
-	if err != nil {
-		return
-	}
-
-	err = addKeys(ctx, dests)
-	if err != nil {
-		return
 	}
 
 	return

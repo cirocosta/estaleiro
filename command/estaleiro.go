@@ -1,4 +1,20 @@
+// Package command defines the commands that can be leverage from `estaleiro`.
+//
 package command
+
+import (
+	"os"
+
+	"code.cloudfoundry.org/lager"
+)
+
+var (
+	logger = lager.NewLogger("estaleiro")
+)
+
+func init() {
+	logger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
+}
 
 var Estaleiro struct {
 	LLB      llbCommand      `command:"llb" description:"generates the llb for a build"`
