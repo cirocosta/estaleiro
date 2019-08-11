@@ -1,6 +1,0 @@
-platform: linux
-
-run:
-  path: cat
-  args: [ /bom/merged.yml ]
-
