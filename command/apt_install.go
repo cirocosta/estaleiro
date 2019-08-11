@@ -8,9 +8,8 @@ import (
 )
 
 type aptInstallCommand struct {
-	Packages []string `short:"p" required:"true"`
-
-	DebianPackagesDirectory string `long:"debs"   default:"/var/lib/estaleiro/debs"`
+	Packages                []string `short:"p"   required:"true"`
+	DebianPackagesDirectory string   `long:"debs" default:"/var/lib/estaleiro/debs"`
 }
 
 func (c *aptInstallCommand) Execute(args []string) (err error) {

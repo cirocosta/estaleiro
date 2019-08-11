@@ -191,6 +191,12 @@ func unarchive(
 	return cp.AddMount("/dest", dest), cp.AddMount("/bom", bom)
 }
 
+// packages retrieves and installs the desired packages.
+//
+// 1. retrieves repositories
+// 2. retrieves packages
+//
+//
 func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.State) {
 	newFs, newBom = fs, bomState
 
@@ -200,20 +206,55 @@ func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.Stat
 		repositories = prefixSlice(allRepositories(apts), "-r=")
 	)
 
-	args := append(keys, append(repositories, packages...)...)
-
-	state := newFs.Run(
+	repositoriesState := fs.Run(
 		llb.Args(append([]string{
 			"/usr/local/bin/estaleiro",
 			"apt-repositories",
 			"--output=/keys.yml",
-			"--debs=/var/lib/estaleiro/debs",
-		}, args...)),
+		}, append(keys, repositories...)...)),
 		estaleiroSourceMount(),
 	).Root()
 
-	newFs = installPackages(newFs, state, packages)
-	newBom = copy(state, "/keys.yml", newBom, "/keys.yml")
+	opts := []llb.RunOption{
+		llb.Args(append([]string{
+			"/usr/local/bin/estaleiro",
+			"apt-packages",
+			"--output=/pkgs.yml",
+			"--debs=/var/lib/estaleiro/debs",
+		}, packages...)),
+	}
+
+	opts = append(opts, estaleiroSourceMount(),
+		llb.AddMount(
+			"/var/lib/apt/lists",
+			repositoriesState,
+			llb.SourcePath("/var/lib/apt/lists"),
+		),
+		llb.AddMount(
+			"/etc/apt/sources.list",
+			repositoriesState,
+			llb.SourcePath("/etc/apt/sources.list"),
+		),
+		llb.AddMount(
+			"/etc/ssl/certs/ca-certificates.crt",
+			repositoriesState,
+			llb.SourcePath("/etc/ssl/certs/ca-certificates.crt"),
+		),
+	)
+
+	if len(keys) > 0 {
+		opts = append(opts, llb.AddMount(
+			"/etc/apt/trusted.gpg",
+			repositoriesState,
+			llb.SourcePath("/etc/apt/trusted.gpg"),
+		))
+	}
+
+	packagesState := fs.Run(opts...).Root()
+	newBom = copy(repositoriesState, "/keys.yml", newBom, "/keys.yml")
+	newBom = copy(packagesState, "/pkgs.yml", newBom, "/pkgs.yml")
+
+	newFs = installPackages(newFs, packagesState, packages)
 
 	return newFs, newBom
 }
@@ -223,9 +264,9 @@ func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.Stat
 //
 func installPackages(base, pkgsFs llb.State, packages []string) llb.State {
 	packagesMount := llb.AddMount(
-		"/var/lib/estaleiro/deps",
+		"/var/lib/estaleiro/debs",
 		pkgsFs,
-		llb.SourcePath("/var/lib/estaleiro/deps"),
+		llb.SourcePath("/var/lib/estaleiro/debs"),
 	)
 
 	run := base.Run(

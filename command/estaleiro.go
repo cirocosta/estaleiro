@@ -23,6 +23,7 @@ var Estaleiro struct {
 
 	AptInstall      aptInstallCommand      `command:"apt-install"      hidden:"true"`
 	AptRepositories aptRepositoriesCommand `command:"apt-repositories" hidden:"true"`
+	AptPackages     aptPackagesCommand     `command:"apt-packages"     hidden:"true"`
 	Base            baseCommand            `command:"base"             hidden:"true"`
 	Collect         collectCommand         `command:"collect"          hidden:"true"`
 	Extract         extractCommand         `command:"extract"          hidden:"true"`

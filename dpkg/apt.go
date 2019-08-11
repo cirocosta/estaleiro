@@ -29,8 +29,6 @@ func init() {
 }
 
 func CreateDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
-	logger.Info("create-deb-repository", lager.Data{"dir": dir})
-
 	var buffer bytes.Buffer
 
 	for _, pkg := range pkgs {
@@ -232,13 +230,13 @@ func UpdateApt(ctx context.Context) (err error) {
 
 func InstallDebianPackages(ctx context.Context, packages []string) (err error) {
 	args := append([]string{
-		"install", "--no-install-recommends", "--no-install-suggests",
+		"install", "--yes", "--no-install-recommends", "--no-install-suggests",
 	}, packages...)
 
 	out, err := exec.CommandContext(ctx, "apt", args...).CombinedOutput()
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to install packages %v - %s", args[3:], string(out))
+			"failed to install packages %v - %s", args[4:], string(out))
 		return
 	}
 

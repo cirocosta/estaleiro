@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"code.cloudfoundry.org/lager"
 	bomfs "github.com/cirocosta/estaleiro/bom/fs"
@@ -17,24 +18,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// retrieves the necessary repository information in order to be able to
+// retrieve package information.
+//
+// - /var/lib/apt/lists
+// - /etc/apt/trusted.gpg
+//
+//
 type aptRepositoriesCommand struct {
-	Output                  string `long:"output" default:"-"`
-	DebianPackagesDirectory string `long:"debs"   default:"/var/lib/estaleiro/debs"`
-
+	Output       string   `long:"output" default:"-"`
 	Repositories []string `short:"r"`
 	Keys         []string `short:"k"`
-	Packages     []string `short:"p" required:"true"`
 }
 
 func (c *aptRepositoriesCommand) Execute(args []string) (err error) {
 	ctx := context.TODO()
 
-	err = c.repositoriesAndKeys(ctx)
+	keys, err := c.setupRepositoriesAndKeys(ctx)
 	if err != nil {
 		return
 	}
 
-	err = packages(ctx, c.Packages, c.DebianPackagesDirectory)
+	err = writeKeysBom(c.Output, keys)
 	if err != nil {
 		return
 	}
@@ -42,46 +47,48 @@ func (c *aptRepositoriesCommand) Execute(args []string) (err error) {
 	return
 }
 
-func packages(ctx context.Context, packages []string, dir string) (err error) {
-	err = os.MkdirAll(dir, 0755)
+func writeKeysBom(fname string, keys []bomfs.Key) (err error) {
+	w, err := writer(fname)
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed creating debian packages directory %s", dir)
+			"failed creating writer for file %s", fname)
 		return
 	}
 
-	locations, err := dpkg.GatherDebLocations(ctx, packages)
+	b, err := yaml.Marshal(bomfs.NewKeysV1(false, keys))
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed to install packages %v", packages)
+			"failed marshalling bomfs keys")
 		return
 	}
 
-	err = dpkg.DownloadDebianPackages(ctx, dir, locations)
+	_, err = fmt.Fprintf(w, "%s", string(b))
 	if err != nil {
 		err = errors.Wrapf(err,
-			"failed downloading packages %v", packages)
-		return
-	}
-
-	pkgs, err := dpkg.CreatePackages(ctx, dir, locations)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to create packages bom")
-		return
-	}
-
-	err = dpkg.CreateDebianRepositoryIndex(dir, pkgs)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed creating debian repository index")
+			"failed writing bill of materials to %s", fname)
 		return
 	}
 
 	return
 }
 
-func (c *aptRepositoriesCommand) repositoriesAndKeys(ctx context.Context) (err error) {
+func fetchAndImportKeys(ctx context.Context, uris []string) (err error) {
+	logger.Info("download-keys", lager.Data{"uris": uris})
+	dests, err := downloadKeys(ctx, uris)
+	if err != nil {
+		return
+	}
+
+	logger.Info("add-keys", lager.Data{"dests": dests})
+	err = addKeys(ctx, dests)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (c *aptRepositoriesCommand) setupRepositoriesAndKeys(ctx context.Context) (keys []bomfs.Key, err error) {
 	logger.Info("update-apt")
 	err = dpkg.UpdateApt(ctx)
 	if err != nil {
@@ -94,39 +101,16 @@ func (c *aptRepositoriesCommand) repositoriesAndKeys(ctx context.Context) (err e
 		return
 	}
 
-	logger.Info("download-keys", lager.Data{"keys": c.Keys})
-	dests, err := downloadKeys(ctx, c.Keys)
-	if err != nil {
-		return
-	}
-
-	logger.Info("add-keys", lager.Data{"dests": dests})
-	err = addKeys(ctx, dests)
-	if err != nil {
-		return
+	if len(c.Keys) > 0 {
+		err = fetchAndImportKeys(ctx, c.Keys)
+		if err != nil {
+			return
+		}
 	}
 
 	logger.Info("reading-keyring")
-	keys, err := readKeyRing()
+	keys, err = readKeyRings()
 	if err != nil {
-		return
-	}
-
-	w, err := writer(c.Output)
-	if err != nil {
-		return
-	}
-
-	logger.Info("writing-keyring-bom")
-	res, err := yaml.Marshal(bomfs.NewKeysV1(false, keys))
-	if err != nil {
-		return
-	}
-
-	_, err = fmt.Fprintf(w, "%s", string(res))
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed writing bill of materials to %s", c.Output)
 		return
 	}
 
@@ -164,9 +148,7 @@ func (c *aptRepositoriesCommand) repositoriesAndKeys(ctx context.Context) (err e
 	return
 }
 
-func readKeyRing() (keys []bomfs.Key, err error) {
-	const fname = "/etc/apt/trusted.gpg"
-
+func readKeyRingFile(fname string) (keys []bomfs.Key, err error) {
 	f, err := os.Open(fname)
 	if err != nil {
 		err = errors.Wrapf(err, "failed opening %s", fname)
@@ -191,6 +173,55 @@ func readKeyRing() (keys []bomfs.Key, err error) {
 			keys[idx].Identities[k] = name
 			k++
 		}
+	}
+
+	return
+}
+
+func tryReadLocalTrustedKeys() (keys []bomfs.Key, err error) {
+	const fname = "/etc/apt/trusted.gpg"
+
+	_, err = os.Stat(fname)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = nil
+			return
+		}
+
+		err = errors.Wrapf(err,
+			"failed checking existence of local trusted keys file %s", fname)
+		return
+	}
+
+	keys, err = readKeyRingFile(fname)
+	return
+}
+
+func readKeyRings() (keys []bomfs.Key, err error) {
+	keys, err = tryReadLocalTrustedKeys()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed trying to read local trusted keys file")
+		return
+	}
+
+	matches, err := filepath.Glob("/etc/apt/trusted.gpg.d/*.gpg")
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed creating flob for trusted gpg directory files")
+		return
+	}
+
+	var newKeys []bomfs.Key
+	for _, match := range matches {
+		newKeys, err = readKeyRingFile(match)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed reading keyring from trusted keyrings dir")
+			return
+		}
+
+		keys = append(keys, newKeys...)
 	}
 
 	return
