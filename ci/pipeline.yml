@@ -49,11 +49,16 @@ jobs:
                     --local dockerfile=. \
                     --local context=. \
                     --output type=docker,dest=image/image.tar
-      - put: test-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: show-bom
+              image: image
+              file: repository/ci/tasks/show-bom.yml
+            - put: test-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
   - name: s3-resource
@@ -97,11 +102,16 @@ jobs:
                     --local context=. \
                     --local dockerfile=. \
                     --output type=docker,dest=image/image.tar
-      - put: s3-resource-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: show-bom
+              image: image
+              file: repository/ci/tasks/show-bom.yml
+            - put: s3-resource-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
   - name: git-resource
@@ -147,11 +157,16 @@ jobs:
                     --local context=. \
                     --local dockerfile=. \
                     --output type=docker,dest=image/image.tar
-      - put: git-resource-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: show-bom
+              image: image
+              file: repository/ci/tasks/show-bom.yml
+            - put: git-resource-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
   - name: docker-image-resource
@@ -195,11 +210,16 @@ jobs:
                     --local context=. \
                     --local dockerfile=. \
                     --output type=docker,dest=image/image.tar
-      - put: docker-image-resource-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: show-bom
+              image: image
+              file: repository/ci/tasks/show-bom.yml
+            - put: docker-image-resource-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
 
