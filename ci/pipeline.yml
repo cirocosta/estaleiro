@@ -19,7 +19,7 @@ jobs:
     plan:
       - in_parallel:
           steps:
-            - {get: repository, trigger: true}
+            - {get: repository, trigger: true, passed: [build-image]}
             - {get: rc-image, trigger: true, passed: [build-image]}
             - {get: image-buildkit, trigger: true}
       - task: build
@@ -61,7 +61,7 @@ jobs:
     plan:
       - in_parallel:
           steps:
-            - {get: repository, trigger: true}
+            - {get: repository, trigger: true, passed: [build-image]}
             - {get: rc-image, trigger: true, passed: [build-image]}
             - {get: image-buildkit, trigger: true}
             - {get: s3-resource, trigger: true}
@@ -109,7 +109,7 @@ jobs:
     plan:
       - in_parallel:
           steps:
-            - {get: repository, trigger: true}
+            - {get: repository, trigger: true, passed: [build-image]}
             - {get: rc-image, trigger: true, passed: [build-image]}
             - {get: image-buildkit, trigger: true}
             - {get: git-resource, trigger: true}
@@ -159,7 +159,7 @@ jobs:
     plan:
       - in_parallel:
           steps:
-            - {get: repository, trigger: true}
+            - {get: repository, trigger: true, passed: [build-image]}
             - {get: rc-image, trigger: true, passed: [build-image]}
             - {get: image-buildkit, trigger: true}
             - {get: docker-image-resource, trigger: true}
