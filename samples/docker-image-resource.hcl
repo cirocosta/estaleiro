@@ -14,7 +14,7 @@ image "concourse/docker-image-resource" {
     repositories = [
       "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
       "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
-      "deb http://download.docker.com/linux/ubuntu bionic stable",
+      "deb https://download.docker.com/linux/ubuntu bionic stable",
     ]
 
     key "docker" {

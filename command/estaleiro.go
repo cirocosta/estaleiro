@@ -21,10 +21,10 @@ var Estaleiro struct {
 	Build    buildCommand    `command:"build" description:"performs a build against buildkitd"`
 	Frontend frontendCommand `command:"frontend" description:"serves as a custom Docker-compatible"`
 
-	Apt     aptCommand     `command:"apt"      hidden:"true"`
-	AptKeys keyCommand     `command:"apt-keys" hidden:"true"`
-	Base    baseCommand    `command:"base"     hidden:"true"`
-	Collect collectCommand `command:"collect"  hidden:"true"`
-	Extract extractCommand `command:"extract"  hidden:"true"`
-	Merge   mergeCommand   `command:"merge"    hidden:"true"`
+	AptInstall      aptInstallCommand      `command:"apt-install"      hidden:"true"`
+	AptRepositories aptRepositoriesCommand `command:"apt-repositories" hidden:"true"`
+	Base            baseCommand            `command:"base"             hidden:"true"`
+	Collect         collectCommand         `command:"collect"          hidden:"true"`
+	Extract         extractCommand         `command:"extract"          hidden:"true"`
+	Merge           mergeCommand           `command:"merge"            hidden:"true"`
 }

@@ -28,99 +28,7 @@ func init() {
 	logger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.INFO))
 }
 
-func InstallPackages(ctx context.Context, repositories []string, packages []string) (pkgs []Package, err error) {
-	logger.Info("install-packages", lager.Data{"packages": packages})
-
-	supportedRepos, err := ubuntuSupportedRepositories()
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed generating list of ubuntu supported repos")
-		return
-	}
-
-	err = writeInitialList(append(repositories, supportedRepos...))
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed setting up initial sources.list")
-		return
-	}
-
-	err = UpdateApt(ctx)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed initial apt update")
-		return
-	}
-
-	dir, err := ioutil.TempDir("", "estaleiro-deb-packages")
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed creating temp directory for debian packages")
-		return
-	}
-
-	defer os.RemoveAll(dir)
-
-	err = os.Chmod(dir, 0755)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed changing permissions of temporary deb directory %s", dir)
-		return
-	}
-
-	locations, err := gatherDebLocations(ctx, packages)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to install packages %v", packages)
-		return
-	}
-
-	err = downloadDebianPackages(ctx, dir, locations)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed downloading packages %v", packages)
-		return
-	}
-
-	pkgs, err = createPackages(ctx, dir, locations)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to create packages bom")
-		return
-	}
-
-	err = createDebianRepositoryIndex(dir, pkgs)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed creating debian repository index")
-		return
-	}
-
-	err = forceLocalSourcesList(ctx, dir)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to force apt to use local repositories")
-		return
-	}
-
-	err = installDebianPackages(ctx, pkgs)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to install downloaded debian packages")
-		return
-	}
-
-	err = removeAptLists()
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to remove apt repository listing after installation")
-		return
-	}
-
-	return
-}
-
-func createDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
+func CreateDebianRepositoryIndex(dir string, pkgs []Package) (err error) {
 	logger.Info("create-deb-repository", lager.Data{"dir": dir})
 
 	var buffer bytes.Buffer
@@ -178,7 +86,7 @@ func ComputeSHA256(filename string) (sum string, err error) {
 
 }
 
-func createPackages(ctx context.Context, dir string, locations []AptDebLocation) (pkgs []Package, err error) {
+func CreatePackages(ctx context.Context, dir string, locations []AptDebLocation) (pkgs []Package, err error) {
 	var eg *errgroup.Group
 
 	pkgs = make([]Package, len(locations))
@@ -234,12 +142,10 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 	var (
 		cmd = exec.CommandContext(ctx,
 			"dpkg-deb", "--info", filename, "control")
-		out  bytes.Buffer
-		sess = logger.Session("get-deb-pkg-info", lager.Data{"filename": filename})
+		out bytes.Buffer
 	)
 
-	sess.Info("start")
-	defer sess.Info("finish")
+	logger.Info("get-deb-pkg-info", lager.Data{"filename": filename})
 
 	cmd.Stderr = &out
 	cmd.Stdout = &out
@@ -266,7 +172,7 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 	return
 }
 
-// forceLocalSource ensures that we're only able to retrieve debian packages
+// ForceLocalSource ensures that we're only able to retrieve debian packages
 // from the directory where we downloaded our stuff to so that no other
 // repositories can provide those (which wouldn't be appropriately tracked).
 //
@@ -275,7 +181,7 @@ func getDebianPackageInfo(ctx context.Context, filename string) (pkg DebControl,
 //
 // ps.: backup files/dirs are kept with `-backup` suffixed names.
 //
-func forceLocalSourcesList(ctx context.Context, repositoryDir string) (err error) {
+func ForceLocalSourcesList(ctx context.Context, repositoryDir string) (err error) {
 	logger.Info("force-local-sources", lager.Data{"repository-dir": repositoryDir})
 
 	err = ioutil.WriteFile("/etc/apt/sources.list",
@@ -288,7 +194,7 @@ func forceLocalSourcesList(ctx context.Context, repositoryDir string) (err error
 		return
 	}
 
-	err = removeAptLists()
+	err = RemoveAptLists()
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to remove apt repository listing")
@@ -305,7 +211,7 @@ func forceLocalSourcesList(ctx context.Context, repositoryDir string) (err error
 	return
 }
 
-func removeAptLists() error {
+func RemoveAptLists() error {
 	return os.RemoveAll("/var/lib/apt/lists")
 }
 
@@ -324,12 +230,10 @@ func UpdateApt(ctx context.Context) (err error) {
 	return
 }
 
-func installDebianPackages(ctx context.Context, pkgs []Package) (err error) {
-	args := []string{"install", "--no-install-recommends", "--no-install-suggests"}
-
-	for _, pkg := range pkgs {
-		args = append(args, pkg.Name+"="+pkg.Version)
-	}
+func InstallDebianPackages(ctx context.Context, packages []string) (err error) {
+	args := append([]string{
+		"install", "--no-install-recommends", "--no-install-suggests",
+	}, packages...)
 
 	out, err := exec.CommandContext(ctx, "apt", args...).CombinedOutput()
 	if err != nil {
@@ -341,7 +245,7 @@ func installDebianPackages(ctx context.Context, pkgs []Package) (err error) {
 	return
 }
 
-func gatherDebLocations(ctx context.Context, packages []string) ([]AptDebLocation, error) {
+func GatherDebLocations(ctx context.Context, packages []string) ([]AptDebLocation, error) {
 	return aptUris(ctx, "install", packages)
 }
 
@@ -392,7 +296,7 @@ func aptUris(ctx context.Context, command string, packages []string) (uris []Apt
 //    -----------------------------------
 //    UNSUPPORTED | universe | multiverse
 //
-func ubuntuSupportedRepositories() (res []string, err error) {
+func UbuntuSupportedRepositories() (res []string, err error) {
 	info, err := osrelease.GatherOsRelease()
 	if err != nil {
 		err = errors.Wrapf(err,
@@ -420,7 +324,7 @@ func ubuntuSupportedRepositories() (res []string, err error) {
 	return
 }
 
-func writeInitialList(repositories []string) (err error) {
+func WriteSourcesList(repositories []string) (err error) {
 	logger.Info("write-initial-list", lager.Data{
 		"repositories": repositories,
 	})
@@ -443,7 +347,7 @@ func writeInitialList(repositories []string) (err error) {
 	return
 }
 
-func downloadDebianPackages(ctx context.Context, dir string, locations []AptDebLocation) (err error) {
+func DownloadDebianPackages(ctx context.Context, dir string, locations []AptDebLocation) (err error) {
 	var (
 		eg *errgroup.Group
 	)
@@ -508,15 +412,12 @@ func Download(ctx context.Context, uri, dest string) (err error) {
 }
 
 func downloadDebianPackage(ctx context.Context, dir string, location AptDebLocation) (err error) {
-	sess := logger.Session("download-debian-package", lager.Data{"name": location.Name})
-
-	sess.Info("start")
-	defer sess.Info("finish")
+	logger.Info("download-debian-package", lager.Data{"name": location.Name})
 
 	err = Download(
 		ctx,
-		path.Join(dir, location.Name),
 		location.URI,
+		path.Join(dir, location.Name),
 	)
 	if err != nil {
 		err = errors.Wrapf(err,

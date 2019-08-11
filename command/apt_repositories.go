@@ -17,13 +17,71 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type keyCommand struct {
-	Output string `long:"output"`
+type aptRepositoriesCommand struct {
+	Output                  string `long:"output" default:"-"`
+	DebianPackagesDirectory string `long:"debs"   default:"/var/lib/estaleiro/debs"`
+
+	Repositories []string `short:"r"`
+	Keys         []string `short:"k"`
+	Packages     []string `short:"p" required:"true"`
 }
 
-func (c *keyCommand) Execute(args []string) (err error) {
+func (c *aptRepositoriesCommand) Execute(args []string) (err error) {
 	ctx := context.TODO()
 
+	err = c.repositoriesAndKeys(ctx)
+	if err != nil {
+		return
+	}
+
+	err = packages(ctx, c.Packages, c.DebianPackagesDirectory)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func packages(ctx context.Context, packages []string, dir string) (err error) {
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed creating debian packages directory %s", dir)
+		return
+	}
+
+	locations, err := dpkg.GatherDebLocations(ctx, packages)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to install packages %v", packages)
+		return
+	}
+
+	err = dpkg.DownloadDebianPackages(ctx, dir, locations)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed downloading packages %v", packages)
+		return
+	}
+
+	pkgs, err := dpkg.CreatePackages(ctx, dir, locations)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to create packages bom")
+		return
+	}
+
+	err = dpkg.CreateDebianRepositoryIndex(dir, pkgs)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed creating debian repository index")
+		return
+	}
+
+	return
+}
+
+func (c *aptRepositoriesCommand) repositoriesAndKeys(ctx context.Context) (err error) {
 	logger.Info("update-apt")
 	err = dpkg.UpdateApt(ctx)
 	if err != nil {
@@ -36,8 +94,8 @@ func (c *keyCommand) Execute(args []string) (err error) {
 		return
 	}
 
-	logger.Info("download-keys", lager.Data{"keys": args})
-	dests, err := downloadKeys(ctx, args)
+	logger.Info("download-keys", lager.Data{"keys": c.Keys})
+	dests, err := downloadKeys(ctx, c.Keys)
 	if err != nil {
 		return
 	}
@@ -48,6 +106,7 @@ func (c *keyCommand) Execute(args []string) (err error) {
 		return
 	}
 
+	logger.Info("reading-keyring")
 	keys, err := readKeyRing()
 	if err != nil {
 		return
@@ -58,6 +117,7 @@ func (c *keyCommand) Execute(args []string) (err error) {
 		return
 	}
 
+	logger.Info("writing-keyring-bom")
 	res, err := yaml.Marshal(bomfs.NewKeysV1(false, keys))
 	if err != nil {
 		return
@@ -67,6 +127,37 @@ func (c *keyCommand) Execute(args []string) (err error) {
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed writing bill of materials to %s", c.Output)
+		return
+	}
+
+	logger.Info("remove-apt-lists")
+	err = dpkg.RemoveAptLists()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed to remove apt repository listing after installation")
+		return
+	}
+
+	supportedRepos, err := dpkg.UbuntuSupportedRepositories()
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed generating list of ubuntu supported repos")
+		return
+	}
+
+	repos := append(c.Repositories, supportedRepos...)
+
+	logger.Info("updating-apt-sources-list", lager.Data{"repos": repos})
+	err = dpkg.WriteSourcesList(repos)
+	if err != nil {
+		err = errors.Wrapf(err,
+			"failed setting up initial sources.list")
+		return
+	}
+
+	err = dpkg.UpdateApt(ctx)
+	if err != nil {
+		err = errors.Wrapf(err, "failed apt update")
 		return
 	}
 

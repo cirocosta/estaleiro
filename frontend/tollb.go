@@ -47,8 +47,7 @@ func ToLLB(
 	})
 	bomState = generatePackagesBom(fs, bomState)
 	bomState = generateOsReleaseBom(fs, bomState)
-	fs, bomState = addKeys(fs, bomState, cfg.Image.Apt)
-	fs, bomState = installPackages(fs, bomState, cfg.Image.Apt)
+	fs, bomState = packages(fs, bomState, cfg.Image.Apt)
 	fs, bomState, err = tarballFiles(fs, bomState, cfg)
 	if err != nil {
 		return
@@ -67,37 +66,65 @@ func ToLLB(
 	return
 }
 
-func addKeys(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.State) {
-	newFs, newBom = fs, bomState
-
-	allKeys := []string{}
+func allKeys(apts []config.Apt) (res []string) {
 	for _, apt := range apts {
 		if len(apt.Keys) == 0 {
 			continue
 		}
 
-		keys := make([]string, len(apt.Keys))
-		for idx, key := range apt.Keys {
-			keys[idx] = key.Uri
+		arr := make([]string, len(apt.Keys))
+		for idx, val := range apt.Keys {
+			arr[idx] = val.Uri
 		}
 
-		allKeys = append(allKeys, keys...)
-
+		res = append(res, arr...)
 	}
 
-	keysState := fs.Run(
-		llb.Args(append([]string{
-			"/usr/local/bin/estaleiro",
-			"apt-keys",
-			"--output=/keys.yml",
-		}, allKeys...)),
-		estaleiroSourceMount(),
-	).Root()
+	return
+}
 
-	newFs = copy(keysState, "/etc/apt/trusted.gpg", newFs, "/etc/apt/trusted.gpg")
-	newBom = copy(keysState, "/keys.yml", newBom, "/keys.yml")
+func allPackages(apts []config.Apt) (res []string) {
+	for _, apt := range apts {
+		if len(apt.Packages) == 0 {
+			continue
+		}
 
-	return newFs, newBom
+		arr := make([]string, len(apt.Packages))
+		for idx, val := range apt.Packages {
+			arr[idx] = val.String()
+		}
+
+		res = append(res, arr...)
+	}
+
+	return
+}
+
+func allRepositories(apts []config.Apt) (res []string) {
+	for _, apt := range apts {
+		if len(apt.Repositories) == 0 {
+			continue
+		}
+
+		arr := make([]string, len(apt.Repositories))
+		for idx, val := range apt.Repositories {
+			arr[idx] = val
+		}
+
+		res = append(res, arr...)
+	}
+
+	return
+}
+
+func prefixSlice(slice []string, prefix string) (res []string) {
+	res = make([]string, len(slice))
+
+	for idx, item := range slice {
+		res[idx] = prefix + item
+	}
+
+	return
 }
 
 func mergeBom(bomState llb.State) llb.State {
@@ -164,56 +191,54 @@ func unarchive(
 	return cp.AddMount("/dest", dest), cp.AddMount("/bom", bom)
 }
 
-// installs a list of packages into `base`, providing a bill of materials at
-// `bomState`.
-//
-func installPackages(base llb.State, bom llb.State, apts []config.Apt) (llb.State, llb.State) {
+func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.State) {
+	newFs, newBom = fs, bomState
+
 	var (
-		allPackages     = []string{}
-		allRepositories = []string{}
+		keys         = prefixSlice(allKeys(apts), "-k=")
+		packages     = prefixSlice(allPackages(apts), "-p=")
+		repositories = prefixSlice(allRepositories(apts), "-r=")
 	)
 
-	for _, apt := range apts {
-		if len(apt.Packages) == 0 {
-			continue
-		}
+	args := append(keys, append(repositories, packages...)...)
 
-		pkgs := make([]string, len(apt.Packages))
-		for idx, pkg := range apt.Packages {
-			pkgs[idx] = pkg.String()
-		}
+	state := newFs.Run(
+		llb.Args(append([]string{
+			"/usr/local/bin/estaleiro",
+			"apt-repositories",
+			"--output=/keys.yml",
+			"--debs=/var/lib/estaleiro/debs",
+		}, args...)),
+		estaleiroSourceMount(),
+	).Root()
 
-		allPackages = append(allPackages, pkgs...)
+	newFs = installPackages(newFs, state, packages)
+	newBom = copy(state, "/keys.yml", newBom, "/keys.yml")
 
-	}
+	return newFs, newBom
+}
 
-	if len(allPackages) == 0 {
-		return base, bom
-	}
-
-	for _, apt := range apts {
-		if len(apt.Repositories) == 0 {
-			continue
-		}
-
-		repos := make([]string, len(apt.Repositories))
-		for idx, repository := range apt.Repositories {
-			repos[idx] = "--repository=" + repository
-		}
-
-		allRepositories = append(allRepositories, repos...)
-	}
+// installPackages installs debian packages that are provided from a given state
+// `packages`.
+//
+func installPackages(base, pkgsFs llb.State, packages []string) llb.State {
+	packagesMount := llb.AddMount(
+		"/var/lib/estaleiro/deps",
+		pkgsFs,
+		llb.SourcePath("/var/lib/estaleiro/deps"),
+	)
 
 	run := base.Run(
-		llb.Args(append(append([]string{
+		llb.Args(append([]string{
 			"/usr/local/bin/estaleiro",
-			"apt",
-			"--output=/bom/final-packages.yml",
-		}, allRepositories...), allPackages...)),
+			"apt-install",
+			"--debs=/var/lib/estaleiro/debs",
+		}, packages...)),
 		estaleiroSourceMount(),
+		packagesMount,
 	)
 
-	return run.Root(), run.AddMount("/bom", bom)
+	return run.Root()
 }
 
 // gathers the package listing from a given state, saving the bill of materials
@@ -482,9 +507,10 @@ func getStepFromConfig(cfg *config.Config, name string) *config.Step {
 //
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
 	return dest.File(llb.Copy(src, srcPath, destPath, &llb.CopyInfo{
-		AllowWildcard:  true,
-		AttemptUnpack:  true,
-		CreateDestPath: true,
+		AllowWildcard:       true,
+		AttemptUnpack:       true,
+		CreateDestPath:      true,
+		CopyDirContentsOnly: true,
 	}))
 
 }
