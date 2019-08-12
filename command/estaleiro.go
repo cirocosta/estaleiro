@@ -17,9 +17,11 @@ func init() {
 }
 
 var Estaleiro struct {
-	LLB      llbCommand      `command:"llb" description:"generates the llb for a build"`
-	Build    buildCommand    `command:"build" description:"performs a build against buildkitd"`
+	LLB      llbCommand      `command:"llb"      description:"generates the llb for a build"`
+	Build    buildCommand    `command:"build"    description:"performs a build against buildkitd"`
 	Frontend frontendCommand `command:"frontend" description:"serves as a custom Docker-compatible"`
+
+	RetrieveBom retrieveBomCommand `command:"retrieve-bom" description:"retrieves bom from images in registries"`
 
 	AptInstall      aptInstallCommand      `command:"apt-install"      hidden:"true"`
 	AptRepositories aptRepositoriesCommand `command:"apt-repositories" hidden:"true"`

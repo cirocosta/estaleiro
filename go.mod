@@ -25,6 +25,7 @@ require (
 	github.com/gogo/googleapis v1.2.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
+	github.com/google/go-containerregistry v0.0.0-20190809222851-5d07ccae338d
 	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
 	github.com/hashicorp/hcl2 v0.0.0-20190725010614-0c3fe388e450
 	github.com/jessevdk/go-flags v1.4.0
@@ -54,10 +55,10 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/sys v0.0.0-20190812172437-4e8604ab3aff // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
 	google.golang.org/grpc v1.22.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20190709130402-674ba3eaed22
+	k8s.io/apimachinery v0.0.0-20190809020650-423f5d784010 // indirect
 )
 
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
