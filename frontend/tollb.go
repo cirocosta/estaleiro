@@ -28,26 +28,33 @@ func ToLLB(
 	fs llb.State, img ocispec.Image, err error,
 ) {
 
-	// TODO consider tag provided
-	//
-	canonicalName, err := resolveImage(ctx, cfg.Image.BaseImage.Name)
-	if err != nil {
-		err = errors.Wrapf(err,
-			"failed to resolve digest for %s when preparing llb",
-			cfg.Image.BaseImage.Name)
-		return
+	fs = llb.Scratch()
+	bomState := llb.Scratch()
+	metadata := bomfs.Meta{Image: "scratch"}
+
+	if cfg.Image.BaseImage.Name != "scratch" {
+		var canonicalName reference.Canonical
+
+		canonicalName, err = resolveImage(ctx, cfg.Image.BaseImage.Name)
+		if err != nil {
+			err = errors.Wrapf(err,
+				"failed to resolve digest for %s when preparing llb",
+				cfg.Image.BaseImage.Name)
+			return
+		}
+
+		fs = llb.Image(canonicalName.String())
+		metadata.Image = canonicalName.String()
 	}
 
-	bomState := llb.Scratch()
-	fs = llb.Image(canonicalName.String())
+	bomState = generateMetaBom(bomState, metadata)
 
-	bomState = generateMetaBom(bomState, bomfs.Meta{
-		Image:       canonicalName.String(),
-		ProductName: cfg.Image.Name,
-	})
-	bomState = generatePackagesBom(fs, bomState)
-	bomState = generateOsReleaseBom(fs, bomState)
-	fs, bomState = packages(fs, bomState, cfg.Image.Apt)
+	if cfg.Image.BaseImage.Name != "scratch" {
+		bomState = generatePackagesBom(fs, bomState)
+		bomState = generateOsReleaseBom(fs, bomState)
+		fs, bomState = packages(fs, bomState, cfg.Image.Apt)
+	}
+
 	fs, bomState, err = tarballFiles(fs, bomState, cfg)
 	if err != nil {
 		return
