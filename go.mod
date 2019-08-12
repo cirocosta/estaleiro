@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
-	github.com/Microsoft/go-winio v0.4.13 // indirect
+	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/Microsoft/hcsshim v0.8.6 // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/containerd/cgroups v0.0.0-20190717030353-c4b9ac5c7601 // indirect
@@ -15,6 +15,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/color v1.7.0
@@ -23,6 +24,7 @@ require (
 	github.com/gofrs/flock v0.7.1 // indirect
 	github.com/gogo/googleapis v1.2.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
 	github.com/hashicorp/hcl2 v0.0.0-20190725010614-0c3fe388e450
 	github.com/jessevdk/go-flags v1.4.0
@@ -31,7 +33,7 @@ require (
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
-	github.com/moby/buildkit v0.6.0
+	github.com/moby/buildkit v0.6.1-0.20190810045437-2b2bdac1b84b
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0
@@ -50,9 +52,8 @@ require (
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa // indirect
+	golang.org/x/sys v0.0.0-20190812172437-4e8604ab3aff // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
 	google.golang.org/grpc v1.22.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20190709130402-674ba3eaed22
