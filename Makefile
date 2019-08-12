@@ -70,10 +70,11 @@ graph: install
 buildctl-gateway-integration:
 	buildctl build \
 		--frontend gateway.v0 \
-		--opt source=cirocosta/estaleiro \
-		--opt build-arg:estaleiro-commit=$(GIT_COMMIT) \
-		--local dockerfile=. \
 		--local context=. \
+		--local dockerfile=. \
+		--opt build-arg:estaleiro-commit=$(GIT_COMMIT) \
+		--opt source=cirocosta/estaleiro \
+		--trace /tmp/trace \
 		--output type=oci,dest=image.tar
 
 

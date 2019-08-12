@@ -29,22 +29,17 @@ FROM base AS test
 
 
 
-FROM ubuntu AS release
-
-	COPY \
-		--from=build \
-		/bin/estaleiro \
-		/usr/local/bin/estaleiro
-
-	ENTRYPOINT [ "/usr/local/bin/estaleiro" ]
-
-
-FROM release AS frontend
+FROM ubuntu AS frontend
 
 	RUN set -x && \
 		apt update && \
 		apt install -y ca-certificates && \
 		rm -rf /var/lib/apt/lists
+
+	COPY \
+		--from=build \
+		/bin/estaleiro \
+		/usr/local/bin/estaleiro
 
 	ENTRYPOINT [ "/usr/local/bin/estaleiro", "frontend" ]
 

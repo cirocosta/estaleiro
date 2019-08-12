@@ -60,7 +60,7 @@ func ToLLB(
 
 	bomState = mergeBom(bomState)
 
-	fs = copy(bomState, "merged.yml", fs, "/bom")
+	fs = copy(bomState, "merged.yml", fs, "/bom/merged.yml")
 	img = prepareImage(cfg.Image)
 
 	return
@@ -553,7 +553,6 @@ func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.St
 		CreateDestPath:      true,
 		CopyDirContentsOnly: true,
 	}))
-
 }
 
 func addImageBuildStep(step *config.Step, dockerfileContent []byte) (state llb.State, err error) {
