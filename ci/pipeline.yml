@@ -61,6 +61,52 @@ jobs:
                 image: image/image.tar
 
 
+  - name: concourse
+    public: true
+    plan:
+      - in_parallel:
+          steps:
+            - {get: repository, trigger: true, passed: [build-image]}
+            - {get: rc-image, trigger: true, passed: [build-image]}
+            - {get: image-buildkit, trigger: true}
+      - task: build
+        image: image-buildkit
+        privileged: true
+        config:
+          platform: linux
+          inputs: 
+            - name: rc-image
+            - name: repository
+              path: .
+          outputs:
+            - name: image
+          run:
+            path: /bin/sh
+            args:
+              - -cex
+              - |
+                stty columns 80
+                sanitize-cgroups
+
+                buildctl-daemonless.sh build \
+                    --frontend gateway.v0 \
+                    --local context=./samples \
+                    --local dockerfile=./samples \
+                    --opt filename=./samples/concourse.hcl \
+                    --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
+                    --progress plain \
+                    --output type=docker,dest=image/image.tar
+      - in_parallel:
+          steps:
+            - task: read-bom
+              image: rc-image
+              file: ./repository/ci/tasks/read-bom.yml
+            - put: concourse-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
+
 
   - name: scratch
     public: true
@@ -91,9 +137,9 @@ jobs:
 
                 buildctl-daemonless.sh build \
                     --frontend gateway.v0 \
-                    --local context=. \
-                    --local dockerfile=. \
-                    --opt filename=scratch.hcl \
+                    --local context=./samples \
+                    --local dockerfile=./samples \
+                    --opt filename=./samples/scratch.hcl \
                     --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
                     --progress plain \
                     --output type=docker,dest=image/image.tar
@@ -338,3 +384,8 @@ resources:
     type: registry-image
     source:
       repository: registry-docker-registry.registry.svc.cluster.local:5000/scratch
+
+  - name: concourse-image
+    type: registry-image
+    source:
+      repository: registry-docker-registry.registry.svc.cluster.local:5000/concourse
