@@ -1,0 +1,15 @@
+---
+platform: linux
+
+image_resource:
+  type: registry-image
+  source: {repository: cirocosta/estaleiro}
+
+inputs:
+- name: image
+
+run:
+  path: estaleiro
+  args:
+    - retrieve-bom
+    - --docker-tarball=./image/image.tar

@@ -49,11 +49,15 @@ jobs:
                     --local dockerfile=. \
                     --local context=. \
                     --output type=docker,dest=image/image.tar
-      - put: test-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: read-bom
+              file: ./repository/ci/tasks/read-bom.yml
+            - put: test-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
 
@@ -92,11 +96,15 @@ jobs:
                     --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
                     --progress plain \
                     --output type=docker,dest=image/image.tar
-      - put: scratch-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: read-bom
+              file: ./repository/ci/tasks/read-bom.yml
+            - put: scratch-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
   - name: s3-resource
@@ -140,11 +148,15 @@ jobs:
                     --local context=. \
                     --local dockerfile=. \
                     --output type=docker,dest=image/image.tar
-      - put: s3-resource-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: read-bom
+              file: ./repository/ci/tasks/read-bom.yml
+            - put: s3-resource-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
   - name: git-resource
@@ -190,11 +202,15 @@ jobs:
                     --local context=. \
                     --local dockerfile=. \
                     --output type=docker,dest=image/image.tar
-      - put: git-resource-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: read-bom
+              file: ./repository/ci/tasks/read-bom.yml
+            - put: git-resource-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
   - name: docker-image-resource
@@ -238,11 +254,15 @@ jobs:
                     --local context=. \
                     --local dockerfile=. \
                     --output type=docker,dest=image/image.tar
-      - put: docker-image-resource-image
-        inputs: [image]
-        get_params: {format: oci}
-        params:
-          image: image/image.tar
+      - in_parallel:
+          steps:
+            - task: read-bom
+              file: ./repository/ci/tasks/read-bom.yml
+            - put: docker-image-resource-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
 
 
 
