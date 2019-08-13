@@ -29,7 +29,7 @@ For those cases, it's useful to have the contents of certain packages (like,
 `libc` and `ca-certificates`).
 
 
-## packages
+## packages complications - the `ca-certificates` case
 
 A complication that arises from "let's rely on some packages" is that in some
 cases, they're only useful after they run their corresponding setup scripts.
@@ -40,6 +40,48 @@ under `/etc/ssl/certs` as part of its `post-install` step :(.
 As that is a file that we simply can't verify that it came from a given package
 (again, it gets generated during `postinst` script execution), we have no simple
 way of tying it back to the original package.
+
+
+## install-based copying
+
+
+1. retrieve the package
+2. run post-install
+3. let a copy happen
+
+
+
+### is it really a problem?
+
+It could be that this just isn't a problem.
+
+
+
+```hcl
+image "final" {
+  base_image {
+    name = "scratch"
+  }
+
+  file "/etc/ssl/certs/ca-certificates.crt" {
+    from_package "ca-certificates" {
+      path = "/etc/ssl/certs/ca-certificates.crt"
+    }
+  }
+}
+
+
+package "ca-certificates" {
+  install = true
+}
+```
+
+With that declaration, `ca-certificates` would be installed in a separate state,
+allowing the `copy` to happen, while still having the source information
+specified.
+
+
+Maybe this could be just "good enough".
 
 
 
