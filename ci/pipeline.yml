@@ -53,7 +53,7 @@ jobs:
           steps:
             - task: read-bom
               image: rc-image
-              file: ./repository/ci/tasks/read-bom.yml
+              file: repository/ci/tasks/read-bom.yml
             - put: test-image
               inputs: [image]
               get_params: {format: oci}
@@ -92,7 +92,7 @@ jobs:
                     --frontend gateway.v0 \
                     --local context=./samples \
                     --local dockerfile=./samples \
-                    --opt filename=./samples/concourse.hcl \
+                    --opt filename=./concourse.hcl \
                     --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
                     --progress plain \
                     --output type=docker,dest=image/image.tar
@@ -100,7 +100,7 @@ jobs:
           steps:
             - task: read-bom
               image: rc-image
-              file: ./repository/ci/tasks/read-bom.yml
+              file: repository/ci/tasks/read-bom.yml
             - put: concourse-image
               inputs: [image]
               get_params: {format: oci}
@@ -139,7 +139,7 @@ jobs:
                     --frontend gateway.v0 \
                     --local context=./samples \
                     --local dockerfile=./samples \
-                    --opt filename=./samples/scratch.hcl \
+                    --opt filename=./scratch.hcl \
                     --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
                     --progress plain \
                     --output type=docker,dest=image/image.tar
@@ -147,7 +147,7 @@ jobs:
           steps:
             - task: read-bom
               image: rc-image
-              file: ./repository/ci/tasks/read-bom.yml
+              file: repository/ci/tasks/read-bom.yml
             - put: scratch-image
               inputs: [image]
               get_params: {format: oci}
@@ -200,7 +200,7 @@ jobs:
           steps:
             - task: read-bom
               image: rc-image
-              file: ./repository/ci/tasks/read-bom.yml
+              file: repository/ci/tasks/read-bom.yml
             - put: s3-resource-image
               inputs: [image]
               get_params: {format: oci}
@@ -255,7 +255,7 @@ jobs:
           steps:
             - task: read-bom
               image: rc-image
-              file: ./repository/ci/tasks/read-bom.yml
+              file: repository/ci/tasks/read-bom.yml
             - put: git-resource-image
               inputs: [image]
               get_params: {format: oci}
@@ -308,7 +308,7 @@ jobs:
           steps:
             - task: read-bom
               image: rc-image
-              file: ./repository/ci/tasks/read-bom.yml
+              file: repository/ci/tasks/read-bom.yml
             - put: docker-image-resource-image
               inputs: [image]
               get_params: {format: oci}

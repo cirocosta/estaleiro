@@ -5,6 +5,6 @@
 #
 image "concourse" {
   base_image {
-    name = "concourse"
+    name = "concourse/concourse"
   }
 }
