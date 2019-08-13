@@ -5,24 +5,34 @@ import (
 	"fmt"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/pkg/errors"
 )
 
 type retrieveBomCommand struct {
-	Image string `long:"image" required:"true"`
+	Image         string `long:"image"`
+	DockerTarball string `long:"docker-tarball"`
 }
 
 func (c *retrieveBomCommand) Execute(args []string) (err error) {
-	n, err := name.ParseReference(c.Image, name.WeakValidation, name.Insecure)
-	if err != nil {
-		err = errors.Wrapf(err, "could not resolve repository/tag reference '%s'", c.Image)
-		return
-	}
+	var image v1.Image
 
-	image, err := remote.Image(n)
+	switch {
+	case c.Image != "":
+		image, err = resolveFromRegistry(c.Image)
+	case c.DockerTarball != "":
+		image, err = tarball.ImageFromPath(c.DockerTarball, nil)
+		if err != nil {
+			err = errors.Wrapf(err, "could not load image from path '%s'", c.DockerTarball)
+			return
+		}
+
+	default:
+		err = errors.Errorf("either `image` or `docker-tarball` must be specified")
+	}
 	if err != nil {
-		err = errors.Wrapf(err, "failed to get remote image %s", c.Image)
 		return
 	}
 
@@ -48,5 +58,21 @@ func (c *retrieveBomCommand) Execute(args []string) (err error) {
 	}
 
 	fmt.Printf("%s", string(decodedBom))
+	return
+}
+
+func resolveFromRegistry(imageName string) (image v1.Image, err error) {
+	n, err := name.ParseReference(imageName, name.WeakValidation, name.Insecure)
+	if err != nil {
+		err = errors.Wrapf(err, "could not resolve repository/tag reference '%s'", imageName)
+		return
+	}
+
+	image, err = remote.Image(n)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to get remote image %s", image)
+		return
+	}
+
 	return
 }
