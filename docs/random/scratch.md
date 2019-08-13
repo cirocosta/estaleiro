@@ -11,9 +11,9 @@ are needed.
 
 ```
 
-  (scratch)
+      (scratch)                        (final image)
      .---------.                        .--------.
-     |         |			|        |
+     |         |			                  |        |
      | nothing |  + your binary  ==>    | binary |
      |         |                        |        |
      *---------*                        *--------*
@@ -27,6 +27,20 @@ that's not always the case (e.g., binaries that rely on dynamic linking
 
 For those cases, it's useful to have the contents of certain packages (like,
 `libc` and `ca-certificates`).
+
+
+## packages
+
+A complication that arises from "let's rely on some packages" is that in some
+cases, they're only useful after they run their corresponding setup scripts.
+
+For instance, `ca-certificates` only generates a final `ca-certificates.crt`
+under `/etc/ssl/certs` as part of its `post-install` step :(.
+
+As that is a file that we simply can't verify that it came from a given package
+(again, it gets generated during `postinst` script execution), we have no simple
+way of tying it back to the original package.
+
 
 
 ## the proposal
