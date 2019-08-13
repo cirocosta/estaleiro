@@ -14,17 +14,6 @@ const Version = "v0.0.1"
 //
 type Bom struct {
 
-	// ProductName is the name of the product that the bill of materials is
-	// describing.
-	//
-	ProductName string `yaml:"product_name"`
-
-	// Protocol corresponds to the version of the format that the BOM adheres
-	// to, not the version of the product.
-	//
-	//
-	Protocol string `yaml:"protocol"`
-
 	// BaseImage aggregates information about the base image that provided
 	// the initial rootfs for the final container image.
 	//

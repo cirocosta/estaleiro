@@ -10,8 +10,7 @@ type MetaV1 struct {
 }
 
 type Meta struct {
-	ProductName string `yaml:"product_name"`
-	Image       string `yaml:"image"`
+	Image string `yaml:"image"`
 }
 
 func NewMetaV1(meta Meta) MetaV1 {

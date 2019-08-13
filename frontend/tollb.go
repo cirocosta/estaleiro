@@ -27,7 +27,6 @@ func ToLLB(
 ) (
 	fs llb.State, img ocispec.Image, err error,
 ) {
-
 	fs = llb.Scratch()
 	bomState := llb.Scratch()
 	metadata := bomfs.Meta{Image: "scratch"}

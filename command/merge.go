@@ -63,7 +63,6 @@ func (c *mergeCommand) Execute(args []string) (err error) {
 
 	materials := bom.Bom{}
 
-	materials.ProductName = metav1.Data.ProductName
 	materials.BaseImage.CanonicalName = metav1.Data.Image
 	materials.BaseImage.OS = osReleasev1.Data.OS
 	materials.BaseImage.Version = osReleasev1.Data.Version

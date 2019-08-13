@@ -11,7 +11,6 @@ image "cirocosta/estaleiro" {
 
 
   apt {
-
     repositories = [
       "deb http://archive.ubuntu.com/ubuntu/ bionic universe",
       "deb-src http://archive.ubuntu.com/ubuntu/ bionic universe",
