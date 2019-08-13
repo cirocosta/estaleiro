@@ -52,6 +52,7 @@ jobs:
       - in_parallel:
           steps:
             - task: read-bom
+              image: rc-image
               file: ./repository/ci/tasks/read-bom.yml
             - put: test-image
               inputs: [image]
@@ -99,6 +100,7 @@ jobs:
       - in_parallel:
           steps:
             - task: read-bom
+              image: rc-image
               file: ./repository/ci/tasks/read-bom.yml
             - put: scratch-image
               inputs: [image]
@@ -151,6 +153,7 @@ jobs:
       - in_parallel:
           steps:
             - task: read-bom
+              image: rc-image
               file: ./repository/ci/tasks/read-bom.yml
             - put: s3-resource-image
               inputs: [image]
@@ -205,6 +208,7 @@ jobs:
       - in_parallel:
           steps:
             - task: read-bom
+              image: rc-image
               file: ./repository/ci/tasks/read-bom.yml
             - put: git-resource-image
               inputs: [image]
@@ -257,6 +261,7 @@ jobs:
       - in_parallel:
           steps:
             - task: read-bom
+              image: rc-image
               file: ./repository/ci/tasks/read-bom.yml
             - put: docker-image-resource-image
               inputs: [image]
