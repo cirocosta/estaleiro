@@ -559,17 +559,14 @@ func getStepFromConfig(cfg *config.Config, name string) *config.Step {
 //
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
 	return dest.File(llb.Copy(src, srcPath, destPath, &llb.CopyInfo{
-		AllowWildcard:       true,
-		AttemptUnpack:       true,
-		CreateDestPath:      true,
-		CopyDirContentsOnly: true,
+		AllowWildcard:  true,
+		AttemptUnpack:  true,
+		CreateDestPath: true,
 	}))
 }
 
 func addImageBuildStep(step *config.Step, dockerfileContent []byte) (state llb.State, err error) {
 	var stepState *llb.State
-
-	caps := pb.Caps.CapSet(pb.Caps.All())
 
 	buildContext := llb.Local("context")
 	if step.Context != "" {
@@ -580,6 +577,7 @@ func addImageBuildStep(step *config.Step, dockerfileContent []byte) (state llb.S
 			"/")
 	}
 
+	caps := pb.Caps.CapSet(pb.Caps.All())
 	stepState, _, err = dockerfile.Dockerfile2LLB(
 		context.TODO(), dockerfileContent, dockerfile.ConvertOpt{
 			Target:       step.Target,
