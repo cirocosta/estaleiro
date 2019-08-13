@@ -84,7 +84,6 @@ specified.
 Maybe this could be just "good enough".
 
 
-
 ## the proposal
 
 We could learn from what the [distroless][distroless] folks have been doing and
@@ -111,6 +110,37 @@ initially, leveraging `scratch` would mean not being able to leverage `apt`,
 thus, we should perform that check during the validation phase.
 
 > should we just tie a `Validate()` method to `config`? :thinking:
+
+
+### package retrieval
+
+
+Questions:
+
+- which base image should be used?
+  - default to `ubuntu:bionic`, but let the person override that?
+
+
+        const packageRetrievalBase = `ubuntu:bionic`
+
+
+        // given a package definition, creates 
+        //
+        func retrievePackage(package config.Package, bomState llb.State) (state, newBom llb.State) {
+          state = llb.Image(packageRetrievalBase)
+
+          state = state.Run(
+            llb.Args([]string{
+
+            }),
+            estaleiroMount(),
+          )
+
+
+
+        }
+
+
 
 
 [distroless]: https://github.com/GoogleContainerTools/distroless
