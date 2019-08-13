@@ -50,9 +50,14 @@ func ToLLB(
 	bomState = generateMetaBom(bomState, metadata)
 
 	if cfg.Image.BaseImage.Name != "scratch" {
+
 		bomState = generatePackagesBom(fs, bomState)
 		bomState = generateOsReleaseBom(fs, bomState)
-		fs, bomState = packages(fs, bomState, cfg.Image.Apt)
+
+		if len(cfg.Image.Apt) > 0 {
+			fs, bomState = packages(fs, bomState, cfg.Image.Apt)
+
+		}
 	}
 
 	fs, bomState, err = tarballFiles(fs, bomState, cfg)
