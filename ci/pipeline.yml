@@ -385,5 +385,4 @@ resources:
   - name: concourse-rc
     type: registry-image
     source:
-      repository: concourse/concourse
-      tag: rc
+      repository: concourse/concourse-rc

@@ -1,10 +1,7 @@
 # syntax=cirocosta/estaleiro
 
-image "concourse/s3-resource" {
-  base_image {
-    name = "ubuntu"
-    ref  = "bionic"
-  }
+image "concourse/git-resource" {
+  base_image = "ubuntu:bionic"
 
   apt {
     package "ca-certificates" {}
