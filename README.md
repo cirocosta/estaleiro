@@ -92,10 +92,7 @@ FROM base AS build
 # the final image to produce
 #
 image "cirocosta/estaleiro" {
-  base_image {
-    name = "ubuntu"
-    ref  = "bionic"
-  }
+  base_image = "ubuntu:bionic"
   
   apt {
     package "ca-certificates" {}
@@ -202,10 +199,7 @@ repo), direct `docker build` to it via a regular `--file` (`-f`), having
 #
 $ echo "# syntax=cirocosta/estaleiro
 image "cirocosta/sample" {
-  base_image {
-    name = "ubuntu"
-    ref  = "bionic"
-  }
+  base_image = "ubuntu:bionic"
 }
 " > ./estaleiro.hcl
 
