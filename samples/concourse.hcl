@@ -4,7 +4,5 @@
 # like.
 #
 image "concourse" {
-  base_image {
-    name = "concourse/concourse"
-  }
+  base_image  = "concourse/concourse"
 }

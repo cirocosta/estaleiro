@@ -65,37 +65,15 @@ jobs:
     public: true
     plan:
       - in_parallel:
-          steps:
-            - {get: repository, trigger: true, passed: [build-image]}
-            - {get: rc-image, trigger: true, passed: [build-image]}
-            - {get: image-buildkit, trigger: true}
+        - {get: repository, trigger: true, passed: [build-image]}
+        - {get: rc-image, trigger: true, passed: [build-image]}
+        - {get: concourse, trigger: true}
+        - {get: image-buildkit, trigger: true}
       - task: build
         image: image-buildkit
         privileged: true
-        config:
-          platform: linux
-          inputs: 
-            - name: rc-image
-            - name: repository
-              path: .
-          outputs:
-            - name: image
-          run:
-            path: /bin/sh
-            args:
-              - -cex
-              - |
-                stty columns 80
-                sanitize-cgroups
-
-                buildctl-daemonless.sh build \
-                    --frontend gateway.v0 \
-                    --local context=./samples \
-                    --local dockerfile=./samples \
-                    --opt filename=./concourse.hcl \
-                    --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
-                    --progress plain \
-                    --output type=docker,dest=image/image.tar
+        file: repository/ci/tasks/estaleiro-simple.yml
+        params: {FILENAME: concourse.hcl}
       - in_parallel:
           steps:
             - task: read-bom
@@ -108,6 +86,32 @@ jobs:
                 image: image/image.tar
 
 
+  - name: concourse-rc
+    public: true
+    plan:
+      - in_parallel:
+        - {get: repository, trigger: true, passed: [build-image]}
+        - {get: rc-image, trigger: true, passed: [build-image]}
+        - {get: concourse-rc, trigger: true}
+        - {get: image-buildkit, trigger: true}
+      - task: build
+        image: image-buildkit
+        file: repository/ci/tasks/estaleiro-simple.yml
+        privileged: true
+        params: {FILENAME: concourse-rc.hcl}
+      - in_parallel:
+          steps:
+            - task: read-bom
+              image: rc-image
+              file: repository/ci/tasks/read-bom.yml
+            - put: concourse-rc-image
+              inputs: [image]
+              get_params: {format: oci}
+              params:
+                image: image/image.tar
+
+
+
   - name: scratch
     public: true
     plan:
@@ -118,31 +122,9 @@ jobs:
             - {get: image-buildkit, trigger: true}
       - task: build
         image: image-buildkit
+        file: repository/ci/tasks/estaleiro-simple.yml
         privileged: true
-        config:
-          platform: linux
-          inputs: 
-            - name: rc-image
-            - name: repository
-              path: .
-          outputs:
-            - name: image
-          run:
-            path: /bin/sh
-            args:
-              - -cex
-              - |
-                stty columns 80
-                sanitize-cgroups
-
-                buildctl-daemonless.sh build \
-                    --frontend gateway.v0 \
-                    --local context=./samples \
-                    --local dockerfile=./samples \
-                    --opt filename=./scratch.hcl \
-                    --opt source=cirocosta/estaleiro@$(cat ./rc-image/digest) \
-                    --progress plain \
-                    --output type=docker,dest=image/image.tar
+        params: {FILENAME: scratch.hcl}
       - in_parallel:
           steps:
             - task: read-bom
@@ -389,3 +371,19 @@ resources:
     type: registry-image
     source:
       repository: registry-docker-registry.registry.svc.cluster.local:5000/concourse
+
+  - name: concourse-rc-image
+    type: registry-image
+    source:
+      repository: registry-docker-registry.registry.svc.cluster.local:5000/concourse-rc
+
+  - name: concourse
+    type: registry-image
+    source:
+      repository: concourse/concourse
+
+  - name: concourse-rc
+    type: registry-image
+    source:
+      repository: concourse/concourse
+      tag: rc

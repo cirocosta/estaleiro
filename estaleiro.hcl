@@ -4,11 +4,7 @@
 # the final image to produce
 #
 image "cirocosta/estaleiro" {
-  base_image {
-    name = "ubuntu"
-    ref  = "bionic"
-  }
-
+  base_image = "ubuntu"
 
   apt {
     repositories = [

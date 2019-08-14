@@ -17,15 +17,15 @@ type Config struct {
 // image, specifying the desired final intent.
 //
 type Image struct {
-	Name string `hcl:"name,label" `
+	Name string `hcl:"name,label"`
 
-	BaseImage BaseImage `hcl:"base_image,block" `
+	BaseImage string `hcl:"base_image"`
 
 	// State providers
 	//
 
 	Apt   []Apt  `hcl:"apt,block"`
-	Files []File `hcl:"file,block" `
+	Files []File `hcl:"file,block"`
 
 	// Final image configuration
 	//
@@ -143,14 +143,6 @@ type File struct {
 
 	FromStep    *FileFromStep    `hcl:"from_step,block"`
 	FromTarball *FileFromTarball `hcl:"from_tarball,block"`
-}
-
-// BaseImage is the image that is going to be retrieved from a registry (or
-// locally) to base the final layer of.
-//
-type BaseImage struct {
-	Name      string `hcl:"name"`
-	Reference string `hcl:"ref,optional"`
 }
 
 type Apt struct {

@@ -31,14 +31,14 @@ func ToLLB(
 	bomState := llb.Scratch()
 	metadata := bomfs.Meta{Image: "scratch"}
 
-	if cfg.Image.BaseImage.Name != "scratch" {
+	if cfg.Image.BaseImage != "scratch" {
 		var canonicalName reference.Canonical
 
-		canonicalName, err = resolveImage(ctx, cfg.Image.BaseImage.Name)
+		canonicalName, err = resolveImage(ctx, cfg.Image.BaseImage)
 		if err != nil {
 			err = errors.Wrapf(err,
 				"failed to resolve digest for %s when preparing llb",
-				cfg.Image.BaseImage.Name)
+				cfg.Image.BaseImage)
 			return
 		}
 
@@ -48,8 +48,7 @@ func ToLLB(
 
 	bomState = generateMetaBom(bomState, metadata)
 
-	if cfg.Image.BaseImage.Name != "scratch" {
-
+	if cfg.Image.BaseImage != "scratch" {
 		bomState = generatePackagesBom(fs, bomState)
 		bomState = generateOsReleaseBom(fs, bomState)
 

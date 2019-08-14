@@ -1,9 +1,7 @@
 # syntax=cirocosta/estaleiro
 
 image "concourse/s3-resource" {
-  base_image {
-    name = "ubuntu"
-  }
+  base_image = "ubuntu:bionic"
 
   apt {
     package "tzdata" {}

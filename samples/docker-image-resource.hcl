@@ -1,10 +1,7 @@
 # syntax=cirocosta/estaleiro
 
 image "concourse/docker-image-resource" {
-  base_image {
-    name = "ubuntu"
-    ref  = "bionic"
-  }
+  base_image = "ubuntu:bionic"
 
   apt {
     package "ca-certificates" {}
