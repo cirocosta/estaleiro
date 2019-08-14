@@ -33,8 +33,8 @@ step "build" {
 
   source_file "/bin/estaleiro" {
     vcs "git" {
-      ref        = "${estaleiro-commit}"
       repository = "https://github.com/cirocosta/estaleiro"
+      ref        = "${estaleiro-commit}"
     }
   }
 }
