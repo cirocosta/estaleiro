@@ -13,9 +13,11 @@ import (
 )
 
 type aptPackagesCommand struct {
-	Output                  string   `long:"output" default:"-"`
-	DebianPackagesDirectory string   `long:"debs"            default:"/var/lib/estaleiro/debs"`
-	Packages                []string `short:"p"              required:"true"`
+	Output                  string `long:"output" default:"-"`
+	DebianPackagesDirectory string `long:"debs"   default:"/var/lib/estaleiro/debs"`
+
+	Packages   []string `short:"p" required:"true"`
+	SkipSource []string `short:"s" description:"skip the source retrieval for the package"`
 }
 
 func (c *aptPackagesCommand) Execute(args []string) (err error) {

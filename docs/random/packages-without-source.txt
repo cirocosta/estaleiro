@@ -1,5 +1,6 @@
 PACKAGES WITHOUT SRC
 
+
 	There are some cases where repositories simply don't have a source
 	counterpart that is able to give us the source code for the contents
 	that are being packaged.
@@ -55,4 +56,18 @@ PACKAGES WITHOUT SRC
 					ref        = "19.03.1"
 				}
 			}
+	
+
+	with those hardcoded source infos, we should be able to skip the source
+	fetching for such.
+
+		apt packages \
+			-p docker-ce \
+			-s containerd.io=$version \
+			-s docker-ce-cli=$version \
+			-s docker-ce=$version
+
+
+	this would shortcut the checking process, being similar to how we do
+	for file sources, where we fill that info later in the `merge` step.
 
