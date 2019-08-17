@@ -23,7 +23,7 @@ type aptPackagesCommand struct {
 func (c *aptPackagesCommand) Execute(args []string) (err error) {
 	ctx := context.TODO()
 
-	pkgs, err := retrieveDebianPackages(ctx, c.Packages, c.DebianPackagesDirectory)
+	pkgs, err := retrieveDebianPackages(ctx, c.Packages, c.SkipSource, c.DebianPackagesDirectory)
 	if err != nil {
 		return
 	}
@@ -36,7 +36,7 @@ func (c *aptPackagesCommand) Execute(args []string) (err error) {
 	return
 }
 
-func retrieveDebianPackages(ctx context.Context, packages []string, dir string) (pkgs []dpkg.Package, err error) {
+func retrieveDebianPackages(ctx context.Context, packages, skipSource []string, dir string) (pkgs []dpkg.Package, err error) {
 	logger.Info("retrieve-packages", lager.Data{"packages": packages, "dir": dir})
 
 	err = os.MkdirAll(dir, 0755)
@@ -63,7 +63,7 @@ func retrieveDebianPackages(ctx context.Context, packages []string, dir string) 
 	}
 
 	logger.Info("create-packages")
-	pkgs, err = dpkg.CreatePackages(ctx, dir, locations)
+	pkgs, err = dpkg.CreatePackages(ctx, dir, locations, skipSource)
 	if err != nil {
 		err = errors.Wrapf(err,
 			"failed to create packages bom")

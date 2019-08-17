@@ -3,6 +3,11 @@ GIT_COMMIT = $(shell git rev-parse HEAD)
 all: install linux-binary
 
 
+sample-docker-image-resource:
+	cd ./samples && \
+		make -C ../ -j2 && make docker-image-resource
+
+
 install:
 	go install -tags "dfrunmount local" -v .
 
@@ -34,14 +39,14 @@ linux-binary:
 ubuntu:
 	DOCKER_BUILDKIT=1 \
 		docker build \
-			--tag cirocosta/estaleiro-with-ubuntu \
+			--tag cirocosta/ubuntu-with-estaleiro \
 			--target release \
 			.
 	docker run \
 		--interactive \
 		--tty \
 		--entrypoint /bin/bash \
-		cirocosta/estaleiro-with-ubuntu
+		cirocosta/ubuntu-with-estaleiro
 
 
 # TODO include estaleiro-commit through `--var`

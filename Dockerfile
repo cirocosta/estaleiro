@@ -33,7 +33,8 @@ FROM ubuntu AS frontend
 
 	RUN set -x && \
 		apt update && \
-		apt install -y ca-certificates && \
+		apt install -y --no-install-suggests --no-install-recommends \
+			ca-certificates && \
 		rm -rf /var/lib/apt/lists
 
 	COPY \
@@ -42,4 +43,3 @@ FROM ubuntu AS frontend
 		/usr/local/bin/estaleiro
 
 	ENTRYPOINT [ "/usr/local/bin/estaleiro", "frontend" ]
-

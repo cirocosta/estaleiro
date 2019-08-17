@@ -84,6 +84,8 @@ type AptKey struct {
 type Package struct {
 	Name    string `hcl:"name,label"`
 	Version string `hcl:"version,optional"`
+
+	VCS *VCS `hcl:"vcs,block"`
 }
 
 func (p Package) String() string {

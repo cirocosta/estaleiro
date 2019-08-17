@@ -93,6 +93,27 @@ func allKeys(apts []config.Apt) (res []string) {
 	return
 }
 
+func allPackagesToSkipSource(apts []config.Apt) (res []string) {
+	for _, apt := range apts {
+		if len(apt.Packages) == 0 {
+			continue
+		}
+
+		arr := []string{}
+		for _, val := range apt.Packages {
+			if val.VCS == nil {
+				continue
+			}
+
+			arr = append(arr, val.String())
+		}
+
+		res = append(res, arr...)
+	}
+
+	return
+}
+
 func allPackages(apts []config.Apt) (res []string) {
 	for _, apt := range apts {
 		if len(apt.Packages) == 0 {
@@ -213,6 +234,7 @@ func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.Stat
 	var (
 		keys         = prefixSlice(allKeys(apts), "-k=")
 		packages     = prefixSlice(allPackages(apts), "-p=")
+		skipSource   = prefixSlice(allPackagesToSkipSource(apts), "-s=")
 		repositories = prefixSlice(allRepositories(apts), "-r=")
 	)
 
@@ -225,13 +247,15 @@ func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.Stat
 		estaleiroSourceMount(),
 	).Root()
 
+	// skip packages from config
+
 	opts := []llb.RunOption{
-		llb.Args(append([]string{
+		llb.Args(append(append([]string{
 			"/usr/local/bin/estaleiro",
 			"apt-packages",
 			"--output=/pkgs.yml",
 			"--debs=/var/lib/estaleiro/debs",
-		}, packages...)),
+		}, packages...), skipSource...)),
 	}
 
 	opts = append(opts, estaleiroSourceMount(),

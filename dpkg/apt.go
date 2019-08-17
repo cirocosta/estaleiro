@@ -84,7 +84,21 @@ func ComputeSHA256(filename string) (sum string, err error) {
 
 }
 
-func CreatePackages(ctx context.Context, dir string, locations []AptDebLocation) (pkgs []Package, err error) {
+func shouldSkipSource(name string, skipSources []string) bool {
+	for _, s := range skipSources {
+		if name == s {
+			return true
+		}
+	}
+
+	return false
+}
+
+func CreatePackages(
+	ctx context.Context, dir string, locations []AptDebLocation, skipSource []string,
+) (
+	pkgs []Package, err error,
+) {
 	var eg *errgroup.Group
 
 	pkgs = make([]Package, len(locations))
@@ -107,13 +121,23 @@ func CreatePackages(ctx context.Context, dir string, locations []AptDebLocation)
 				return
 			}
 
-			ref := control.Name + "=" + control.Version
-			sourceLocations, err := aptSourcePackageUris(ctx, ref)
-			if err != nil {
-				err = errors.Wrapf(err,
-					"failed to retrieve source for package %s",
-					ref)
-				return
+			// how to conditionally check for this?
+
+			var (
+				sourceLocations []AptDebLocation
+				ref             = control.Name + "=" + control.Version
+			)
+
+			if shouldSkipSource(ref, skipSource) {
+				sourceLocations = []AptDebLocation{}
+			} else {
+				sourceLocations, err = aptSourcePackageUris(ctx, ref)
+				if err != nil {
+					err = errors.Wrapf(err,
+						"failed to retrieve source for package %s",
+						ref)
+					return
+				}
 			}
 
 			pkgs[idx] = Package{
@@ -247,7 +271,7 @@ func GatherDebLocations(ctx context.Context, packages []string) ([]AptDebLocatio
 	return aptUris(ctx, "install", packages)
 }
 
-func aptSourcePackageUris(ctx context.Context, packageName string) ([]AptDebLocation, error) {
+func aptSourcePackageUris(ctx context.Context, packageName string) (locations []AptDebLocation, err error) {
 	return aptUris(ctx, "source", []string{packageName})
 }
 
