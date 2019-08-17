@@ -230,16 +230,18 @@ func readTypedBomFile(file string) (res interface{}, err error) {
 	}
 
 	switch wrapper.Kind {
-	case bomfs.FilesV1Kind:
-		res = &bomfs.FilesV1{}
 	case bomfs.FileSourcesV1Kind:
 		res = &bomfs.FileSourcesV1{}
+	case bomfs.FilesV1Kind:
+		res = &bomfs.FilesV1{}
+	case bomfs.MetaV1Kind:
+		res = &bomfs.MetaV1{}
 	case bomfs.OsReleaseV1Kind:
 		res = &bomfs.OsReleaseV1{}
 	case bomfs.PackagesV1Kind:
 		res = &bomfs.PackagesV1{}
-	case bomfs.MetaV1Kind:
-		res = &bomfs.MetaV1{}
+	case bomfs.PackageSourcesV1Kind:
+		res = &bomfs.PackageSourcesV1{}
 	default:
 		err = errors.Wrapf(err,
 			"unexpected kind %s", wrapper.Kind)
