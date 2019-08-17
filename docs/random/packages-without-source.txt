@@ -71,3 +71,42 @@ PACKAGES WITHOUT SRC
 	this would shortcut the checking process, being similar to how we do
 	for file sources, where we fill that info later in the `merge` step.
 
+
+FINAL BOM
+
+	packages:
+	- name: containerd.io
+	  version: blabla
+	  source_package: docker-ce
+	  architecture: amd64
+	  location:
+	    uri: $debian_package_uri
+	    digest: $digest
+	    name: name
+	  sources:
+	    - git:
+	        uri: https://github.com/containerd/containerd
+	        ref: v1.2.3
+	    - external_resource:
+	        uri: ...
+	        digest: ...
+	        name: ...
+	
+
+
+
+MERGING
+
+	merge(
+		PackageSource{
+			name: something,
+			version: somethingelse,
+			source: fille
+		},
+		Package {
+			name something,
+			version: somethingelse,
+			source: empty
+		},
+	) ==> final package.
+

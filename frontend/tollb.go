@@ -93,6 +93,33 @@ func allKeys(apts []config.Apt) (res []string) {
 	return
 }
 
+func hardcodedPackageSources(apts []config.Apt) (res bomfs.PackageSourcesV1) {
+	mapping := map[string]bomfs.PackageSource{}
+
+	for _, apt := range apts {
+		if len(apt.Packages) == 0 {
+			continue
+		}
+
+		for _, val := range apt.Packages {
+			if val.VCS == nil {
+				continue
+			}
+
+			mapping[val.String()] = bomfs.PackageSource{
+				VCS: *val.VCS,
+				Origin: bomfs.PackageOrigin{
+					Name:    val.Name,
+					Version: val.Version,
+				},
+			}
+		}
+	}
+
+	res = bomfs.NewPackageSourcesV1(mapping)
+	return
+}
+
 func allPackagesToSkipSource(apts []config.Apt) (res []string) {
 	for _, apt := range apts {
 		if len(apt.Packages) == 0 {
@@ -246,6 +273,17 @@ func packages(fs, bomState llb.State, apts []config.Apt) (newFs, newBom llb.Stat
 		}, append(keys, repositories...)...)),
 		estaleiroSourceMount(),
 	).Root()
+
+	if len(skipSource) > 0 {
+		res, err := yaml.Marshal(hardcodedPackageSources(apts))
+		if err != nil {
+			panic(err)
+		}
+
+		// save the sources info in the `bom` state
+		//
+		newBom = newBom.File(llb.Mkfile("/package-sources.yml", 0755, res))
+	}
 
 	// skip packages from config
 

@@ -55,7 +55,32 @@ While it's great to talk about best practices, it's hard to enforce them.
 
 ### estaleiro
 
-`estaleiro` leverages [`buildkit`](https://github.com/moby/buildkit) as a way of
+
+`estaleiro` sits at the very final portion of your image building process,
+gating what gets into the final container image that is supposed to be shipped
+to your customers.
+
+
+```
+
+                                   .-----------.
+    somehow you build stuff  --->  | estaleiro | --> final container image
+                                   *-----------*              +
+                                                       bill of materials
+                                                              
+    with the Dockerfiles and                                  |
+     build process that you                                   |
+         already have                                         .
+
+                                                      anything that gets into the
+                                                      final container image *MUST*
+                                                      declare where it comes from.
+
+
+```
+
+
+It leverages [`buildkit`](https://github.com/moby/buildkit) as a way of
 implementing a convention of how the last stage in building a container image
 (i.e., gathering binaries built in previous steps), putting guard-rails where
 needed, and enforcing a set of rules where needed.

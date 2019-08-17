@@ -29,12 +29,13 @@ func (c *mergeCommand) Execute(args []string) (err error) {
 	}
 
 	var (
-		filesv1         = []bomfs.FilesV1{}
-		filesourcesv1   = []bomfs.FileSourcesV1{}
-		osPackagesv1    = bomfs.PackagesV1{}
-		addedPackagesv1 = bomfs.PackagesV1{}
-		osReleasev1     = bomfs.OsReleaseV1{}
-		metav1          = bomfs.MetaV1{}
+		filesv1          = []bomfs.FilesV1{}
+		filesourcesv1    = []bomfs.FileSourcesV1{}
+		packagesourcesv1 = bomfs.PackageSourcesV1{}
+		osPackagesv1     = bomfs.PackagesV1{}
+		addedPackagesv1  = bomfs.PackagesV1{}
+		osReleasev1      = bomfs.OsReleaseV1{}
+		metav1           = bomfs.MetaV1{}
 	)
 
 	for _, file := range files {
@@ -48,6 +49,8 @@ func (c *mergeCommand) Execute(args []string) (err error) {
 			filesv1 = append(filesv1, *v)
 		case *bomfs.FileSourcesV1:
 			filesourcesv1 = append(filesourcesv1, *v)
+		case *bomfs.PackageSourcesV1:
+			packagesourcesv1 = *v
 		case *bomfs.OsReleaseV1:
 			osReleasev1 = *v
 		case *bomfs.MetaV1:
@@ -68,7 +71,7 @@ func (c *mergeCommand) Execute(args []string) (err error) {
 	materials.BaseImage.Version = osReleasev1.Data.Version
 	materials.BaseImage.Codename = osReleasev1.Data.Codename
 	materials.BaseImage.Packages = toBomPackages(osPackagesv1.Data.Packages)
-	materials.ChangeSet.Packages = toBomPackages(addedPackagesv1.Data.Packages)
+	materials.ChangeSet.Packages = fillPackageSources(toBomPackages(addedPackagesv1.Data.Packages), packagesourcesv1)
 	materials.ChangeSet.Files = toBomFiles(filesv1, filesourcesv1)
 
 	writer, err := writer(c.Output)
@@ -140,14 +143,14 @@ func toBomPackages(orig []dpkg.Package) (res []bom.Package) {
 	emptyLocation := dpkg.AptDebLocation{}
 
 	for idx, pkg := range orig {
-		sources := make([]bom.ExternalResource, len(pkg.Source))
+		sources := make([]bom.Source, len(pkg.Source))
 
 		for idx, source := range pkg.Source {
-			sources[idx] = bom.ExternalResource{
+			sources[idx] = bom.Source{ExternalResource: &bom.ExternalResource{
 				Uri:    source.URI,
 				Digest: "md5:" + source.MD5sum,
 				Name:   source.Name,
-			}
+			}}
 		}
 
 		location := bom.ExternalResource{}
@@ -167,6 +170,27 @@ func toBomPackages(orig []dpkg.Package) (res []bom.Package) {
 			Location:      location,
 			Sources:       sources,
 		}
+	}
+
+	return
+}
+
+func fillPackageSources(packages []bom.Package, sources bomfs.PackageSourcesV1) (enhanced []bom.Package) {
+	srcs := sources.Data
+	enhanced = packages
+
+	for idx, pkg := range packages {
+		src, found := srcs[pkg.Name+"="+pkg.Version]
+		if !found {
+			continue
+		}
+
+		enhanced[idx].Sources = append(enhanced[idx].Sources, bom.Source{
+			Git: &bom.GitSource{
+				RepositoryUri: src.VCS.Repository,
+				Ref:           src.VCS.Ref,
+			},
+		})
 	}
 
 	return

@@ -53,12 +53,12 @@ type BaseImage struct {
 // how to have it retrieved (including its sources).
 //
 type Package struct {
-	Name          string             `yaml:"name"`
-	Version       string             `yaml:"version"`
-	SourcePackage string             `yaml:"source_package"`
-	Architecture  string             `yaml:"architecture"`
-	Location      ExternalResource   `yaml:"location,omitempty"`
-	Sources       []ExternalResource `yaml:"sources,omitempty"`
+	Name          string           `yaml:"name"`
+	Version       string           `yaml:"version"`
+	SourcePackage string           `yaml:"source_package"`
+	Architecture  string           `yaml:"architecture"`
+	Location      ExternalResource `yaml:"location,omitempty"`
+	Sources       []Source         `yaml:"sources,omitempty"`
 }
 
 // ExternalResource indicates an external resource that can be retrieved from a
@@ -100,7 +100,8 @@ type File struct {
 }
 
 type Source struct {
-	Git *GitSource `yaml:"git"`
+	Git              *GitSource        `yaml:"git,omitempty"`
+	ExternalResource *ExternalResource `yaml:"external_resource,omitempty"`
 }
 
 type GitSource struct {

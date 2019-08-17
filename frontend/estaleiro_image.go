@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	imageName = "cirocosta/estaleiro@sha256:f6a1fae66bbc07929837c84749e22783df7394a7cfc3fadbb2c9e67b5057c5fd"
+	imageName = "cirocosta/estaleiro@sha256:0e53c97683e6cbc6d29e9424d5827baa6141888bd1be645ff9745a17ab680cf4"
 )
 
 func estaleiroSourceMount() llb.RunOption {
